@@ -50,18 +50,15 @@ Rst means the interpreter must set this byte / bit correctly after loading / res
        |   | 6+  |   | * | * | Sound effects available?
   .6   |   | 1-3 |   | * | * | Is a variable-pitch font the default? (Maybe also valid in higher versions)
   .7   |   | 4+  |   | * | * | Timed keyboard input available?
- 02-03 | * |     |   |   |   | Release number
+ 02-03 | * | 1+  |   |   |   | Release number
  04-05 |   | 1+  |   |   |   | High memory base (byte address)
  06-07 |   | 1-5 |   |   |   | Initial value of PC (byte address)
        |   | 6+  |   |   |   | Main routine location (packed address)
  08-09 |   | 1+  |   |   |   | Dictionary location (byte address)
  0A-0B |   | 1+  |   |   |   | Object table location (byte address)
  0C-0D |   | 1+  |   |   |   | Global variables table location (byte address)
- 0E-0F |   | 1+  |   |   |   | Static memory base (by<te address)
- 10    | . | 1+  | . | . | . | Flags 2 (low byte)
-  .0   |   | 6+  |   | * | * | Game wants to use menus?
-  .1-7 |   | 1+  | - | - | - | unused. Note: An interpreter should clear these bits for forward compilance.
- 11    | . | 1+  | . | . | . | Flags 2 (high byte)
+ 0E-0F |   | 1+  |   |   |   | Static memory base (byte address)
+ 10-11 | . | 1+  | . | . | . | Flags 2
   .0   |   | 1+  | * | * | * | Transcipting on?
   .1   |   | 3+  | * |   | * | Force printing in fixed-pitch font
   .2   |   | 6+  | * | * |   | Screen redraw: Interpreter sets this to request redraw; game clears when it complies.
@@ -70,6 +67,8 @@ Rst means the interpreter must set this byte / bit correctly after loading / res
   .5   |   | 5+  |   | * | * | Game wants to use a mouse?
   .6   |   | 5+  |   |   |   | Game wants to use colors?
   .7   |   | 5+  |   | * | * | Game wants to use sound effects?
+  .8   |   | 6+  |   | * | * | Game wants to use menus?
+  .9-F |   | 1+  | - | - | - | unused. Note: An interpreter should clear these bits for forward compilance.
  12-17 | * | 2   |   |   |   | Serial code (ASCII chars)
        | * | 3+  |   |   |   | Serial number: compilation date (ASCII chars in the format YYMMDD)
  18-19 |   | 2+  |   |   |   | Abbrevations table location (byte address)
@@ -88,7 +87,7 @@ Rst means the interpreter must set this byte / bit correctly after loading / res
  28-29 |   | 6+  |   |   |   | Routines offset (r_o)
  2A-2B |   | 6+  |   |   |   | Static strings offset (s_o)
  2C    |   | 5+  |   | * | * | Default background color
- 2D    |   | 5+  |   | * | * | Default background color
+ 2D    |   | 5+  |   | * | * | Default foreground color
  2E-2F |   | 5+  |   |   |   | Terminating characters table location (byte address)
  30-31 |   | 6+  |   | * |   | Total width in pixels of text sent to output stream 3
  32-33 |   | 1+  |   | * | * | Standard revision number
