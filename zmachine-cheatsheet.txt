@@ -151,10 +151,11 @@ In extended and variable form, a byte containing operand types follows the opcod
 
 Operand type:
 Possible "values" are large constant, small constant, variable.
-An operand type can be encoded using 2 bits: large constant = $$00, small constant = $$01, variable=$$10.
-$$11 means "omitted".
+An operand type can be encoded using 2 bits: large constant=$$00, small constant=$$01, variable=$$10.
+An operand type can be encoded using 1 bit: small constant=$$0, variable=$$1
+  $$11 means "omitted".
 Long form: 2 operands (as long form always is 2OP);
-  type of first operand encoded in opcode byte bit 6, second in bit 5. If $$0, small constant; if $$1, variable.
+  type of first operand encoded in opcode byte bit 6, second in bit 5.
 Short form 0OP: 0 operands.
 Short form 1OP: 1 operand; type encoded in opcode byte bits 5-4.
 Extended and variable form: 0 to 4 (8 for some opcodes) operands;
@@ -169,8 +170,8 @@ If the opcode is a store opcode, a "store variable" byte follows.
 If the opcode is a branch opcode, a "branch offset" byte follows. (The branch offset byte is not equal to the branch offset!)
   If bit 7 is $$0, a branch occurs when the condition was false; if $$1, when true.
   If bit 6 is $$0, a second branch offset byte follows.
-    The branch offset is given by concatenating first branch offset byte bits 5-0 with second branch offset byte (bits 7-0).
-  If bit 6 is $$1, no second branch offset byte follows and the branch offset is given in bits 5-0 of the branch offset byte.
+      The branch offset is given by concatenating first branch offset byte bits 5-0 with second branch offset byte (bits 7-0).
+    If bit 6 is $$1, no second branch offset byte follows and the branch offset is given in bits 5-0 of the branch offset byte.
 
 If the opcode is a text opcode, a text (of unlimited length) follows; encoded as described above.
 
