@@ -1,5 +1,5 @@
 General:
--Source: http://inform-fiction.org/zmachine/standards/z1point1/index.html. Section references refer to this document.
+-Source: http://inform-fiction.org/zmachine/standards/z1point1 (also located in doc/). Section references refer to this document.
 -Games are stored in "story files". Story files are "images" of interpreter memory.
 -When using words, MSB comes first
 
