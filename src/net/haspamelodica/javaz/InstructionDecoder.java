@@ -29,10 +29,10 @@ public class InstructionDecoder
 			opcode = Opcode.decode(opcodeByte, form, count, version);
 		target.opcode = opcode;
 		if(opcode == Opcode._unknown_instr && config.getBool("instructions.decoding.dont_ignore_unknown_instructions"))
-			throw new IllegalArgumentException("Unknown instruction: " + opcodeByte);//TODO another exception, please
+			throw new InstructionFormatException("Unknown instruction: " + opcodeByte);
 		if((opcode.minVersion > version || (opcode.maxVersion > 0 && opcode.maxVersion < version)) && config.getBool("instructions.decoding.check_instruction_version"))
-			throw new IllegalArgumentException("Instruction not valid for version " + version +
-					" (V" + opcode.minVersion + (opcode.maxVersion > 0 ? "-" + opcode.maxVersion : "+") + "): " + opcode);//TODO another exception, please
+			throw new InstructionFormatException("Instruction not valid for version " + version +
+					" (V" + opcode.minVersion + (opcode.maxVersion > 0 ? "-" + opcode.maxVersion : "+") + "): " + opcode);
 		switch(count)
 		{
 			case OP0:
@@ -110,7 +110,7 @@ public class InstructionDecoder
 			OperandType type = OperandType.decodeTwoBits((operandTypes >> bitLocation) & 0x03);
 			if(type != null)
 				if(followingOperandsMustBeOmitted)
-					throw new IllegalArgumentException("");//TODO another exception, please
+					throw new InstructionFormatException("Operands after the first omitted operand found");
 				else
 				{
 					target.operandTypes[operandI] = type;
