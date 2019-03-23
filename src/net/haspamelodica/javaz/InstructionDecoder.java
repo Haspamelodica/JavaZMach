@@ -72,6 +72,7 @@ public class InstructionDecoder
 				break;
 			case VAR:
 				decodeVarParams(opcode.hasTwoOperandTypeBytes, target);
+				break;
 			default:
 				throw new IllegalArgumentException("Unknown enum type: " + count);
 		}
