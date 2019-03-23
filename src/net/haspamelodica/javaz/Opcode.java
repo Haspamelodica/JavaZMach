@@ -1,143 +1,150 @@
 package net.haspamelodica.javaz;
 
-import static net.haspamelodica.javaz.OperandCount.*;
+import static net.haspamelodica.javaz.OpcodeRange.EXT;
+import static net.haspamelodica.javaz.OpcodeRange.OP0;
+import static net.haspamelodica.javaz.OpcodeRange.OP1;
+import static net.haspamelodica.javaz.OpcodeRange.OP2;
+import static net.haspamelodica.javaz.OpcodeRange.VAR;
 
 public enum Opcode
 {
-	je(0x1, OP2, 1, 0, 1, 0, "je"),
-	jl(0x2, OP2, 1, 0, 1, 0, "jl"),
-	jg(0x3, OP2, 1, 0, 1, 0, "jg"),
-	dec_chk(0x4, OP2, 1, 0, 1, 0, "dec_chk"),
-	inc_chk(0x5, OP2, 1, 0, 1, 0, "inc_chk"),
-	jin(0x6, OP2, 1, 0, 1, 0, "jin"),
-	test(0x7, OP2, 1, 0, 1, 0, "test"),
-	or(0x8, OP2, 1, 1, 0, 0, "or"),
-	and(0x9, OP2, 1, 1, 0, 0, "and"),
-	test_attr(0xA, OP2, 1, 0, 1, 0, "test_attr"),
-	set_attr(0xB, OP2, 1, 0, 0, 0, "set_attr"),
-	clear_attr(0xC, OP2, 1, 0, 0, 0, "clear_attr"),
-	store(0xD, OP2, 1, 0, 0, 0, "store"),
-	insert_obj(0xE, OP2, 1, 0, 0, 0, "insert_obj"),
-	loadw(0xF, OP2, 1, 1, 0, 0, "loadw"),
-	loadb(0x10, OP2, 1, 1, 0, 0, "loadb"),
-	get_prop(0x11, OP2, 1, 1, 0, 0, "get_prop"),
-	get_prop_addr(0x12, OP2, 1, 1, 0, 0, "get_prop_addr"),
-	get_next_prop(0x13, OP2, 1, 1, 0, 0, "get_next_prop"),
-	add(0x14, OP2, 1, 1, 0, 0, "add"),
-	sub(0x15, OP2, 1, 1, 0, 0, "sub"),
-	mul(0x16, OP2, 1, 1, 0, 0, "mul"),
-	div(0x17, OP2, 1, 1, 0, 0, "div"),
-	mod(0x18, OP2, 1, 1, 0, 0, "mod"),
-	call_2s(0x19, OP2, 4, 1, 0, 0, "call_2s"),
-	call_2n(0x1A, OP2, 5, 0, 0, 0, "call_2n"),
-	set_colour(0x1B, OP2, 5, 0, 0, 0, "set_colour"),
-	throw_(0x1C, OP2, 5, 0, 0, 0, "throw"),
-	jz(0x0, OP1, 1, 0, 1, 0, "jz"),
-	get_sibling(0x1, OP1, 1, 1, 1, 0, "get_sibling"),
-	get_child(0x2, OP1, 1, 1, 1, 0, "get_child"),
-	get_parent(0x3, OP1, 1, 1, 0, 0, "get_parent"),
-	get_prop_len(0x4, OP1, 1, 1, 0, 0, "get_prop_len"),
-	inc(0x5, OP1, 1, 0, 0, 0, "inc"),
-	dec(0x6, OP1, 1, 0, 0, 0, "dec"),
-	print_addr(0x7, OP1, 1, 0, 0, 0, "print_addr"),
-	call_1s(0x8, OP1, 4, 1, 0, 0, "call_1s"),
-	remove_obj(0x9, OP1, 1, 0, 0, 0, "remove_obj"),
-	print_obj(0xA, OP1, 1, 0, 0, 0, "print_obj"),
-	ret(0xB, OP1, 1, 0, 0, 0, "ret"),
-	jump(0xC, OP1, 1, 0, 0, 0, "jump"),//Not a branch instruction
-	print_paddr(0xD, OP1, 1, 0, 0, 0, "print_paddr"),
-	load(0xE, OP1, 1, 1, 0, 0, "load"),
-	not_V14(0xF, OP1, 1, 4, 1, 0, 0, "not"),
-	call_1n(0xF, OP1, 5, 0, 0, 0, "call_1n"),
-	rtrue(0x0, OP0, 1, 0, 0, 0, "rtrue"),
-	rfalse(0x1, OP0, 1, 0, 0, 0, "rfalse"),
-	print(0x2, OP0, 1, 0, 0, 0, "print"),
-	print_ret(0x3, OP0, 1, 0, 0, 0, "print_ret"),
-	nop(0x4, OP0, 1, 0, 0, 0, "nop"),
-	save_V13(0x5, OP0, 1, 3, 0, 1, 0, "save"),
-	save_V4(0x5, OP0, 4, 4, 1, 0, 0, "save"),//TODO: Is this a store or a branch opcode? Documentation contradicts itself
-	restore_V13(0x6, OP0, 1, 3, 0, 1, 0, "restore"),
-	restore_V4(0x6, OP0, 4, 5, 1, 0, 0, "restore"),//TODO: Is this a store or a branch opcode? Documentation contradicts itself
-	restart(0x7, OP0, 1, 0, 0, 0, "restart"),
-	ret_popped(0x8, OP0, 1, 0, 0, 0, "ret_popped"),
-	pop(0x9, OP0, 1, 4, 0, 0, 0, "pop"),
-	catch_(0x9, OP0, 5, 1, 0, 0, "catch"),
-	quit(0xA, OP0, 1, 0, 0, 0, "quit"),
-	new_line(0xB, OP0, 1, 0, 0, 0, "new_line"),
-	show_status(0xC, OP0, 3, 3, 0, 0, 0, "show_status"),
-	verify(0xD, OP0, 3, 0, 1, 0, "verify"),
-	piracy(0xF, OP0, 5, 0, 1, 0, "piracy"),
-	call(0x0, VAR, 1, 3, 1, 0, 0, "call"),
-	call_vs(0x0, VAR, 4, 1, 0, 0, "call_vs"),
-	storew(0x1, VAR, 1, 0, 0, 0, "storew"),
-	storeb(0x2, VAR, 1, 0, 0, 0, "storeb"),
-	put_prop(0x3, VAR, 1, 0, 0, 0, "put_prop"),
-	sread(0x4, VAR, 1, 4, 0, 0, 0, "sread"),
-	aread(0x4, VAR, 5, 1, 0, 0, "aread"),
-	print_char(0x5, VAR, 1, 0, 0, 0, "print_char"),
-	print_num(0x6, VAR, 1, 0, 0, 0, "print_num"),
-	random(0x7, VAR, 1, 1, 0, 0, "random"),
-	push(0x8, VAR, 1, 0, 0, 0, "push"),
-	pull_V15(0x9, VAR, 1, 5, 0, 0, 0, "pull"),
-	pull_V6(0x9, VAR, 6, 1, 0, 0, "pull"),
-	split_window(0xA, VAR, 3, 0, 0, 0, "split_window"),
-	set_window(0xB, VAR, 3, 0, 0, 0, "set_window"),
-	call_vs2(0xC, VAR, 4, 1, 0, 0, "call_vs2"),
-	erase_window(0xD, VAR, 4, 0, 0, 0, "erase_window"),
-	erase_line(0xE, VAR, 4, 0, 0, 0, "erase_line"),
-	set_cursor(0xF, VAR, 4, 0, 0, 0, "set_cursor"),
-	get_cursor(0x10, VAR, 4, 0, 0, 0, "get_cursor"),
-	set_text_style(0x11, VAR, 4, 0, 0, 0, "set_text_style"),
-	buffer_mode(0x12, VAR, 4, 0, 0, 0, "buffer_mode"),
-	output_stream(0x13, VAR, 3, 0, 0, 0, "output_stream"),
-	input_stream(0x14, VAR, 3, 0, 0, 0, "input_stream"),
-	sound_effect(0x15, VAR, 5, 0, 0, 0, "sound_effect"),
-	read_char(0x16, VAR, 4, 1, 0, 0, "read_char"),
-	scan_table(0x17, VAR, 4, 1, 1, 0, "scan_table"),//TODO is this correct? where is the branch target specified? See documentation...
-	not_V5(0x18, VAR, 5, 1, 0, 0, "not"),
-	call_vn(0x19, VAR, 5, 0, 0, 0, "call_vn"),
-	call_vn2(0x1A, VAR, 5, 0, 0, 0, "call_vn2"),
-	tokenise(0x1B, VAR, 5, 0, 0, 0, "tokenise"),
-	encode_text(0x1C, VAR, 5, 0, 0, 0, "encode_text"),
-	copy_table(0x1D, VAR, 5, 0, 0, 0, "copy_table"),
-	print_table(0x1E, VAR, 5, 0, 0, 0, "print_table"),
-	check_arg_count(0x1F, VAR, 5, 0, 1, 0, "check_arg_count"),//TODO is this correct? where is the branch target specified? See documentation...
-	save_V5(0x0, null, 5, 1, 0, 0, "save"),
-	restore_V5(0x1, null, 5, 1, 0, 0, "restore"),
-	log_shift(0x2, null, 5, 1, 0, 0, "log_shift"),
-	art_shift(0x3, null, 5, 1, 0, 0, "art_shift"),
-	set_font(0x4, null, 5, 1, 0, 0, "set_font"),
-	draw_picture(0x5, null, 6, 0, 0, 0, "draw_picture"),
-	picture_data(0x6, null, 6, 0, 1, 0, "picture_data"),
-	erase_picture(0x7, null, 6, 0, 0, 0, "erase_picture"),
-	set_margins(0x8, null, 6, 0, 0, 0, "set_margins"),
-	save_undo(0x9, null, 5, 1, 0, 0, "save_undo"),
-	restore_undo(0xA, null, 5, 1, 0, 0, "restore_undo"),
-	print_unicode(0xB, null, 5, 0, 0, 0, "print_unicode"),
-	check_unicode(0xC, null, 5, 1, 0, 0, "check_unicode"),
-	set_true_colour(0xD, null, 5, 0, 0, 0, "set_true_colour"),
-	move_window(0x10, null, 6, 0, 0, 0, "move_window"),
-	window_size(0x11, null, 6, 0, 0, 0, "window_size"),
-	window_style(0x12, null, 6, 0, 0, 0, "window_style"),
-	get_wind_prop(0x13, null, 6, 1, 0, 0, "get_wind_prop"),
-	scroll_window(0x14, null, 6, 0, 0, 0, "scroll_window"),
-	pop_stack(0x15, null, 6, 0, 0, 0, "pop_stack"),
-	read_mouse(0x16, null, 6, 0, 0, 0, "read_mouse"),
-	mouse_window(0x17, null, 6, 0, 0, 0, "mouse_window"),
-	push_stack(0x18, null, 6, 0, 1, 0, "push_stack"),
-	put_wind_prop(0x19, null, 6, 0, 0, 0, "put_wind_prop"),
-	print_form(0x1A, null, 6, 0, 0, 0, "print_form"),
-	make_menu(0x1B, null, 6, 0, 1, 0, "make_menu"),
-	picture_table(0x1C, null, 6, 0, 0, 0, "picture_table"),
-	buffer_screen(0x1D, null, 6, 1, 0, 0, "buffer_screen"),
+	je/*             */(0x01, OP2, SBT._B_, 1, "je"),
+	jl/*             */(0x02, OP2, SBT._B_, 1, "jl"),
+	jg/*             */(0x03, OP2, SBT._B_, 1, "jg"),
+	dec_chk/*        */(0x04, OP2, SBT._B_, 1, "dec_chk"),
+	inc_chk/*        */(0x05, OP2, SBT._B_, 1, "inc_chk"),
+	jin/*            */(0x06, OP2, SBT._B_, 1, "jin"),
+	test/*           */(0x07, OP2, SBT._B_, 1, "test"),
+	or/*             */(0x08, OP2, SBT.S__, 1, "or"),
+	and/*            */(0x09, OP2, SBT.S__, 1, "and"),
+	test_attr/*      */(0x0A, OP2, SBT._B_, 1, "test_attr"),
+	set_attr/*       */(0x0B, OP2, SBT.___, 1, "set_attr"),
+	clear_attr/*     */(0x0C, OP2, SBT.___, 1, "clear_attr"),
+	store/*          */(0x0D, OP2, SBT.___, 1, "store"),
+	insert_obj/*     */(0x0E, OP2, SBT.___, 1, "insert_obj"),
+	loadw/*          */(0x0F, OP2, SBT.S__, 1, "loadw"),
+	loadb/*          */(0x10, OP2, SBT.S__, 1, "loadb"),
+	get_prop/*       */(0x11, OP2, SBT.S__, 1, "get_prop"),
+	get_prop_addr/*  */(0x12, OP2, SBT.S__, 1, "get_prop_addr"),
+	get_next_prop/*  */(0x13, OP2, SBT.S__, 1, "get_next_prop"),
+	add/*            */(0x14, OP2, SBT.S__, 1, "add"),
+	sub/*            */(0x15, OP2, SBT.S__, 1, "sub"),
+	mul/*            */(0x16, OP2, SBT.S__, 1, "mul"),
+	div/*            */(0x17, OP2, SBT.S__, 1, "div"),
+	mod/*            */(0x18, OP2, SBT.S__, 1, "mod"),
+	call_2s/*        */(0x19, OP2, SBT.S__, 4, "call_2s"),
+	call_2n/*        */(0x1A, OP2, SBT.___, 5, "call_2n"),
+	set_colour/*     */(0x1B, OP2, SBT.___, 5, "set_colour"),
+	throw_/*         */(0x1C, OP2, SBT.___, 5, "throw"),
 
-	_unknown_instr(-1, null, -1, -1, 0, 0, 0, "<unknown>");
+	jz/*             */(0x00, OP1, SBT._B_, 1, "jz"),
+	get_sibling/*    */(0x01, OP1, SBT.SB_, 1, "get_sibling"),
+	get_child/*      */(0x02, OP1, SBT.SB_, 1, "get_child"),
+	get_parent/*     */(0x03, OP1, SBT.S__, 1, "get_parent"),
+	get_prop_len/*   */(0x04, OP1, SBT.S__, 1, "get_prop_len"),
+	inc/*            */(0x05, OP1, SBT.___, 1, "inc"),
+	dec/*            */(0x06, OP1, SBT.___, 1, "dec"),
+	print_addr/*     */(0x07, OP1, SBT.___, 1, "print_addr"),
+	call_1s/*        */(0x08, OP1, SBT.S__, 4, "call_1s"),
+	remove_obj/*     */(0x09, OP1, SBT.___, 1, "remove_obj"),
+	print_obj/*      */(0x0A, OP1, SBT.___, 1, "print_obj"),
+	ret/*            */(0x0B, OP1, SBT.___, 1, "ret"),
+	jump/*           */(0x0C, OP1, SBT.___, 1, "jump"),//Not a branch instruction
+	print_paddr/*    */(0x0D, OP1, SBT.___, 1, "print_paddr"),
+	load/*           */(0x0E, OP1, SBT.S__, 1, "load"),
+	not_V14/*        */(0x0F, OP1, SBT.S__, 1, 4, "not"),
+	call_1n/*        */(0x0F, OP1, SBT.___, 5, "call_1n"),
+	rtrue/*          */(0x00, OP0, SBT.___, 1, "rtrue"),
+	rfalse/*         */(0x01, OP0, SBT.___, 1, "rfalse"),
+	print/*          */(0x02, OP0, SBT.__T, 1, "print"),
+	print_ret/*      */(0x03, OP0, SBT.__T, 1, "print_ret"),
+	nop/*            */(0x04, OP0, SBT.___, 1, "nop"),
+	save_V13/*       */(0x05, OP0, SBT._B_, 1, 3, "save"),
+	save_V4/*        */(0x05, OP0, SBT.S__, 4, 4, "save"),//TODO: Is this a store or a branch opcode? Documentation contradicts itself
+	restore_V13/*    */(0x06, OP0, SBT._B_, 1, 3, "restore"),
+	restore_V4/*     */(0x06, OP0, SBT.S__, 4, 5, "restore"),//TODO: Is this a store or a branch opcode? Documentation contradicts itself
+	restart/*        */(0x07, OP0, SBT.___, 1, "restart"),
+	ret_popped/*     */(0x08, OP0, SBT.___, 1, "ret_popped"),
+	pop/*            */(0x09, OP0, SBT.___, 1, 4, "pop"),
+	catch_/*         */(0x09, OP0, SBT.S__, 5, "catch"),
+	quit/*           */(0x0A, OP0, SBT.___, 1, "quit"),
+	new_line/*       */(0x0B, OP0, SBT.___, 1, "new_line"),
+	show_status/*    */(0x0C, OP0, SBT.___, 3, 3, "show_status"),
+	verify/*         */(0x0D, OP0, SBT._B_, 3, "verify"),
+	piracy/*         */(0x0F, OP0, SBT._B_, 5, "piracy"),
+
+	call/*           */(0x00, VAR, SBT.S__, 1, 3, "call"),
+	call_vs/*        */(0x00, VAR, SBT.S__, 4, "call_vs"),
+	storew/*         */(0x01, VAR, SBT.___, 1, "storew"),
+	storeb/*         */(0x02, VAR, SBT.___, 1, "storeb"),
+	put_prop/*       */(0x03, VAR, SBT.___, 1, "put_prop"),
+	sread/*          */(0x04, VAR, SBT.___, 1, 4, "sread"),
+	aread/*          */(0x04, VAR, SBT.S__, 5, "aread"),
+	print_char/*     */(0x05, VAR, SBT.___, 1, "print_char"),
+	print_num/*      */(0x06, VAR, SBT.___, 1, "print_num"),
+	random/*         */(0x07, VAR, SBT.S__, 1, "random"),
+	push/*           */(0x08, VAR, SBT.___, 1, "push"),
+	pull_V15/*       */(0x09, VAR, SBT.___, 1, 5, "pull"),
+	pull_V6/*        */(0x09, VAR, SBT.S__, 6, "pull"),
+	split_window/*   */(0x0A, VAR, SBT.___, 3, "split_window"),
+	set_window/*     */(0x0B, VAR, SBT.___, 3, "set_window"),
+	call_vs2/*       */(0x0C, VAR, SBT.S__, 4, true, "call_vs2"),
+	erase_window/*   */(0x0D, VAR, SBT.___, 4, "erase_window"),
+	erase_line/*     */(0x0E, VAR, SBT.___, 4, "erase_line"),
+	set_cursor/*     */(0x0F, VAR, SBT.___, 4, "set_cursor"),
+	get_cursor/*     */(0x10, VAR, SBT.___, 4, "get_cursor"),
+	set_text_style/* */(0x11, VAR, SBT.___, 4, "set_text_style"),
+	buffer_mode/*    */(0x12, VAR, SBT.___, 4, "buffer_mode"),
+	output_stream/*  */(0x13, VAR, SBT.___, 3, "output_stream"),
+	input_stream/*   */(0x14, VAR, SBT.___, 3, "input_stream"),
+	sound_effect/*   */(0x15, VAR, SBT.___, 5, "sound_effect"),
+	read_char/*      */(0x16, VAR, SBT.S__, 4, "read_char"),
+	scan_table/*     */(0x17, VAR, SBT.SB_, 4, "scan_table"),//TODO is this correct? where is the branch target specified? See documentation...
+	not_V5/*         */(0x18, VAR, SBT.S__, 5, "not"),
+	call_vn/*        */(0x19, VAR, SBT.___, 5, "call_vn"),
+	call_vn2/*       */(0x1A, VAR, SBT.___, 5, true, "call_vn2"),
+	tokenise/*       */(0x1B, VAR, SBT.___, 5, "tokenise"),
+	encode_text/*    */(0x1C, VAR, SBT.___, 5, "encode_text"),
+	copy_table/*     */(0x1D, VAR, SBT.___, 5, "copy_table"),
+	print_table/*    */(0x1E, VAR, SBT.___, 5, "print_table"),
+	check_arg_count/**/(0x1F, VAR, SBT._B_, 5, "check_arg_count"),//TODO is this correct? where is the branch target specified? See documentation...
+
+	save_V5/*        */(0x00, EXT, SBT.S__, 5, "save"),
+	restore_V5/*     */(0x01, EXT, SBT.S__, 5, "restore"),
+	log_shift/*      */(0x02, EXT, SBT.S__, 5, "log_shift"),
+	art_shift/*      */(0x03, EXT, SBT.S__, 5, "art_shift"),
+	set_font/*       */(0x04, EXT, SBT.S__, 5, "set_font"),
+	draw_picture/*   */(0x05, EXT, SBT.___, 6, "draw_picture"),
+	picture_data/*   */(0x06, EXT, SBT._B_, 6, "picture_data"),
+	erase_picture/*  */(0x07, EXT, SBT.___, 6, "erase_picture"),
+	set_margins/*    */(0x08, EXT, SBT.___, 6, "set_margins"),
+	save_undo/*      */(0x09, EXT, SBT.S__, 5, "save_undo"),
+	restore_undo/*   */(0x0A, EXT, SBT.S__, 5, "restore_undo"),
+	print_unicode/*  */(0x0B, EXT, SBT.___, 5, "print_unicode"),
+	check_unicode/*  */(0x0C, EXT, SBT.S__, 5, "check_unicode"),
+	set_true_colour/**/(0x0D, EXT, SBT.___, 5, "set_true_colour"),
+	move_window/*    */(0x10, EXT, SBT.___, 6, "move_window"),
+	window_size/*    */(0x11, EXT, SBT.___, 6, "window_size"),
+	window_style/*   */(0x12, EXT, SBT.___, 6, "window_style"),
+	get_wind_prop/*  */(0x13, EXT, SBT.S__, 6, "get_wind_prop"),
+	scroll_window/*  */(0x14, EXT, SBT.___, 6, "scroll_window"),
+	pop_stack/*      */(0x15, EXT, SBT.___, 6, "pop_stack"),
+	read_mouse/*     */(0x16, EXT, SBT.___, 6, "read_mouse"),
+	mouse_window/*   */(0x17, EXT, SBT.___, 6, "mouse_window"),
+	push_stack/*     */(0x18, EXT, SBT._B_, 6, "push_stack"),
+	put_wind_prop/*  */(0x19, EXT, SBT.___, 6, "put_wind_prop"),
+	print_form/*     */(0x1A, EXT, SBT.___, 6, "print_form"),
+	make_menu/*      */(0x1B, EXT, SBT._B_, 6, "make_menu"),
+	picture_table/*  */(0x1C, EXT, SBT.___, 6, "picture_table"),
+	buffer_screen/*  */(0x1D, EXT, SBT.S__, 6, "buffer_screen"),
+
+	_unknown_instr/* */(0xFF, null, SBT.___, -1, "<unknown>");
 
 	public final int			opcodeNumber;
 	/**
 	 * null means this opcode is in EXTENDED "range".
 	 */
-	public final OperandCount	count;
+	public final OpcodeRange	range;
 	public final boolean		hasTwoOperandTypeBytes;
 	public final int			minVersion, maxVersion;
 	public final boolean		isStoreOpcode;
@@ -145,32 +152,28 @@ public enum Opcode
 	public final boolean		isTextOpcode;
 	public final String			name;
 
-	private Opcode(int opcodeNumber, OperandCount count, int store, int branch, int text, String name)
+	private Opcode(int opcodeNumber, OpcodeRange range, SBT sbt, int minVersion, String name)
 	{
-		this(opcodeNumber, count, 1, store, branch, text, name);
+		this(opcodeNumber, range, sbt, minVersion, -1, name);
 	}
-	private Opcode(int opcodeNumber, OperandCount count, int minVersion, int store, int branch, int text, String name)
+	private Opcode(int opcodeNumber, OpcodeRange range, SBT sbt, int minVersion, int maxVersion, String name)
 	{
-		this(opcodeNumber, count, minVersion, -1, store, branch, text, name);
+		this(opcodeNumber, range, sbt, minVersion, maxVersion, false, name);
 	}
-	private Opcode(int opcodeNumber, OperandCount count, int minVersion, int maxVersion, int store, int branch, int text, String name)
+	private Opcode(int opcodeNumber, OpcodeRange range, SBT sbt, int minVersion, boolean hasTwoOperandTypeBytes, String name)
 	{
-		this(opcodeNumber, count, false, minVersion, maxVersion, store, branch, text, name);
+		this(opcodeNumber, range, sbt, minVersion, -1, hasTwoOperandTypeBytes, name);
 	}
-	private Opcode(int opcodeNumber, OperandCount count, boolean hasTwoOperandTypeBytes, int minVersion, int store, int branch, int text, String name)
-	{
-		this(opcodeNumber, count, hasTwoOperandTypeBytes, minVersion, -1, store, branch, text, name);
-	}
-	private Opcode(int opcodeNumber, OperandCount count, boolean hasTwoOperandTypeBytes, int minVersion, int maxVersion, int store, int branch, int text, String name)
+	private Opcode(int opcodeNumber, OpcodeRange range, SBT sbt, int minVersion, int maxVersion, boolean hasTwoOperandTypeBytes, String name)
 	{
 		this.opcodeNumber = opcodeNumber;
-		this.count = count;
+		this.range = range;
 		this.hasTwoOperandTypeBytes = hasTwoOperandTypeBytes;
 		this.minVersion = minVersion;
 		this.maxVersion = maxVersion;
-		this.isStoreOpcode = store != 0;
-		this.isBranchOpcode = branch != 0;
-		this.isTextOpcode = text != 0;
+		this.isStoreOpcode = sbt.isStore;
+		this.isBranchOpcode = sbt.isBranch;
+		this.isTextOpcode = sbt.isText;
 		this.name = name;
 	}
 
@@ -193,7 +196,9 @@ public enum Opcode
 				throw new IllegalArgumentException("Unknown enum type: " + form);
 		}
 		for(Opcode op : values())
-			if(op.opcodeNumber == opcodeNumber && op.count == count && op.minVersion <= version && (op.maxVersion <= 0 || op.maxVersion >= version))
+			if(op.range != null
+					&& op.opcodeNumber == opcodeNumber && op.range.asCount == count
+					&& op.minVersion <= version && (op.maxVersion <= 0 || op.maxVersion >= version))
 				return op;
 		return _unknown_instr;
 	}
@@ -202,8 +207,33 @@ public enum Opcode
 	{
 		//TODO make this faster.
 		for(Opcode op : values())
-			if(op.opcodeNumber == secondOpcodeByte && op.count == null && op.minVersion <= version && (op.maxVersion <= 0 || op.maxVersion >= version))
+			if(op.range != null
+					&& op.opcodeNumber == secondOpcodeByte && op.range == EXT
+					&& op.minVersion <= version && (op.maxVersion <= 0 || op.maxVersion >= version))
 				return op;
 		return _unknown_instr;
+	}
+
+	private static enum SBT
+	{
+		___(false, false, false),
+		S__(true, false, false),
+		_B_(false, true, false),
+		SB_(true, true, false),
+		__T(false, false, true),
+		S_T(true, false, true),
+		_BT(false, true, true),
+		SBT(true, true, true);
+
+		public final boolean	isStore;
+		public final boolean	isBranch;
+		public final boolean	isText;
+
+		private SBT(boolean isStore, boolean isBranch, boolean isText)
+		{
+			this.isStore = isStore;
+			this.isBranch = isBranch;
+			this.isText = isText;
+		}
 	}
 }
