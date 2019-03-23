@@ -12,18 +12,18 @@ public class DecodedInstruction
 	public int					storeTarget;
 	public boolean				branchOnConditionTrue;
 	public int					branchOffset;
-	//TODO text
+	public final ZCharString	text;
 
 	public DecodedInstruction()
 	{
 		this.operandTypes = new OperandType[8];
 		this.operandValues = new int[8];
+		this.text = new ZCharString();
 	}
 
 	@Override
 	public String toString()
 	{
-		//TODO
-		return "DecodedInstruction [opcode=" + opcode + ", form=" + form + ", operandCount=" + operandCount + ", operandTypes=" + Arrays.toString(operandTypes) + ", operandValues=" + Arrays.toString(operandValues) + ", storeTarget=" + storeTarget + ", branchOnConditionTrue=" + branchOnConditionTrue + ", branchOffset=" + branchOffset + "]";
+		return "DecodedInstruction [opcode=" + opcode + ", form=" + form + ", operandCount=" + operandCount + ", operandTypes=" + Arrays.toString(operandTypes) + ", operandValues=" + Arrays.toString(operandValues) + ", storeTarget=" + storeTarget + ", branchOnConditionTrue=" + branchOnConditionTrue + ", branchOffset=" + branchOffset + ", text=" + text + "]";
 	}
 }

@@ -2,20 +2,24 @@ package net.haspamelodica.javaz;
 
 public class InstructionDecoder
 {
-	private final GlobalConfig config;
+	private final GlobalConfig				config;
+	private final int						version;
+	private final SequentialMemoryAccess	mem;
 
-	public InstructionDecoder(GlobalConfig config)
+	private final ZCharsUnpacker textUnpacker;
+
+	public InstructionDecoder(GlobalConfig config, int version, SequentialMemoryAccess mem)
 	{
 		this.config = config;
+		this.version = version;
+
+		this.mem = mem;
+		this.textUnpacker = new ZCharsUnpacker(mem);
 	}
 
-	/**
-	 * Decodes a Z-Instruction in <code>mem</code> starting from <code>addr</code> and stores the result
-	 * to <code>target</code> and returns the next address after this instruction.
-	 */
-	public int decode(Memory mem, int addr, int version, DecodedInstruction target)
+	public void decode(DecodedInstruction target)
 	{
-		int opcodeByte = mem.readByte(addr ++);
+		int opcodeByte = mem.readNextByte();
 
 		OpcodeForm form = OpcodeForm.decode(opcodeByte);
 		target.form = form;
@@ -24,7 +28,7 @@ public class InstructionDecoder
 
 		Opcode opcode;
 		if(form == OpcodeForm.EXTENDED)
-			opcode = Opcode.decodeExtended(mem.readByte(addr ++), version);
+			opcode = Opcode.decodeExtended(mem.readNextByte(), version);
 		else
 			opcode = Opcode.decode(opcodeByte, form, count, version);
 		target.opcode = opcode;
@@ -42,7 +46,7 @@ public class InstructionDecoder
 				target.operandCount = 1;
 				OperandType operandType = OperandType.decodeTwoBits((opcodeByte & 0x30) >> 4);//bits 5-4
 				target.operandTypes[0] = operandType;
-				addr = readOperand(mem, addr, operandType, 0, target.operandValues);
+				readOperand(operandType, 0, target.operandValues);
 				break;
 			case OP2:
 				target.operandCount = 2;
@@ -53,12 +57,11 @@ public class InstructionDecoder
 						OperandType operandType2 = OperandType.decodeOneBit((opcodeByte & 0x20) >> 5);//bit 5
 						target.operandTypes[0] = operandType1;
 						target.operandTypes[1] = operandType2;
-						addr = readOperand(mem, addr, operandType1, 0, target.operandValues);
-						addr = readOperand(mem, addr, operandType2, 1, target.operandValues);
+						readOperand(operandType1, 0, target.operandValues);
+						readOperand(operandType2, 1, target.operandValues);
 						break;
 					case VARIABLE:
-						addr = decodeVarParams(mem, addr, false, target);
-						//TODO
+						decodeVarParams(false, target);
 						break;
 					case SHORT:
 					case EXTENDED:
@@ -68,39 +71,37 @@ public class InstructionDecoder
 				}
 				break;
 			case VAR:
-				addr = decodeVarParams(mem, addr, opcode.hasTwoOperandTypeBytes, target);
+				decodeVarParams(opcode.hasTwoOperandTypeBytes, target);
 			default:
 				throw new IllegalArgumentException("Unknown enum type: " + count);
 		}
 
 		if(opcode.isStoreOpcode)
-			target.storeTarget = mem.readByte(addr ++);
+			target.storeTarget = mem.readNextByte();
 		if(opcode.isBranchOpcode)
 		{
-			int branchOffsetByte = mem.readByte(addr ++);
+			int branchOffsetByte = mem.readNextByte();
 			target.branchOnConditionTrue = (branchOffsetByte & 0x80) != 0;//bit 7
-			if((branchOffsetByte & 0x40) == 0)
-				target.branchOffset = mem.readByte(addr ++) | ((branchOffsetByte & 0x3) << 8);//bits 5-0
+			if((branchOffsetByte & 0x40) == 0)//bit 6
+				target.branchOffset = mem.readNextByte() | ((branchOffsetByte & 0x3) << 8);//bits 5-0
 			else
 				target.branchOffset = branchOffsetByte & 0x3F;//bits 5-0
 		}
-		//TODO text
-
-		return addr;
+		if(opcode.isTextOpcode)
+			textUnpacker.unpack(target.text);
 	}
 
-	private int decodeVarParams(Memory mem, int addr, boolean hasTwoOperandTypeBytes, DecodedInstruction target)
+	private void decodeVarParams(boolean hasTwoOperandTypeBytes, DecodedInstruction target)
 	{
 		int operandTypes;
 		int firstOperandBitLocation;
 		if(hasTwoOperandTypeBytes)
 		{
-			operandTypes = mem.readWord(addr);
-			addr += 2;
+			operandTypes = mem.readNextWord();
 			firstOperandBitLocation = 14;
 		} else
 		{
-			operandTypes = mem.readByte(addr ++);
+			operandTypes = mem.readNextByte();
 			firstOperandBitLocation = 6;
 		}
 		boolean checkOperandsAreInBlock = config.getBool("instructions.decoding.check_var_operands_block");
@@ -114,24 +115,23 @@ public class InstructionDecoder
 				else
 				{
 					target.operandTypes[operandI] = type;
-					addr = readOperand(mem, addr, type, operandI ++, target.operandValues);
+					readOperand(type, operandI ++, target.operandValues);
 				}
 			else
 				followingOperandsMustBeOmitted = checkOperandsAreInBlock;
 		}
-		return addr;
 	}
-	private static int readOperand(Memory mem, int addr, OperandType operandType, int valIndex, int[] valsArray)
+	private void readOperand(OperandType operandType, int valIndex, int[] valsArray)
 	{
 		switch(operandType)
 		{
 			case LARGE_CONST:
-				valsArray[valIndex] = mem.readWord(addr);
-				return addr + 2;
+				valsArray[valIndex] = mem.readNextWord();
+				break;
 			case SMALL_CONST:
 			case VARIABLE:
-				valsArray[valIndex] = mem.readByte(addr);
-				return addr + 1;
+				valsArray[valIndex] = mem.readNextByte();
+				break;
 			default:
 				throw new IllegalArgumentException("Unknown enum type: " + operandType);
 		}
