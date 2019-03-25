@@ -54,7 +54,7 @@ public class InstructionDecoder
 				break;
 			case OP1:
 				target.operandCount = 1;
-				OperandType operandType = OperandType.decodeTwoBits((opcodeByte & 0x30) >> 4);//bits 5-4
+				OperandType operandType = OperandType.decodeTwoBits((opcodeByte & 0x30) >>> 4);//bits 5-4
 				target.operandTypes[0] = operandType;
 				readOperand(operandType, 0, target.operandValues);
 				break;
@@ -63,8 +63,8 @@ public class InstructionDecoder
 				switch(form)
 				{
 					case LONG:
-						OperandType operandType1 = OperandType.decodeOneBit((opcodeByte & 0x40) >> 6);//bit 6
-						OperandType operandType2 = OperandType.decodeOneBit((opcodeByte & 0x20) >> 5);//bit 5
+						OperandType operandType1 = OperandType.decodeOneBit((opcodeByte & 0x40) >>> 6);//bit 6
+						OperandType operandType2 = OperandType.decodeOneBit((opcodeByte & 0x20) >>> 5);//bit 5
 						target.operandTypes[0] = operandType1;
 						target.operandTypes[1] = operandType2;
 						readOperand(operandType1, 0, target.operandValues);
@@ -120,7 +120,7 @@ public class InstructionDecoder
 		boolean followingOperandsMustBeOmitted = false;
 		for(int operandI = 0, bitLocation = firstOperandBitLocation; bitLocation >= 0; bitLocation -= 2)
 		{
-			OperandType type = OperandType.decodeTwoBits((operandTypes >> bitLocation) & 0x03);
+			OperandType type = OperandType.decodeTwoBits((operandTypes >>> bitLocation) & 0x03);
 			if(type != null)
 				if(followingOperandsMustBeOmitted)
 					throw new InstructionFormatException("Operands after the first omitted operand found");

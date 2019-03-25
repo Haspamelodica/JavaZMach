@@ -41,7 +41,7 @@ public class WritableFixedSizeMemory implements WritableMemory
 	@Override
 	public void writeWord(int byteAddr, int val)
 	{
-		bytes[byteAddr] = (byte) (val >> 8);
+		bytes[byteAddr] = (byte) (val >>> 8);
 		bytes[byteAddr + 1] = (byte) val;
 	}
 }

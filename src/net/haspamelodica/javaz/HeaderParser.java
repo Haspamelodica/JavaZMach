@@ -154,7 +154,7 @@ public class HeaderParser
 		int isWord = location & 0x02_00;
 		int addr = location & 0xFF;
 		int isBitfield = location & 0x01_00;
-		int bitAddr = (location & 0x0F_00_00) >> 16;
+		int bitAddr = (location & 0x0F_00_00) >>> 16;
 
 		int byteOrWord;
 		if(isWord == 0)
@@ -165,7 +165,7 @@ public class HeaderParser
 		if(isBitfield == 0)
 			return byteOrWord;
 		else
-			return (byteOrWord >> bitAddr) & 1;
+			return (byteOrWord >>> bitAddr) & 1;
 	}
 	/**
 	 * It is recommended to use constants of this class for field access.
@@ -177,7 +177,7 @@ public class HeaderParser
 		int isWord = location & 0x02_00;
 		int addr = location & 0xFF;
 		int isBitfield = location & 0x01_00;
-		int bitAddr = (location & 0x0F_00_00) >> 16;
+		int bitAddr = (location & 0x0F_00_00) >>> 16;
 
 		int byteOrWord;
 		if(isBitfield == 0)
