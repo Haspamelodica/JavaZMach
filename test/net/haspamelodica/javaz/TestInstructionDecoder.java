@@ -17,7 +17,7 @@ public class TestInstructionDecoder
 	private static void print(int version, int... bytes)
 	{
 		DecodedInstruction instr = new DecodedInstruction();
-		SequentialMemoryAccess mem = new SequentialMemoryAccess(new Memory(bs(bytes)));
+		SequentialMemoryAccess mem = new SequentialMemoryAccess(new WritableFixedSizeMemory(bs(bytes)));
 		mem.setAddress(0);
 		InstructionDecoder decoder = new InstructionDecoder(new GlobalConfig(), version, mem);
 		decoder.decode(instr);

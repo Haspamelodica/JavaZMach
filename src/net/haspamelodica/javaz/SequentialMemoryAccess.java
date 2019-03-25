@@ -2,10 +2,10 @@ package net.haspamelodica.javaz;
 
 public class SequentialMemoryAccess
 {
-	private final Memory	mem;
-	private int				addr;
+	private final ReadOnlyMemory	mem;
+	private int						addr;
 
-	public SequentialMemoryAccess(Memory mem)
+	public SequentialMemoryAccess(ReadOnlyMemory mem)
 	{
 		this.mem = mem;
 	}

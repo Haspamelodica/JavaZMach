@@ -2,19 +2,29 @@ package net.haspamelodica.javaz;
 
 public class InstructionDecoder
 {
-	private final GlobalConfig				config;
-	private final int						version;
-	private final SequentialMemoryAccess	mem;
+	private final int version;
 
-	private final ZCharsUnpacker textUnpacker;
+	private final boolean	dontIgnoreUnknownInstructions;
+	private final boolean	checkVersion;
+	private final boolean	checkOperandsAreInBlock;
+	private final boolean	checkOperandsCount;
+
+	private final SequentialMemoryAccess	mem;
+	private final ZCharsUnpacker			textUnpacker;
+
 
 	public InstructionDecoder(GlobalConfig config, int version, SequentialMemoryAccess mem)
 	{
-		this.config = config;
 		this.version = version;
+
+		this.dontIgnoreUnknownInstructions = config.getBool("instructions.decoding.dont_ignore_unknown_instructions");
+		this.checkVersion = config.getBool("instructions.decoding.check_version");
+		this.checkOperandsAreInBlock = config.getBool("instructions.decoding.operands.check_var_block");
+		this.checkOperandsCount = config.getBool("instructions.decoding.operands.check_count");
 
 		this.mem = mem;
 		this.textUnpacker = new ZCharsUnpacker(mem);
+
 	}
 
 	public void decode(DecodedInstruction target)
@@ -32,9 +42,9 @@ public class InstructionDecoder
 		else
 			opcode = Opcode.decode(opcodeByte, form, count, version);
 		target.opcode = opcode;
-		if(opcode == Opcode._unknown_instr && config.getBool("instructions.decoding.dont_ignore_unknown_instructions"))
+		if(opcode == Opcode._unknown_instr && dontIgnoreUnknownInstructions)
 			throw new InstructionFormatException("Unknown instruction: " + opcodeByte);
-		if((opcode.minVersion > version || (opcode.maxVersion > 0 && opcode.maxVersion < version)) && config.getBool("instructions.decoding.check_instruction_version"))
+		if((opcode.minVersion > version || (opcode.maxVersion > 0 && opcode.maxVersion < version)) && checkVersion)
 			throw new InstructionFormatException("Instruction not valid for version " + version +
 					" (V" + opcode.minVersion + (opcode.maxVersion > 0 ? "-" + opcode.maxVersion : "+") + "): " + opcode);
 		switch(count)
@@ -62,6 +72,8 @@ public class InstructionDecoder
 						break;
 					case VARIABLE:
 						decodeVarParams(false, target);
+						if(target.operandCount != 2 && checkOperandsCount)
+							throw new InstructionFormatException("Too many / few operands for a 2OP instruction: " + target.operandCount);
 						break;
 					case SHORT:
 					case EXTENDED:
@@ -105,7 +117,6 @@ public class InstructionDecoder
 			operandTypes = mem.readNextByte();
 			firstOperandBitLocation = 6;
 		}
-		boolean checkOperandsAreInBlock = config.getBool("instructions.decoding.check_var_operands_block");
 		boolean followingOperandsMustBeOmitted = false;
 		for(int operandI = 0, bitLocation = firstOperandBitLocation; bitLocation >= 0; bitLocation -= 2)
 		{

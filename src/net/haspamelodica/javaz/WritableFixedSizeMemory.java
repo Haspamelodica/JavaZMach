@@ -2,15 +2,15 @@ package net.haspamelodica.javaz;
 
 import java.util.Arrays;
 
-public class Memory
+public class WritableFixedSizeMemory implements WritableMemory
 {
 	private final byte[] bytes;
 
-	public Memory(int size)
+	public WritableFixedSizeMemory(int size)
 	{
 		this.bytes = new byte[size];
 	}
-	public Memory(byte[] bytes)
+	public WritableFixedSizeMemory(byte[] bytes)
 	{
 		this.bytes = Arrays.copyOf(bytes, bytes.length);
 	}
@@ -19,10 +19,12 @@ public class Memory
 	{
 		return bytes.length;
 	}
+	@Override
 	public int readByte(int byteAddr)
 	{
 		return byteAt(byteAddr);
 	}
+	@Override
 	public int readWord(int byteAddr)
 	{
 		return (byteAt(byteAddr) << 8) | byteAt(byteAddr + 1);
@@ -31,10 +33,12 @@ public class Memory
 	{
 		return bytes[byteAddr] & 0xFF;
 	}
+	@Override
 	public void writeByte(int byteAddr, int val)
 	{
 		bytes[byteAddr] = (byte) val;
 	}
+	@Override
 	public void writeWord(int byteAddr, int val)
 	{
 		bytes[byteAddr] = (byte) (val >> 8);

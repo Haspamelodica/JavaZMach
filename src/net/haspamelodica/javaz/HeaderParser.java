@@ -128,9 +128,9 @@ public class HeaderParser
 	public static final int	CompilerVerFirstByte	= 0x3C;
 	public static final int	CompilerVerLength		= 4;
 
-	private final Memory mem;
+	private final WritableMemory mem;
 
-	public HeaderParser(Memory memory)
+	public HeaderParser(WritableMemory memory)
 	{
 		this.mem = memory;
 	}

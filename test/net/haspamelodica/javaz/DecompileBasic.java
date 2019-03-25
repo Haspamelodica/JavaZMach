@@ -8,7 +8,7 @@ public class DecompileBasic
 {
 	public static void main(String[] args) throws IOException
 	{
-		Memory mem = new Memory(Files.readAllBytes(Paths.get("ZORK1.z3")));
+		WritableMemory mem = new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("ZORK1.z3")));
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess memSeq = new SequentialMemoryAccess(mem);
 		InstructionDecoder decoder = new InstructionDecoder(new GlobalConfig(), 3, memSeq);
