@@ -14,11 +14,13 @@ public class FramedStack
 	public FramedStack()
 	{
 		this.mem = new short[SIZE_OVERHEAD];
+		this.fp = -1;
 	}
 
 	public int pop()
 	{
-		return getWordAt(-- sp);
+		checkRW(-- sp);
+		return getWordAtUnchecked(sp);
 	}
 	public void push(int val)
 	{
@@ -84,6 +86,10 @@ public class FramedStack
 	{
 		checkRO(i);
 		growMemTo(i);
+		return getWordAtUnchecked(i);
+	}
+	private int getWordAtUnchecked(int i)
+	{
 		return mem[i] & 0xFFFF;
 	}
 	private void setWordAt(int i, int val)
@@ -94,7 +100,21 @@ public class FramedStack
 	}
 	private void growMemTo(int i)
 	{
-		if(mem.length < i)
+		if(mem.length <= i)
 			mem = Arrays.copyOf(mem, i + SIZE_OVERHEAD);
+	}
+
+	@Override
+	public String toString()
+	{
+		growMemTo(sp - 1);
+		StringBuilder result = new StringBuilder();
+		for(int i = sp - 1; i >= 0; i --)
+			result.append(String.format("%04x ", mem[i]));
+		result.append(System.lineSeparator());
+		for(int i = sp - fp; i > 1; i --)
+			result.append("     ");
+		result.append("^fp^");
+		return result.toString();
 	}
 }
