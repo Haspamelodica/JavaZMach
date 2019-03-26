@@ -1,4 +1,6 @@
-package net.haspamelodica.javaz;
+package net.haspamelodica.javaz.model;
+
+import net.haspamelodica.javaz.model.memory.WritableMemory;
 
 public class HeaderParser
 {

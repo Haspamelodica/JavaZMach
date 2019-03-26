@@ -1,4 +1,4 @@
-package net.haspamelodica.javaz;
+package net.haspamelodica.javaz.model.memory;
 
 public class SequentialMemoryAccess
 {

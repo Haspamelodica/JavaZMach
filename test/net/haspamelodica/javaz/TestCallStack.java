@@ -1,5 +1,7 @@
 package net.haspamelodica.javaz;
 
+import net.haspamelodica.javaz.model.stack.CallStack;
+
 public class TestCallStack
 {
 	public static void main(String[] args)

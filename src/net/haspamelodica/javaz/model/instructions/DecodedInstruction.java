@@ -1,6 +1,8 @@
-package net.haspamelodica.javaz;
+package net.haspamelodica.javaz.model.instructions;
 
 import java.util.Arrays;
+
+import net.haspamelodica.javaz.model.text.ZCharString;
 
 public class DecodedInstruction
 {

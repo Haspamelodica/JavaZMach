@@ -1,6 +1,8 @@
-package net.haspamelodica.javaz;
+package net.haspamelodica.javaz.model.text;
 
 import java.util.Arrays;
+
+import net.haspamelodica.javaz.model.memory.SequentialMemoryAccess;
 
 public class ZCharsUnpacker
 {

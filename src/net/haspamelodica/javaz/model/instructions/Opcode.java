@@ -1,10 +1,10 @@
-package net.haspamelodica.javaz;
+package net.haspamelodica.javaz.model.instructions;
 
-import static net.haspamelodica.javaz.OpcodeRange.EXT;
-import static net.haspamelodica.javaz.OpcodeRange.OP0;
-import static net.haspamelodica.javaz.OpcodeRange.OP1;
-import static net.haspamelodica.javaz.OpcodeRange.OP2;
-import static net.haspamelodica.javaz.OpcodeRange.VAR;
+import static net.haspamelodica.javaz.model.instructions.OpcodeRange.EXT;
+import static net.haspamelodica.javaz.model.instructions.OpcodeRange.OP0;
+import static net.haspamelodica.javaz.model.instructions.OpcodeRange.OP1;
+import static net.haspamelodica.javaz.model.instructions.OpcodeRange.OP2;
+import static net.haspamelodica.javaz.model.instructions.OpcodeRange.VAR;
 
 public enum Opcode
 {

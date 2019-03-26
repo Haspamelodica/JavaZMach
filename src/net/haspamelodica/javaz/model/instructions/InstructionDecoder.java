@@ -1,4 +1,8 @@
-package net.haspamelodica.javaz;
+package net.haspamelodica.javaz.model.instructions;
+
+import net.haspamelodica.javaz.GlobalConfig;
+import net.haspamelodica.javaz.model.memory.SequentialMemoryAccess;
+import net.haspamelodica.javaz.model.text.ZCharsUnpacker;
 
 public class InstructionDecoder
 {

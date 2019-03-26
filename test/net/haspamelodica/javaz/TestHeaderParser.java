@@ -1,9 +1,13 @@
 package net.haspamelodica.javaz;
 
+import static net.haspamelodica.javaz.model.HeaderParser.*;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import static net.haspamelodica.javaz.HeaderParser.*;
+
+import net.haspamelodica.javaz.model.HeaderParser;
+import net.haspamelodica.javaz.model.memory.WritableFixedSizeMemory;
 
 public class TestHeaderParser
 {
