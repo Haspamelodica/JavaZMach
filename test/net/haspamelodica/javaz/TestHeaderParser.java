@@ -70,7 +70,7 @@ public class TestHeaderParser
 		print("StandardRev", StandardRevLoc);
 		print("AlphabetTableLoc", AlphabetTableLocLoc);
 		print("HeaderExtTableLoc", HeaderExtTableLocLoc);
-		
+
 		//TODO set field
 	}
 	private static void print(String descr, int loc)
