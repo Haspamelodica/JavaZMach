@@ -63,10 +63,10 @@ public class InstructionDecoder
 				readOperand(operandType, 0, target.operandValues);
 				break;
 			case OP2:
-				target.operandCount = 2;
 				switch(form)
 				{
 					case LONG:
+						target.operandCount = 2;
 						OperandType operandType1 = OperandType.decodeOneBit((opcodeByte & 0x40) >>> 6);//bit 6
 						OperandType operandType2 = OperandType.decodeOneBit((opcodeByte & 0x20) >>> 5);//bit 5
 						target.operandTypes[0] = operandType1;
@@ -77,7 +77,9 @@ public class InstructionDecoder
 					case VARIABLE:
 						decodeVarParams(false, target);
 						if(target.operandCount != 2 && checkOperandsCount)
-							throw new InstructionFormatException("Too many / few operands for a 2OP instruction: " + target.operandCount);
+							//This is an exception: je can have 1-4 operands, even though it is 2OP.
+							if(opcode != Opcode.je || target.operandCount == 0)
+								throw new InstructionFormatException("Too many / few operands for a 2OP instruction: " + target.operandCount);
 						break;
 					case SHORT:
 					case EXTENDED:
@@ -111,18 +113,19 @@ public class InstructionDecoder
 	private void decodeVarParams(boolean hasTwoOperandTypeBytes, DecodedInstruction target)
 	{
 		int operandTypes;
-		int firstOperandBitLocation;
+		int bitLocation;
 		if(hasTwoOperandTypeBytes)
 		{
 			operandTypes = mem.readNextWord();
-			firstOperandBitLocation = 14;
+			bitLocation = 14;
 		} else
 		{
 			operandTypes = mem.readNextByte();
-			firstOperandBitLocation = 6;
+			bitLocation = 6;
 		}
 		boolean followingOperandsMustBeOmitted = false;
-		for(int operandI = 0, bitLocation = firstOperandBitLocation; bitLocation >= 0; bitLocation -= 2)
+		int operandI;
+		for(operandI = 0; bitLocation >= 0; bitLocation -= 2)
 		{
 			OperandType type = OperandType.decodeTwoBits((operandTypes >>> bitLocation) & 0x03);
 			if(type != null)
@@ -136,6 +139,7 @@ public class InstructionDecoder
 			else
 				followingOperandsMustBeOmitted = checkOperandsAreInBlock;
 		}
+		target.operandCount = operandI;
 	}
 	private void readOperand(OperandType operandType, int valIndex, int[] valsArray)
 	{
