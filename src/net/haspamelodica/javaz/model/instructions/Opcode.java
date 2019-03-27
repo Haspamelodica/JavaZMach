@@ -1,10 +1,10 @@
 package net.haspamelodica.javaz.model.instructions;
 
-import static net.haspamelodica.javaz.model.instructions.OpcodeRange.EXT;
-import static net.haspamelodica.javaz.model.instructions.OpcodeRange.OP0;
-import static net.haspamelodica.javaz.model.instructions.OpcodeRange.OP1;
-import static net.haspamelodica.javaz.model.instructions.OpcodeRange.OP2;
-import static net.haspamelodica.javaz.model.instructions.OpcodeRange.VAR;
+import static net.haspamelodica.javaz.model.instructions.OpcodeKind.EXT;
+import static net.haspamelodica.javaz.model.instructions.OpcodeKind.OP0;
+import static net.haspamelodica.javaz.model.instructions.OpcodeKind.OP1;
+import static net.haspamelodica.javaz.model.instructions.OpcodeKind.OP2;
+import static net.haspamelodica.javaz.model.instructions.OpcodeKind.VAR;
 
 public enum Opcode
 {
@@ -140,35 +140,80 @@ public enum Opcode
 
 	_unknown_instr/* */(0xFF, null, SBT.___, -1, "<unknown>");
 
-	public final int			opcodeNumber;
+	public final int		opcodeNumber;
 	/**
 	 * null means this opcode is in EXTENDED "range".
 	 */
-	public final OpcodeRange	range;
-	public final boolean		hasTwoOperandTypeBytes;
-	public final int			minVersion, maxVersion;
-	public final boolean		isStoreOpcode;
-	public final boolean		isBranchOpcode;
-	public final boolean		isTextOpcode;
-	public final String			name;
+	public final OpcodeKind	range;
+	public final boolean	hasTwoOperandTypeBytes;
+	public final int		minArgs, maxArgs;
+	public final int		minVersion, maxVersion;
+	public final boolean	isStoreOpcode;
+	public final boolean	isBranchOpcode;
+	public final boolean	isTextOpcode;
+	public final String		name;
 
-	private Opcode(int opcodeNumber, OpcodeRange range, SBT sbt, int minVersion, String name)
+	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, String name)
 	{
 		this(opcodeNumber, range, sbt, minVersion, -1, name);
 	}
-	private Opcode(int opcodeNumber, OpcodeRange range, SBT sbt, int minVersion, int maxVersion, String name)
+	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, int maxVersion, String name)
 	{
 		this(opcodeNumber, range, sbt, minVersion, maxVersion, false, name);
 	}
-	private Opcode(int opcodeNumber, OpcodeRange range, SBT sbt, int minVersion, boolean hasTwoOperandTypeBytes, String name)
+	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, boolean hasTwoOperandTypeBytes, String name)
 	{
 		this(opcodeNumber, range, sbt, minVersion, -1, hasTwoOperandTypeBytes, name);
 	}
-	private Opcode(int opcodeNumber, OpcodeRange range, SBT sbt, int minVersion, int maxVersion, boolean hasTwoOperandTypeBytes, String name)
+	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, int maxVersion, boolean hasTwoOperandTypeBytes, String name)
+	{
+		this(opcodeNumber, range, sbt, defaultMinArgs(range), defaultMaxArgs(range, hasTwoOperandTypeBytes), minVersion, maxVersion, hasTwoOperandTypeBytes, name);
+	}
+	private static int defaultMinArgs(OpcodeKind range)
+	{
+		if(range == null)
+			return -1;
+		switch(range)
+		{
+			case OP0:
+				return 0;
+			case OP1:
+				return 1;
+			case OP2:
+				return 2;
+			case VAR:
+			case EXT:
+				return 0;
+			default:
+				throw new IllegalArgumentException("Unknown enum type: " + range);
+		}
+	}
+	private static int defaultMaxArgs(OpcodeKind range, boolean hasTwoOperandTypeBytes)
+	{
+		if(range == null)
+			return -1;
+		switch(range)
+		{
+			case OP0:
+				return 0;
+			case OP1:
+				return 1;
+			case OP2:
+				return 2;
+			case VAR:
+			case EXT:
+				return 4;
+			default:
+				throw new IllegalArgumentException("Unknown enum type: " + range);
+		}
+	}
+	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minArgs, int maxArgs, int minVersion, int maxVersion, boolean hasTwoOperandTypeBytes, String name)
 	{
 		this.opcodeNumber = opcodeNumber;
 		this.range = range;
 		this.hasTwoOperandTypeBytes = hasTwoOperandTypeBytes;
+		this.minArgs = minArgs;
+		this.maxArgs = maxArgs;
 		this.minVersion = minVersion;
 		this.maxVersion = maxVersion;
 		this.isStoreOpcode = sbt.isStore;
@@ -177,7 +222,7 @@ public enum Opcode
 		this.name = name;
 	}
 
-	public static Opcode decode(int opcodeByte, OpcodeForm form, OperandCount count, int version)
+	public static Opcode decode(int opcodeByte, OpcodeForm form, OpcodeKind kind, int version)
 	{
 		//TODO make this faster.
 		int opcodeNumber;
@@ -197,12 +242,11 @@ public enum Opcode
 		}
 		for(Opcode op : values())
 			if(op.range != null
-					&& op.opcodeNumber == opcodeNumber && op.range.asCount == count
+					&& op.opcodeNumber == opcodeNumber && op.range == kind
 					&& op.minVersion <= version && (op.maxVersion <= 0 || op.maxVersion >= version))
 				return op;
 		return _unknown_instr;
 	}
-
 	public static Opcode decodeExtended(int secondOpcodeByte, int version)
 	{
 		//TODO make this faster.

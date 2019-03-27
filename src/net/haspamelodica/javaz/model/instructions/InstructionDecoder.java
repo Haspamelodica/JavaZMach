@@ -38,20 +38,20 @@ public class InstructionDecoder
 		OpcodeForm form = OpcodeForm.decode(opcodeByte);
 		target.form = form;
 
-		OperandCount count = OperandCount.decode(opcodeByte, form);
+		OpcodeKind kind = OpcodeKind.decode(opcodeByte, form);
 
 		Opcode opcode;
 		if(form == OpcodeForm.EXTENDED)
 			opcode = Opcode.decodeExtended(mem.readNextByte(), version);
 		else
-			opcode = Opcode.decode(opcodeByte, form, count, version);
+			opcode = Opcode.decode(opcodeByte, form, kind, version);
 		target.opcode = opcode;
 		if(opcode == Opcode._unknown_instr && dontIgnoreUnknownInstructions)
 			throw new InstructionFormatException("Unknown instruction: " + opcodeByte);
 		if((opcode.minVersion > version || (opcode.maxVersion > 0 && opcode.maxVersion < version)) && checkVersion)
 			throw new InstructionFormatException("Instruction not valid for version " + version +
 					" (V" + opcode.minVersion + (opcode.maxVersion > 0 ? "-" + opcode.maxVersion : "+") + "): " + opcode);
-		switch(count)
+		switch(kind)
 		{
 			case OP0:
 				target.operandCount = 0;
@@ -83,7 +83,7 @@ public class InstructionDecoder
 						break;
 					case SHORT:
 					case EXTENDED:
-						throw new IllegalStateException("Impossible combination of OperandCount and OpcodeForm: " + count + " - " + form);
+						throw new IllegalStateException("Impossible combination of OperandCount and OpcodeForm: " + kind + " - " + form);
 					default:
 						throw new IllegalArgumentException("Unknown enum type: " + form);
 				}
@@ -92,7 +92,7 @@ public class InstructionDecoder
 				decodeVarParams(opcode.hasTwoOperandTypeBytes, target);
 				break;
 			default:
-				throw new IllegalArgumentException("Unknown enum type: " + count);
+				throw new IllegalArgumentException("Unknown enum type: " + kind);
 		}
 
 		if(opcode.isStoreOpcode)

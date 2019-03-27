@@ -1,13 +1,14 @@
 package net.haspamelodica.javaz.model.instructions;
 
-public enum OperandCount
+public enum OpcodeKind
 {
 	OP0,
 	OP1,
 	OP2,
-	VAR;
+	VAR,
+	EXT;
 
-	public static OperandCount decode(int opcodeByte, OpcodeForm form)
+	public static OpcodeKind decode(int opcodeByte, OpcodeForm form)
 	{
 		switch(form)
 		{
@@ -16,7 +17,7 @@ public enum OperandCount
 			case SHORT:
 				return (opcodeByte & 0x30) == 0x30 ? OP0 : OP1;//bits 5-4
 			case EXTENDED:
-				return VAR;
+				return EXT;
 			case VARIABLE:
 				return (opcodeByte & 0x20) == 0 ? OP2 : VAR;//bit 5
 			default:
