@@ -35,6 +35,10 @@ public class ZInterpreter
 	private final int[]					variablesInitialValuesBuf;
 	private final int[]					operandEvaluatedValuesBuf;
 
+	public ZInterpreter(GlobalConfig config, WritableMemory dynamicMem, ReadOnlyMemory mem)
+	{
+		this(config, -1, dynamicMem, mem);
+	}
 	public ZInterpreter(GlobalConfig config, int versionOverride, WritableMemory dynamicMem, ReadOnlyMemory mem)
 	{
 		this.headerParser = new HeaderParser(dynamicMem);

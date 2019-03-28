@@ -13,7 +13,7 @@ public class JavaZ
 	{
 		//TODO read config and game path from commandline / args
 		WritableFixedSizeMemory mem = new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("zork1.z3")));
-		ZInterpreter zInterpreter = new ZInterpreter(new GlobalConfig(), -1, mem, mem);
+		ZInterpreter zInterpreter = new ZInterpreter(new GlobalConfig(), mem, mem);
 		zInterpreter.reset();
 		while(zInterpreter.step());
 	}
