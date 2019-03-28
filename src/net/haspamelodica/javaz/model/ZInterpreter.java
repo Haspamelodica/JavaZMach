@@ -73,7 +73,7 @@ public class ZInterpreter
 	public boolean step()
 	{
 		instrDecoder.decode(currentInstr);
-		System.out.printf("pc=%05x", memAtPC.getAddress());
+		System.out.printf("pc=%05x: ", memAtPC.getAddress());
 		System.out.println(currentInstr);
 		for(int i = 0; i < currentInstr.operandCount; i ++)
 			operandRawValuesBuf[i] = getRawOperandValue(currentInstr.operandTypes[i], currentInstr.operandValues[i]);
