@@ -1,5 +1,7 @@
 package net.haspamelodica.javaz.model.stack;
 
+import net.haspamelodica.javaz.model.VariableException;
+
 public class CallStack
 {
 	private final FramedStack stack;
@@ -29,9 +31,10 @@ public class CallStack
 	 * ...
 	 * fp+v+1 first "evaluation stack" entry for current routine
 	 */
-	public void pushCallFrame(int returnPC, int variablesCount, int[] variablesInitialValues, int suppliedArgumentCount,
-			boolean discardReturnValue, int storeTarget)
+	public void pushCallFrame(int returnPC, int variablesCount, int[] variablesInitialValues, int suppliedArgumentCount, boolean discardReturnValue, int storeTarget)
 	{
+		if(variablesCount >> 4 != 0)//only the lower 4 bit are allowed to be set
+			throw new VariableException("Illegal variable count: " + variablesCount);
 		int returnFP = stack.getFP();
 
 		stack.push(returnPC >>> 16);
@@ -61,11 +64,18 @@ public class CallStack
 	}
 	public int readLocalVariable(int var)
 	{
+		checkLocalVariable(var);
 		return stack.readFPRelative(var);
 	}
 	public void writeLocalVariable(int var, int val)
 	{
+		checkLocalVariable(var);
 		stack.writeFPRelative(var, val);
+	}
+	private void checkLocalVariable(int var)
+	{
+		if(var < 1 || var > getCurrentCallFrameLocalVariableCount())
+			throw new VariableException("Illegal local variable: " + var);
 	}
 	/**
 	 * Returns <code>returnPC</code>.
