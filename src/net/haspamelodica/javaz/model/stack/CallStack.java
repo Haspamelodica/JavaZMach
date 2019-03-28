@@ -58,6 +58,9 @@ public class CallStack
 	{
 		return stack.readFPRelative(-2) & 0x00_FF;
 	}
+	/**
+	 * When no frame is on this stack, returns -1.
+	 */
 	public int getCurrentCallFrameFP()
 	{
 		return stack.getFP();

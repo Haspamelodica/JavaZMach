@@ -91,6 +91,9 @@ public class ZInterpreter
 			case loadw:
 				storeVal = mem.readWord(operandEvaluatedValuesBuf[0] + (operandEvaluatedValuesBuf[1] << 1));
 				break;
+			case storew:
+				dynamicMem.writeWord(operandEvaluatedValuesBuf[0] + (operandEvaluatedValuesBuf[1] << 1), operandEvaluatedValuesBuf[2]);
+				break;
 			//8.3 Arithmetic
 			case add:
 				storeVal = operandEvaluatedValuesBuf[0] + operandEvaluatedValuesBuf[1];
@@ -128,6 +131,9 @@ public class ZInterpreter
 				}
 				doStore = false;//return will do this store
 				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandEvaluatedValuesBuf, 1, false, currentInstr.storeTarget);
+				break;
+			case ret:
+				doReturn(operandEvaluatedValuesBuf[0]);
 				break;
 			//8.6 Objects, attributes, and properties
 			//8.7 Windows
@@ -220,8 +226,11 @@ public class ZInterpreter
 		System.out.println("return");
 		boolean discardReturnValue = stack.getCurrentCallFrameDiscardReturnValue();
 		int storeTarget = stack.getCurrentCallFrameStoreTarget();
-		stack.popCallFrame();
+		memAtPC.setAddress(stack.popCallFrame());
+		if(stack.getCurrentCallFrameFP() <= 0)
+			throw new ControlFlowException("Return from main routine");
 		if(!discardReturnValue)
+			//TODO interrupt routines
 			writeVariable(storeTarget, returnVal);
 	}
 	public int packedToByteAddr(int packed, boolean isRoutine)
