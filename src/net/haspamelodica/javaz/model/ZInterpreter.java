@@ -88,6 +88,9 @@ public class ZInterpreter
 		switch(currentInstr.opcode)
 		{
 			//8.2 Reading and writing memory
+			case loadw:
+				storeVal = mem.readWord(operandEvaluatedValuesBuf[0] + (operandEvaluatedValuesBuf[1] << 1));
+				break;
 			//8.3 Arithmetic
 			case add:
 				storeVal = operandEvaluatedValuesBuf[0] + operandEvaluatedValuesBuf[1];
@@ -108,6 +111,12 @@ public class ZInterpreter
 						branchCondition = true;
 						break;
 					}
+				break;
+			case jump:
+				//TODO Is the branch offset signed if jump is assembled with operand type SMALL_CONSTANT?
+				//I assume it is not (because it's easier to implement ;))
+				//Sign-extend word to Java integer. For an explanation see below.
+				memAtPC.skipBytes(((operandEvaluatedValuesBuf[0] - 2) << 16) >> 16);
 				break;
 			//8.5 Call and return, throw and catch
 			case call:
