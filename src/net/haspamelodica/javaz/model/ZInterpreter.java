@@ -13,6 +13,8 @@ import net.haspamelodica.javaz.model.stack.CallStack;
 
 public class ZInterpreter
 {
+	private static final boolean DEBUG_SYSOUTS = true;
+
 	private final int version;
 
 	private final boolean	dontIgnoreIllegalVariableCount;
@@ -66,15 +68,21 @@ public class ZInterpreter
 			stack.pushCallFrame(-1, 0, variablesInitialValuesBuf, 0, true, 0);
 			memAtPC.setAddress(headerParser.getField(HeaderParser.InitialPCLoc));
 		}
+		if(DEBUG_SYSOUTS)
+			System.out.println("Reset complete!");
 	}
 	/**
 	 * Returns true if the game should continue (=is not finished)
 	 */
 	public boolean step()
 	{
+		int currentInstrPC = memAtPC.getAddress();
 		instrDecoder.decode(currentInstr);
-		System.out.printf("pc=%05x: ", memAtPC.getAddress());
-		System.out.println(currentInstr);
+		if(DEBUG_SYSOUTS)
+		{
+			System.out.printf("pc=%05x (to %05x): ", currentInstrPC, memAtPC.getAddress() - 1);
+			System.out.println(currentInstr);
+		}
 		for(int i = 0; i < currentInstr.operandCount; i ++)
 			operandEvaluatedValuesBuf[i] = getRawOperandValue(currentInstr.operandTypes[i], currentInstr.operandValues[i]);
 
@@ -196,7 +204,8 @@ public class ZInterpreter
 
 	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget)
 	{
-		System.out.println("call");
+		if(DEBUG_SYSOUTS)
+			System.out.println("call");
 		int returnPC = memAtPC.getAddress();
 		memAtPC.setAddress(packedToByteAddr(packedRoutineAddress, true));
 		int specifiedVarCount = memAtPC.readNextByte();
@@ -223,7 +232,8 @@ public class ZInterpreter
 	}
 	public void doReturn(int returnVal)
 	{
-		System.out.println("return");
+		if(DEBUG_SYSOUTS)
+			System.out.println("return");
 		boolean discardReturnValue = stack.getCurrentCallFrameDiscardReturnValue();
 		int storeTarget = stack.getCurrentCallFrameStoreTarget();
 		memAtPC.setAddress(stack.popCallFrame());
