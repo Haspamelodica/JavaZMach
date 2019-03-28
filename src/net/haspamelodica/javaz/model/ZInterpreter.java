@@ -77,8 +77,12 @@ public class ZInterpreter
 		System.out.println(currentInstr);
 		for(int i = 0; i < currentInstr.operandCount; i ++)
 			operandEvaluatedValuesBuf[i] = getRawOperandValue(currentInstr.operandTypes[i], currentInstr.operandValues[i]);
+
 		boolean doStore = currentInstr.opcode.isStoreOpcode;
 		int storeVal = -1;
+
+		boolean doBranch = currentInstr.opcode.isBranchOpcode;
+
 		switch(currentInstr.opcode)
 		{
 			case add:
@@ -94,11 +98,32 @@ public class ZInterpreter
 				doStore = false;//return will do this store
 				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandEvaluatedValuesBuf, 1, false, currentInstr.storeTarget);
 				break;
+			case je:
+				int compareTo = operandEvaluatedValuesBuf[0];
+				doBranch = false;
+				for(int i = 1; i < currentInstr.operandCount; i ++)
+					if(compareTo == operandEvaluatedValuesBuf[i])
+					{
+						doBranch = true;
+						break;
+					}
+				break;
 			default:
 				throw new IllegalStateException("Instruction not yet implemented: " + currentInstr.opcode);
 		}
 		if(doStore)
 			writeVariable(currentInstr.storeTarget, storeVal);
+		if(doBranch)
+			if(currentInstr.branchOffset == 0)
+				doReturn(0);
+			else if(currentInstr.branchOffset == 1)
+				doReturn(1);
+			else
+				//sign-extend the branch offset (ab)using shifts:
+				//0000 0000  0000 0000  0011 1111  1111 1111   highest branch offset (14 bits, signed)
+				//1111 1111  1111 1111  1111 1111  1111 1111   max int (32 bits, signed)
+				//<---18 (32-14) bits---->
+				memAtPC.skipBytes(((currentInstr.branchOffset - 2) << 18) >> 18);
 		return true;
 	}
 	private int getRawOperandValue(OperandType type, int val)
@@ -158,6 +183,14 @@ public class ZInterpreter
 		for(int i = 0; i < suppliedArgumentCount; i ++)
 			variablesInitialValuesBuf[i] = arguments[i + argsOff];
 		stack.pushCallFrame(returnPC, variablesCount, variablesInitialValuesBuf, suppliedArgumentCount, discardReturnValue, storeTarget);
+	}
+	public void doReturn(int returnVal)
+	{
+		boolean discardReturnValue = stack.getCurrentCallFrameDiscardReturnValue();
+		int storeTarget = stack.getCurrentCallFrameStoreTarget();
+		stack.popCallFrame();
+		if(!discardReturnValue)
+			writeVariable(storeTarget, returnVal);
 	}
 	public int packedToByteAddr(int packed, boolean isRoutine)
 	{
