@@ -84,15 +84,15 @@ public class ZInterpreter
 			case 1:
 			case 2:
 			case 3:
-				return 2 * packed;
+				return packed << 1;
 			case 4:
 			case 5:
-				return 4 * packed;
+				return packed << 2;
 			case 6:
 			case 7:
-				return 4 * packed + (isRoutine ? r_o_8 : s_o_8);
+				return (packed << 2) + (isRoutine ? r_o_8 : s_o_8);
 			case 8:
-				return 8 * packed;
+				return packed << 3;
 			default:
 				throw new VersionException("Unknown version: " + version);
 		}
