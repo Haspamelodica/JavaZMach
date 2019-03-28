@@ -12,7 +12,7 @@ public class DecodedInstruction
 	public final OperandType[]	operandTypes;
 	public final int[]			operandValues;
 	public int					storeTarget;
-	public boolean				branchOnConditionTrue;
+	public boolean				branchOnConditionFalse;
 	public int					branchOffset;
 	public final ZCharString	text;
 
@@ -26,6 +26,6 @@ public class DecodedInstruction
 	@Override
 	public String toString()
 	{
-		return "DecodedInstruction [opcode=" + opcode + ", form=" + form + ", operandCount=" + operandCount + ", operandTypes=" + Arrays.toString(operandTypes) + ", operandValues=" + Arrays.toString(operandValues) + ", storeTarget=" + storeTarget + ", branchOnConditionTrue=" + branchOnConditionTrue + ", branchOffset=" + branchOffset + ", text=" + text + "]";
+		return "DecodedInstruction [opcode=" + opcode + ", form=" + form + ", operandCount=" + operandCount + ", operandTypes=" + Arrays.toString(operandTypes) + ", operandValues=" + Arrays.toString(operandValues) + ", storeTarget=" + storeTarget + ", branchOnConditionTrue=" + branchOnConditionFalse + ", branchOffset=" + branchOffset + ", text=" + text + "]";
 	}
 }

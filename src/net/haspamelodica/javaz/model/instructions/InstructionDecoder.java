@@ -98,7 +98,7 @@ public class InstructionDecoder
 		if(opcode.isBranchOpcode)
 		{
 			int branchOffsetByte = mem.readNextByte();
-			target.branchOnConditionTrue = (branchOffsetByte & 0x80) != 0;//bit 7
+			target.branchOnConditionFalse = (branchOffsetByte & 0x80) == 0;//bit 7
 			if((branchOffsetByte & 0x40) == 0)//bit 6
 				target.branchOffset = mem.readNextByte() | ((branchOffsetByte & 0x3) << 8);//bits 5-0
 			else

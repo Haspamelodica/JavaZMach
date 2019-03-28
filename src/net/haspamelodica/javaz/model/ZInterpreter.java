@@ -81,7 +81,7 @@ public class ZInterpreter
 		boolean doStore = currentInstr.opcode.isStoreOpcode;
 		int storeVal = -1;
 
-		boolean doBranch = currentInstr.opcode.isBranchOpcode;
+		boolean branchCondition = false;
 
 		//Opcode ordering and section numbering according to zmach06e.pdf
 		//Source: http://mirror.ifarchive.org/indexes/if-archiveXinfocomXinterpretersXspecificationXzspec02.html
@@ -96,13 +96,16 @@ public class ZInterpreter
 				storeVal = operandEvaluatedValuesBuf[0] - operandEvaluatedValuesBuf[1];
 				break;
 			//8.4 Comparison and jumps
+			case jz:
+				branchCondition = operandEvaluatedValuesBuf[0] == 0;
+				break;
 			case je:
 				int compareTo = operandEvaluatedValuesBuf[0];
-				doBranch = false;
+				branchCondition = false;
 				for(int i = 1; i < currentInstr.operandCount; i ++)
 					if(compareTo == operandEvaluatedValuesBuf[i])
 					{
-						doBranch = true;
+						branchCondition = true;
 						break;
 					}
 				break;
@@ -131,7 +134,7 @@ public class ZInterpreter
 		}
 		if(doStore)
 			writeVariable(currentInstr.storeTarget, storeVal);
-		if(doBranch)
+		if(currentInstr.opcode.isBranchOpcode && (branchCondition ^ currentInstr.branchOnConditionFalse))
 			if(currentInstr.branchOffset == 0)
 				doReturn(0);
 			else if(currentInstr.branchOffset == 1)
@@ -178,6 +181,7 @@ public class ZInterpreter
 
 	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget)
 	{
+		System.out.println("call");
 		int returnPC = memAtPC.getAddress();
 		memAtPC.setAddress(packedToByteAddr(packedRoutineAddress, true));
 		int specifiedVarCount = memAtPC.readNextByte();
@@ -204,6 +208,7 @@ public class ZInterpreter
 	}
 	public void doReturn(int returnVal)
 	{
+		System.out.println("return");
 		boolean discardReturnValue = stack.getCurrentCallFrameDiscardReturnValue();
 		int storeTarget = stack.getCurrentCallFrameStoreTarget();
 		stack.popCallFrame();
