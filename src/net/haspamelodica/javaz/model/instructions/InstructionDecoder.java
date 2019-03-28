@@ -28,7 +28,6 @@ public class InstructionDecoder
 
 		this.mem = mem;
 		this.textUnpacker = new ZCharsUnpacker(mem);
-
 	}
 
 	public void decode(DecodedInstruction target)
