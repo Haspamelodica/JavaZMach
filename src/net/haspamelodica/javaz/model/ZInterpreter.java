@@ -12,6 +12,9 @@ public class ZInterpreter
 {
 	private final int version;
 
+	private final boolean	dontIgnoreIllegalVariableCount;
+	private final boolean	readMoreThan15VarsForIllegalVariableCount;
+
 	private final WritableMemory			dynamicMem;
 	private final ReadOnlyMemory			mem;
 	private final CallStack					stack;
@@ -29,6 +32,10 @@ public class ZInterpreter
 	{
 		this.headerParser = new HeaderParser(dynamicMem);
 		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(HeaderParser.VersionLoc);
+
+		this.dontIgnoreIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.dont_ignore");
+		this.readMoreThan15VarsForIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.allow_read_more_than_15_vars");
+
 		this.dynamicMem = dynamicMem;
 		this.mem = mem;
 		this.stack = new CallStack();
@@ -67,12 +74,22 @@ public class ZInterpreter
 	{
 		int returnPC = memAtPC.getAddress();
 		memAtPC.setAddress(packedToByteAddr(packedRoutineAddress, true));
-		int variablesCount = memAtPC.readNextByte();
-		//TODO check var count
+		int specifiedVarCount = memAtPC.readNextByte();
+		int variablesCount;
+		if(specifiedVarCount >> 4 == 0)//only the lower 4 bit are allowed to be set
+			variablesCount = specifiedVarCount;
+		else if(dontIgnoreIllegalVariableCount)
+			throw new VariableException("Illegal variable count: " + specifiedVarCount);
+		else
+			variablesCount = 15;//the maximum we can supply
 		if(version < 5)
+		{
 			for(int i = 0; i < variablesCount; i ++)
 				variablesInitialValuesBuf[i] = memAtPC.readNextWord();
-		//Otherwise, the initial values are 0.
+			if(readMoreThan15VarsForIllegalVariableCount && specifiedVarCount >> 4 != 0)
+				memAtPC.setAddress(memAtPC.getAddress() + ((specifiedVarCount - 15) << 1));
+		}
+		//If verison>=5, the initial values are 0.
 		//But since version is final, variablesInitialValuesBuf can only contain 0 at this point.
 		//Thus, we don't need to set variablesInitialValues to 0.
 		stack.pushCallFrame(returnPC, variablesCount, variablesInitialValuesBuf, suppliedArgumentCount, discardReturnValue, storeTarget);
