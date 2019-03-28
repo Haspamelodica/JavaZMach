@@ -29,12 +29,18 @@ public class SequentialMemoryAccess
 		addr += 2;
 		return word;
 	}
-	public void skipBytes(int bytes)
+	/**
+	 * This method can "jump" backwards if a negative offset is supplied.
+	 */
+	public void skipBytes(int bytesOff)
 	{
-		addr += bytes;
+		addr += bytesOff;
 	}
-	public void skipWords(int words)
+	/**
+	 * This method can "jump" backwards if a negative offset is supplied.
+	 */
+	public void skipWords(int wordsOff)
 	{
-		addr += words << 1;
+		addr += wordsOff << 1;
 	}
 }
