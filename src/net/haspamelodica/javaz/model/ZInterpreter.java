@@ -83,21 +83,19 @@ public class ZInterpreter
 
 		boolean doBranch = currentInstr.opcode.isBranchOpcode;
 
+		//Opcode ordering and section numbering according to zmach06e.pdf
+		//Source: http://mirror.ifarchive.org/indexes/if-archiveXinfocomXinterpretersXspecificationXzspec02.html
 		switch(currentInstr.opcode)
 		{
+			//8.2 Reading and writing memory
+			//8.3 Arithmetic
 			case add:
 				storeVal = operandEvaluatedValuesBuf[0] + operandEvaluatedValuesBuf[1];
 				break;
-			case call:
-				int routinePackedAddr = operandEvaluatedValuesBuf[0];
-				if(routinePackedAddr == 0)
-				{
-					storeVal = 0;
-					break;
-				}
-				doStore = false;//return will do this store
-				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandEvaluatedValuesBuf, 1, false, currentInstr.storeTarget);
+			case sub:
+				storeVal = operandEvaluatedValuesBuf[0] - operandEvaluatedValuesBuf[1];
 				break;
+			//8.4 Comparison and jumps
 			case je:
 				int compareTo = operandEvaluatedValuesBuf[0];
 				doBranch = false;
@@ -108,6 +106,26 @@ public class ZInterpreter
 						break;
 					}
 				break;
+			//8.5 Call and return, throw and catch
+			case call:
+				int routinePackedAddr = operandEvaluatedValuesBuf[0];
+				if(routinePackedAddr == 0)
+				{
+					storeVal = 0;
+					break;
+				}
+				doStore = false;//return will do this store
+				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandEvaluatedValuesBuf, 1, false, currentInstr.storeTarget);
+				break;
+			//8.6 Objects, attributes, and properties
+			//8.7 Windows
+			//8.8 Input and output streams
+			//8.9 Input
+			//8.10 Character based output
+			//8.11 Miscellaneous screen output
+			//8.12 Sound, mouse, and menus
+			//8.13 Save, restore, and undo
+			//8.14 Miscellaneous
 			default:
 				throw new IllegalStateException("Instruction not yet implemented: " + currentInstr.opcode);
 		}
