@@ -29,4 +29,12 @@ public class SequentialMemoryAccess
 		addr += 2;
 		return word;
 	}
+	public void skipBytes(int bytes)
+	{
+		addr += bytes;
+	}
+	public void skipWords(int words)
+	{
+		addr += words << 1;
+	}
 }
