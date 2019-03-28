@@ -73,13 +73,30 @@ public class ZInterpreter
 	public boolean step()
 	{
 		instrDecoder.decode(currentInstr);
+		System.out.printf("pc=%05x", memAtPC.getAddress());
+		System.out.println(currentInstr);
 		for(int i = 0; i < currentInstr.operandCount; i ++)
 			operandRawValuesBuf[i] = getRawOperandValue(currentInstr.operandTypes[i], currentInstr.operandValues[i]);
+		boolean doStore = currentInstr.opcode.isStoreOpcode;
+		int storeVal = -1;
 		switch(currentInstr.opcode)
 		{
+			case call:
+				int routinePackedAddr = operandRawValuesBuf[0];
+				if(routinePackedAddr == 0)
+				{
+					storeVal = 0;
+					break;
+				}
+				doStore = false;//return will do this store
+				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandRawValuesBuf, 1, false, currentInstr.storeTarget);
+				break;
 			default:
 				throw new IllegalStateException("Instruction not yet implemented: " + currentInstr.opcode);
 		}
+		if(doStore)
+			writeVariable(currentInstr.storeTarget, storeVal);
+		return true;
 	}
 	private int getRawOperandValue(OperandType type, int val)
 	{
