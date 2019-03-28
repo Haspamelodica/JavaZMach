@@ -8,7 +8,7 @@ import static net.haspamelodica.javaz.model.instructions.OpcodeKind.VAR;
 
 public enum Opcode
 {
-	je/*             */(0x01, OP2, SBT._B_, 1, "je"),
+	je/*             */(0x01, OP2, SBT._B_, 1, 1, 4, "je"),
 	jl/*             */(0x02, OP2, SBT._B_, 1, "jl"),
 	jg/*             */(0x03, OP2, SBT._B_, 1, "jg"),
 	dec_chk/*        */(0x04, OP2, SBT._B_, 1, "dec_chk"),
@@ -138,7 +138,7 @@ public enum Opcode
 	picture_table/*  */(0x1C, EXT, SBT.___, 6, "picture_table"),
 	buffer_screen/*  */(0x1D, EXT, SBT.S__, 6, "buffer_screen"),
 
-	_unknown_instr/* */(0xFF, null, SBT.___, -1, "<unknown>");
+	_unknown_instr/* */(0xFF, null, SBT.___, -1, -1, -1, -1, "<unknown>");
 
 	public final int		opcodeNumber;
 	/**
@@ -157,17 +157,29 @@ public enum Opcode
 	{
 		this(opcodeNumber, range, sbt, minVersion, -1, name);
 	}
+	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, int minArgs, int maxArgs, String name)
+	{
+		this(opcodeNumber, range, sbt, minVersion, -1, minArgs, maxArgs, name);
+	}
 	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, int maxVersion, String name)
 	{
 		this(opcodeNumber, range, sbt, minVersion, maxVersion, false, name);
+	}
+	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, int maxVersion, int minArgs, int maxArgs, String name)
+	{
+		this(opcodeNumber, range, sbt, minVersion, maxVersion, minArgs, maxArgs, false, name);
 	}
 	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, boolean hasTwoOperandTypeBytes, String name)
 	{
 		this(opcodeNumber, range, sbt, minVersion, -1, hasTwoOperandTypeBytes, name);
 	}
+	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, int minArgs, int maxArgs, boolean hasTwoOperandTypeBytes, String name)
+	{
+		this(opcodeNumber, range, sbt, minVersion, -1, minArgs, maxArgs, hasTwoOperandTypeBytes, name);
+	}
 	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, int maxVersion, boolean hasTwoOperandTypeBytes, String name)
 	{
-		this(opcodeNumber, range, sbt, defaultMinArgs(range), defaultMaxArgs(range, hasTwoOperandTypeBytes), minVersion, maxVersion, hasTwoOperandTypeBytes, name);
+		this(opcodeNumber, range, sbt, minVersion, maxVersion, defaultMinArgs(range), defaultMaxArgs(range, hasTwoOperandTypeBytes), hasTwoOperandTypeBytes, name);
 	}
 	private static int defaultMinArgs(OpcodeKind range)
 	{
@@ -207,7 +219,7 @@ public enum Opcode
 				throw new IllegalArgumentException("Unknown enum type: " + range);
 		}
 	}
-	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minArgs, int maxArgs, int minVersion, int maxVersion, boolean hasTwoOperandTypeBytes, String name)
+	private Opcode(int opcodeNumber, OpcodeKind range, SBT sbt, int minVersion, int maxVersion, int minArgs, int maxArgs, boolean hasTwoOperandTypeBytes, String name)
 	{
 		this.opcodeNumber = opcodeNumber;
 		this.range = range;

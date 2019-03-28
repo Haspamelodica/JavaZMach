@@ -76,10 +76,6 @@ public class InstructionDecoder
 						break;
 					case VARIABLE:
 						decodeVarParams(false, target);
-						if(target.operandCount != 2 && checkOperandsCount)
-							//This is an exception: je can have 1-4 operands, even though it is 2OP.
-							if(opcode != Opcode.je || target.operandCount == 0)
-								throw new InstructionFormatException("Too many / few operands for a 2OP instruction: " + target.operandCount);
 						break;
 					case SHORT:
 					case EXTENDED:
@@ -94,6 +90,9 @@ public class InstructionDecoder
 			default:
 				throw new IllegalArgumentException("Unknown enum type: " + kind);
 		}
+
+		if(checkOperandsCount && opcode != Opcode._unknown_instr && (target.operandCount < opcode.minArgs || target.operandCount > opcode.maxArgs))
+			throw new InstructionFormatException("Too many / few operands (" + target.operandCount + ") for " + opcode);
 
 		if(opcode.isStoreOpcode)
 			target.storeTarget = mem.readNextByte();
