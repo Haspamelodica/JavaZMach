@@ -31,7 +31,7 @@ public class ZInterpreter
 
 	private final DecodedInstruction	currentInstr;
 	private final int[]					variablesInitialValuesBuf;
-	private final int[]					operandRawValuesBuf;
+	private final int[]					operandEvaluatedValuesBuf;
 
 	public ZInterpreter(GlobalConfig config, int versionOverride, WritableMemory dynamicMem, ReadOnlyMemory mem)
 	{
@@ -48,7 +48,7 @@ public class ZInterpreter
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
 		this.currentInstr = new DecodedInstruction();
 		this.variablesInitialValuesBuf = new int[16];
-		this.operandRawValuesBuf = new int[8];
+		this.operandEvaluatedValuesBuf = new int[8];
 	}
 
 	public void reset()
@@ -76,20 +76,23 @@ public class ZInterpreter
 		System.out.printf("pc=%05x: ", memAtPC.getAddress());
 		System.out.println(currentInstr);
 		for(int i = 0; i < currentInstr.operandCount; i ++)
-			operandRawValuesBuf[i] = getRawOperandValue(currentInstr.operandTypes[i], currentInstr.operandValues[i]);
+			operandEvaluatedValuesBuf[i] = getRawOperandValue(currentInstr.operandTypes[i], currentInstr.operandValues[i]);
 		boolean doStore = currentInstr.opcode.isStoreOpcode;
 		int storeVal = -1;
 		switch(currentInstr.opcode)
 		{
+			case add:
+				storeVal = operandEvaluatedValuesBuf[0] + operandEvaluatedValuesBuf[1];
+				break;
 			case call:
-				int routinePackedAddr = operandRawValuesBuf[0];
+				int routinePackedAddr = operandEvaluatedValuesBuf[0];
 				if(routinePackedAddr == 0)
 				{
 					storeVal = 0;
 					break;
 				}
 				doStore = false;//return will do this store
-				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandRawValuesBuf, 1, false, currentInstr.storeTarget);
+				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandEvaluatedValuesBuf, 1, false, currentInstr.storeTarget);
 				break;
 			default:
 				throw new IllegalStateException("Instruction not yet implemented: " + currentInstr.opcode);
