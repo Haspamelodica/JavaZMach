@@ -1,5 +1,12 @@
 package net.haspamelodica.javaz.model;
 
+import static net.haspamelodica.javaz.model.HeaderParser.GlobalVarTableLocLoc;
+import static net.haspamelodica.javaz.model.HeaderParser.InitialPCLoc;
+import static net.haspamelodica.javaz.model.HeaderParser.MainLocLoc;
+import static net.haspamelodica.javaz.model.HeaderParser.RoutinesOffLoc;
+import static net.haspamelodica.javaz.model.HeaderParser.StringsOffLoc;
+import static net.haspamelodica.javaz.model.HeaderParser.VersionLoc;
+
 import java.util.Arrays;
 
 import net.haspamelodica.javaz.GlobalConfig;
@@ -9,6 +16,7 @@ import net.haspamelodica.javaz.model.instructions.OperandType;
 import net.haspamelodica.javaz.model.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.model.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.model.memory.WritableMemory;
+import net.haspamelodica.javaz.model.objects.ObjectTree;
 import net.haspamelodica.javaz.model.stack.CallStack;
 
 public class ZInterpreter
@@ -20,12 +28,13 @@ public class ZInterpreter
 	private final boolean	dontIgnoreIllegalVariableCount;
 	private final boolean	readMoreThan15VarsForIllegalVariableCount;
 
+	private final HeaderParser				headerParser;
 	private final WritableMemory			dynamicMem;
 	private final ReadOnlyMemory			mem;
 	private final CallStack					stack;
-	private final HeaderParser				headerParser;
 	private final SequentialMemoryAccess	memAtPC;
 	private final InstructionDecoder		instrDecoder;
+	private final ObjectTree				objectTree;
 
 	private int	r_o_8;
 	private int	s_o_8;
@@ -42,7 +51,7 @@ public class ZInterpreter
 	public ZInterpreter(GlobalConfig config, int versionOverride, WritableMemory dynamicMem, ReadOnlyMemory mem)
 	{
 		this.headerParser = new HeaderParser(dynamicMem);
-		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(HeaderParser.VersionLoc);
+		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(VersionLoc);
 
 		this.dontIgnoreIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.dont_ignore");
 		this.readMoreThan15VarsForIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.allow_read_more_than_15_vars");
@@ -52,6 +61,8 @@ public class ZInterpreter
 		this.stack = new CallStack();
 		this.memAtPC = new SequentialMemoryAccess(mem);
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
+		this.objectTree = new ObjectTree(config, version, headerParser, dynamicMem);
+
 		this.currentInstr = new DecodedInstruction();
 		this.variablesInitialValuesBuf = new int[16];
 		this.operandEvaluatedValuesBuf = new int[8];
@@ -61,16 +72,17 @@ public class ZInterpreter
 	{
 		if(version == 6 || version == 7)
 		{
-			r_o_8 = 8 * headerParser.getField(HeaderParser.RoutinesOffLoc);
-			s_o_8 = 8 * headerParser.getField(HeaderParser.StringsOffLoc);
+			r_o_8 = 8 * headerParser.getField(RoutinesOffLoc);
+			s_o_8 = 8 * headerParser.getField(StringsOffLoc);
 		}
-		globalVariablesTableLoc = headerParser.getField(HeaderParser.GlobalVarTableLocLoc);
+		globalVariablesTableLoc = headerParser.getField(GlobalVarTableLocLoc);
+		objectTree.reset();
 		if(version == 6)
-			doCallTo(headerParser.getField(HeaderParser.MainLocLoc), 0, null, 0, true, 0);
+			doCallTo(headerParser.getField(MainLocLoc), 0, null, 0, true, 0);
 		else
 		{
 			stack.pushCallFrame(-1, 0, variablesInitialValuesBuf, 0, true, 0);
-			memAtPC.setAddress(headerParser.getField(HeaderParser.InitialPCLoc));
+			memAtPC.setAddress(headerParser.getField(InitialPCLoc));
 		}
 		if(DEBUG_SYSOUTS)
 			System.out.println("Reset complete!");
