@@ -1,5 +1,7 @@
 package net.haspamelodica.javaz.model;
 
+import java.util.Arrays;
+
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.model.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.model.instructions.InstructionDecoder;
@@ -58,7 +60,7 @@ public class ZInterpreter
 		}
 		globalVariablesTableLoc = headerParser.getField(HeaderParser.GlobalVarTableLocLoc);
 		if(version == 6)
-			doCallTo(headerParser.getField(HeaderParser.MainLocLoc), 0, true, 0);
+			doCallTo(headerParser.getField(HeaderParser.MainLocLoc), 0, null, 0, true, 0);
 		else
 		{
 			stack.pushCallFrame(-1, 0, variablesInitialValuesBuf, 0, true, 0);
@@ -111,7 +113,7 @@ public class ZInterpreter
 			dynamicMem.writeWord(globalVariablesTableLoc + var - 0x10, val);
 	}
 
-	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, boolean discardReturnValue, int storeTarget)
+	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget)
 	{
 		int returnPC = memAtPC.getAddress();
 		memAtPC.setAddress(packedToByteAddr(packedRoutineAddress, true));
@@ -123,16 +125,18 @@ public class ZInterpreter
 			throw new VariableException("Illegal variable count: " + specifiedVarCount);
 		else
 			variablesCount = 15;//the maximum we can supply
+		suppliedArgumentCount = Math.min(suppliedArgumentCount, variablesCount);//discard last arguments if there are too many
 		if(version < 5)
 		{
-			for(int i = 0; i < variablesCount; i ++)
+			memAtPC.skipWords(suppliedArgumentCount);//skip overwritten initial values
+			for(int i = suppliedArgumentCount; i < variablesCount; i ++)
 				variablesInitialValuesBuf[i] = memAtPC.readNextWord();
 			if(readMoreThan15VarsForIllegalVariableCount && specifiedVarCount >> 4 != 0)
-				memAtPC.setAddress(memAtPC.getAddress() + ((specifiedVarCount - 15) << 1));
-		}
-		//If verison>=5, the initial values are 0.
-		//But since version is final, variablesInitialValuesBuf can only contain 0 at this point.
-		//Thus, we don't need to set variablesInitialValues to 0.
+				memAtPC.skipWords(specifiedVarCount - 15);
+		} else
+			Arrays.fill(variablesInitialValuesBuf, suppliedArgumentCount, variablesCount, 0);
+		for(int i = 0; i < suppliedArgumentCount; i ++)
+			variablesInitialValuesBuf[i] = arguments[i + argsOff];
 		stack.pushCallFrame(returnPC, variablesCount, variablesInitialValuesBuf, suppliedArgumentCount, discardReturnValue, storeTarget);
 	}
 	public int packedToByteAddr(int packed, boolean isRoutine)
