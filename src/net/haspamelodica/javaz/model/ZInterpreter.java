@@ -3,6 +3,7 @@ package net.haspamelodica.javaz.model;
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.model.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.model.instructions.InstructionDecoder;
+import net.haspamelodica.javaz.model.instructions.OperandType;
 import net.haspamelodica.javaz.model.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.model.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.model.memory.WritableMemory;
@@ -24,9 +25,11 @@ public class ZInterpreter
 
 	private int	r_o_8;
 	private int	s_o_8;
+	private int	globalVariablesTableLoc;
 
 	private final DecodedInstruction	currentInstr;
 	private final int[]					variablesInitialValuesBuf;
+	private final int[]					operandRawValuesBuf;
 
 	public ZInterpreter(GlobalConfig config, int versionOverride, WritableMemory dynamicMem, ReadOnlyMemory mem)
 	{
@@ -43,6 +46,7 @@ public class ZInterpreter
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
 		this.currentInstr = new DecodedInstruction();
 		this.variablesInitialValuesBuf = new int[16];
+		this.operandRawValuesBuf = new int[8];
 	}
 
 	public void reset()
@@ -52,10 +56,14 @@ public class ZInterpreter
 			r_o_8 = 8 * headerParser.getField(HeaderParser.RoutinesOffLoc);
 			s_o_8 = 8 * headerParser.getField(HeaderParser.StringsOffLoc);
 		}
+		globalVariablesTableLoc = headerParser.getField(HeaderParser.GlobalVarTableLocLoc);
 		if(version == 6)
 			doCallTo(headerParser.getField(HeaderParser.MainLocLoc), 0, true, 0);
 		else
+		{
+			stack.pushCallFrame(-1, 0, variablesInitialValuesBuf, 0, true, 0);
 			memAtPC.setAddress(headerParser.getField(HeaderParser.InitialPCLoc));
+		}
 	}
 	/**
 	 * Returns true if the game should continue (=is not finished)
@@ -63,11 +71,44 @@ public class ZInterpreter
 	public boolean step()
 	{
 		instrDecoder.decode(currentInstr);
+		for(int i = 0; i < currentInstr.operandCount; i ++)
+			operandRawValuesBuf[i] = getRawOperandValue(currentInstr.operandTypes[i], currentInstr.operandValues[i]);
 		switch(currentInstr.opcode)
 		{
 			default:
 				throw new IllegalStateException("Instruction not yet implemented: " + currentInstr.opcode);
 		}
+	}
+	private int getRawOperandValue(OperandType type, int val)
+	{
+		switch(type)
+		{
+			case LARGE_CONST:
+			case SMALL_CONST:
+				return val;
+			case VARIABLE:
+				return readVariable(val);
+			default:
+				throw new IllegalArgumentException("Unknown enum type: " + type);
+		}
+	}
+	private int readVariable(int var)
+	{
+		if(var == 0)
+			return stack.pop();
+		else if(var > 0 && var < 0x10)
+			return stack.readLocalVariable(var);
+		else
+			return dynamicMem.readWord(globalVariablesTableLoc + var - 0x10);
+	}
+	private void writeVariable(int var, int val)
+	{
+		if(var == 0)
+			stack.push(val);
+		else if(var > 0 && var < 0x10)
+			stack.writeLocalVariable(var, val);
+		else
+			dynamicMem.writeWord(globalVariablesTableLoc + var - 0x10, val);
 	}
 
 	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, boolean discardReturnValue, int storeTarget)
