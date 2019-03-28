@@ -13,7 +13,7 @@ public class ZCharsUnpacker
 		this.mem = mem;
 	}
 
-	public void unpack(ZCharString target)
+	public void unpack(ByteString target)
 	{
 		int zCharsWord;
 		byte[] zChars = target.chars;

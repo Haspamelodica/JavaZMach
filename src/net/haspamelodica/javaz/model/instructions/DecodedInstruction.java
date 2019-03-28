@@ -2,7 +2,7 @@ package net.haspamelodica.javaz.model.instructions;
 
 import java.util.Arrays;
 
-import net.haspamelodica.javaz.model.text.ZCharString;
+import net.haspamelodica.javaz.model.text.ByteString;
 
 public class DecodedInstruction
 {
@@ -14,13 +14,13 @@ public class DecodedInstruction
 	public int					storeTarget;
 	public boolean				branchOnConditionFalse;
 	public int					branchOffset;
-	public final ZCharString	text;
+	public final ByteString	text;
 
 	public DecodedInstruction()
 	{
 		this.operandTypes = new OperandType[8];
 		this.operandValues = new int[8];
-		this.text = new ZCharString();
+		this.text = new ByteString();
 	}
 
 	@Override

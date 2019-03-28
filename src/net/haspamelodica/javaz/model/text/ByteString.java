@@ -1,11 +1,11 @@
 package net.haspamelodica.javaz.model.text;
 
-public class ZCharString
+public class ByteString
 {
 	public byte[]	chars;
 	public int		length;
 
-	public ZCharString()
+	public ByteString()
 	{
 		chars = new byte[100];
 	}
