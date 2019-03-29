@@ -12,7 +12,7 @@ import net.haspamelodica.javaz.model.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.model.memory.WritableFixedSizeMemory;
 import net.haspamelodica.javaz.model.memory.WritableMemory;
 import net.haspamelodica.javaz.model.text.ZCharsSeqMemUnpacker;
-import net.haspamelodica.javaz.model.text.ZCharsToZSCIIUnpacker;
+import net.haspamelodica.javaz.model.text.ZCharsToZSCIIConverter;
 import net.haspamelodica.javaz.model.text.ZSCIICharStreamReceiver;
 
 public class DecompileBasic
@@ -25,8 +25,8 @@ public class DecompileBasic
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess memSeq = new SequentialMemoryAccess(mem);
 		InstructionDecoder decoder = new InstructionDecoder(config, version, memSeq);
-		ZCharsToZSCIIUnpacker textUnpacker = new ZCharsToZSCIIUnpacker(config, version, header, mem, new ZCharsSeqMemUnpacker(memSeq));
-		textUnpacker.reset();
+		ZCharsToZSCIIConverter textConverter = new ZCharsToZSCIIConverter(config, version, header, mem, new ZCharsSeqMemUnpacker(memSeq));
+		textConverter.reset();
 		ZSCIICharStreamReceiver textReceiver = zsciiChar -> System.out.print((char) zsciiChar);
 		memSeq.setAddress(header.getField(HeaderParser.InitialPCLoc));
 		memSeq.setAddress(0x535E);//address of Overview example
@@ -41,7 +41,7 @@ public class DecompileBasic
 			if(instr.opcode.isTextOpcode)
 			{
 				System.out.print(" text: \"");
-				textUnpacker.decode(textReceiver);
+				textConverter.decode(textReceiver);
 				System.out.print('"');
 			}
 			System.out.println();
