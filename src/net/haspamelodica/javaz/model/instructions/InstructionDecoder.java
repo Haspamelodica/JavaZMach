@@ -2,7 +2,6 @@ package net.haspamelodica.javaz.model.instructions;
 
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.model.memory.SequentialMemoryAccess;
-import net.haspamelodica.javaz.model.text.ZCharsUnpacker;
 
 public class InstructionDecoder
 {
@@ -14,7 +13,6 @@ public class InstructionDecoder
 	private final boolean	checkOperandsCount;
 
 	private final SequentialMemoryAccess	mem;
-	private final ZCharsUnpacker			textUnpacker;
 
 
 	public InstructionDecoder(GlobalConfig config, int version, SequentialMemoryAccess mem)
@@ -27,9 +25,11 @@ public class InstructionDecoder
 		this.checkOperandsCount = config.getBool("instructions.decoding.operands.check_count");
 
 		this.mem = mem;
-		this.textUnpacker = new ZCharsUnpacker(mem);
 	}
 
+	/**
+	 * Text following the instruction is not read!
+	 */
 	public void decode(DecodedInstruction target)
 	{
 		int opcodeByte = mem.readNextByte();
@@ -104,8 +104,6 @@ public class InstructionDecoder
 			else
 				target.branchOffset = branchOffsetByte & 0x3F;//bits 5-0
 		}
-		if(opcode.isTextOpcode)
-			textUnpacker.unpack(target.text);
 	}
 
 	private void decodeVarParams(boolean hasTwoOperandTypeBytes, DecodedInstruction target)
