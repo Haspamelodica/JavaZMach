@@ -91,6 +91,24 @@ public class ObjectTree
 			mem.writeWord(objAddress + 10, child);
 	}
 
+	public int getObjectNameLoc(int objNumber)
+	{
+		return getPropertiesTableLoc(objNumber) + 1;
+	}
+	public int getObjectNameWords(int objNumber)
+	{
+		return mem.readByte(getPropertiesTableLoc(objNumber));
+	}
+
+	private int getPropertiesTableLocNameSkipped(int objNumber)
+	{
+		int propertiesTableLoc = getPropertiesTableLoc(objNumber);
+		return propertiesTableLoc + (mem.readByte(propertiesTableLoc) << 1);
+	}
+	private int getPropertiesTableLoc(int objNumber)
+	{
+		return mem.readWord(getObjAddress(objNumber) + (version < 4 ? 7 : 12));
+	}
 	private int getObjAddress(int objNumber)
 	{
 		return objNumber * (version < 4 ? 9 : 14) + objectsOffset;
