@@ -26,9 +26,10 @@ public class DecompileBasic
 		SequentialMemoryAccess memSeq = new SequentialMemoryAccess(mem);
 		InstructionDecoder decoder = new InstructionDecoder(config, version, memSeq);
 		ZCharsToZSCIIUnpacker textUnpacker = new ZCharsToZSCIIUnpacker(config, version, header, mem, new ZCharsSeqMemUnpacker(memSeq));
+		textUnpacker.reset();
 		ZSCIICharStreamReceiver textReceiver = zsciiChar -> System.out.print((char) zsciiChar);
 		memSeq.setAddress(header.getField(HeaderParser.InitialPCLoc));
-		//memSeq.setAddress(0x535E);//address of Overview example
+		memSeq.setAddress(0x535E);//address of Overview example
 		DecodedInstruction instr = new DecodedInstruction();
 		do
 		{

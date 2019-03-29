@@ -23,7 +23,7 @@ public class ZCharsSeqMemUnpacker implements ZCharStreamSource
 	@Override
 	public boolean hasNext()
 	{
-		return zCharInWordIndex != 2 || (currentZCharsWord & 0x80_00) == 0;
+		return zCharInWordIndex != 0 || (currentZCharsWord & 0x80_00) == 0;
 	}
 	private static final int[]	zCharsPerWordMasks	= {0x7C_00, 0x03_E0, 0x00_1F};
 	private static final int[]	zCharsPerWordShifts	= {10, 5, 0};
