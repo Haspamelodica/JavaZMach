@@ -21,7 +21,9 @@ public class ZCharsToZSCIIUnpacker
 
 	private final int version;
 
-	private final boolean dontAllowNestedAbbreviations;
+	private final boolean	dontAllowNestedAbbreviations;
+	private final boolean	checkAbbreviationsDontStopIncomplete;
+	private final boolean	checkZSCIIRange;
 
 	private final HeaderParser		headerParser;
 	private final ReadOnlyMemory	mem;
@@ -37,7 +39,9 @@ public class ZCharsToZSCIIUnpacker
 	{
 		this.version = version;
 
-		dontAllowNestedAbbreviations = config.getBool("text.zchars.dont_allow_nested_abbreviations");
+		this.dontAllowNestedAbbreviations = config.getBool("text.zchars.abbreviations.dont_allow_nesting");
+		this.checkAbbreviationsDontStopIncomplete = config.getBool("text.zchars.abbreviations.check_no_incomplete_construction_stop");
+		this.checkZSCIIRange = config.getBool("text.zscii.check_10bit_range");
 
 		this.headerParser = headerParser;
 		this.mem = mem;
@@ -150,7 +154,8 @@ public class ZCharsToZSCIIUnpacker
 					break;
 			}
 		} while(source.hasNext());
-		//TODO handle state!=5
+		if(isAbbreviation && checkAbbreviationsDontStopIncomplete && state != 5)
+			throw new TextException("Abbreviation ended with an incomplete multi-Z-char construction");
 	}
 	private int translateZCharToZSCII(byte zChar, int alphabet)
 	{
@@ -170,8 +175,9 @@ public class ZCharsToZSCIIUnpacker
 				default:
 					throw new IllegalStateException("Illegal alphabet: " + alphabet);
 			}
-		else
-			//TODO check 10 bit range
-			return mem.readWord(alphabetTableLoc + (zChar << 1) + (alphabet * 26));
+		int zscii = mem.readWord(alphabetTableLoc + (zChar << 1) + (alphabet * 26));
+		if(zscii > 0x3FF && checkZSCIIRange)
+			throw new TextException("Out-of-range ZSCII char: " + zscii);
+		return zscii;
 	}
 }
