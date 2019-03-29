@@ -33,7 +33,7 @@ public class CallStack
 	 */
 	public void pushCallFrame(int returnPC, int variablesCount, int[] variablesInitialValues, int suppliedArgumentCount, boolean discardReturnValue, int storeTarget)
 	{
-		if(variablesCount >> 4 != 0)//only the lower 4 bit are allowed to be set
+		if(variablesCount >>> 4 != 0)//only the lower 4 bit are allowed to be set
 			throw new VariableException("Illegal variable count: " + variablesCount);
 		int returnFP = stack.getFP();
 

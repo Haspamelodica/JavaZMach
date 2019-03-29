@@ -36,15 +36,15 @@ public class ObjectTree
 	{
 		int objAddress = getObjAddress(objNumber);
 		int attributeBit = ~attribute & 0x7;//equal to 7 - (attribute & 0x7)
-		int attributeByte = attribute >> 3;
+		int attributeByte = attribute >>> 3;
 
-		return (mem.readByte(objAddress + attributeByte) >> attributeBit) & 0b1;
+		return (mem.readByte(objAddress + attributeByte) >>> attributeBit) & 0b1;
 	}
 	public void setAttribute(int objNumber, int attribute, int val)
 	{
 		int objAddress = getObjAddress(objNumber);
 		int attributeBit = ~attribute & 0x7;//equal to 7 - (attribute & 0x7)
-		int attributeByte = attribute >> 3;
+		int attributeByte = attribute >>> 3;
 
 		int attributeBitMask = val << attributeBit;
 		int oldVal = mem.readByte(objAddress + attributeByte);

@@ -226,7 +226,7 @@ public class ZInterpreter
 		memAtPC.setAddress(packedToByteAddr(packedRoutineAddress, true));
 		int specifiedVarCount = memAtPC.readNextByte();
 		int variablesCount;
-		if(specifiedVarCount >> 4 == 0)//only the lower 4 bit are allowed to be set
+		if(specifiedVarCount >>> 4 == 0)//only the lower 4 bit are allowed to be set
 			variablesCount = specifiedVarCount;
 		else if(dontIgnoreIllegalVariableCount)
 			throw new VariableException("Illegal variable count: " + specifiedVarCount);
@@ -238,7 +238,7 @@ public class ZInterpreter
 			memAtPC.skipWords(suppliedArgumentCount);//skip overwritten initial values
 			for(int i = suppliedArgumentCount; i < variablesCount; i ++)
 				variablesInitialValuesBuf[i] = memAtPC.readNextWord();
-			if(readMoreThan15VarsForIllegalVariableCount && specifiedVarCount >> 4 != 0)
+			if(readMoreThan15VarsForIllegalVariableCount && specifiedVarCount >>> 4 != 0)
 				memAtPC.skipWords(specifiedVarCount - 15);
 		} else
 			Arrays.fill(variablesInitialValuesBuf, suppliedArgumentCount, variablesCount, 0);
