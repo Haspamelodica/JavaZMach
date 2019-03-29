@@ -2,10 +2,17 @@ package net.haspamelodica.javaz.model.instructions;
 
 public enum OpcodeForm
 {
-	LONG,
-	SHORT,
-	EXTENDED,
-	VARIABLE;
+	LONG("lng"),
+	SHORT("srt"),
+	EXTENDED("ext"),
+	VARIABLE("var");
+
+	public final String shortName;
+
+	private OpcodeForm(String shortName)
+	{
+		this.shortName = shortName;
+	}
 
 	public static OpcodeForm decode(int opcodeByte)
 	{
