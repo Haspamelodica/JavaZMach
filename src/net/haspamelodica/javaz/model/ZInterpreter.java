@@ -21,7 +21,7 @@ import net.haspamelodica.javaz.model.stack.CallStack;
 
 public class ZInterpreter
 {
-	private static final boolean DEBUG_SYSOUTS = true;
+	private static final boolean DEBUG_SYSOUTS = false;
 
 	private final int version;
 
@@ -42,7 +42,8 @@ public class ZInterpreter
 
 	private final DecodedInstruction	currentInstr;
 	private final int[]					variablesInitialValuesBuf;
-	private final int[]					operandEvaluatedValuesBuf;
+	private final int[]					operandEvaluatedValuesBufSigned;
+	private final int[]					operandEvaluatedValuesBufUnsigned;
 
 	public ZInterpreter(GlobalConfig config, WritableMemory dynamicMem, ReadOnlyMemory mem)
 	{
@@ -65,7 +66,8 @@ public class ZInterpreter
 
 		this.currentInstr = new DecodedInstruction();
 		this.variablesInitialValuesBuf = new int[16];
-		this.operandEvaluatedValuesBuf = new int[8];
+		this.operandEvaluatedValuesBufSigned = new int[8];
+		this.operandEvaluatedValuesBufUnsigned = new int[8];
 	}
 
 	public void reset()
@@ -100,7 +102,7 @@ public class ZInterpreter
 			System.out.println(currentInstr);
 		}
 		for(int i = 0; i < currentInstr.operandCount; i ++)
-			operandEvaluatedValuesBuf[i] = getRawOperandValue(currentInstr.operandTypes[i], currentInstr.operandValues[i]);
+			putRawOperandValueToBufs(currentInstr, i);
 
 		boolean doStore = currentInstr.opcode.isStoreOpcode;
 		int storeVal = -1;
@@ -113,61 +115,77 @@ public class ZInterpreter
 		{
 			//8.2 Reading and writing memory
 			case store:
-				writeVariable(operandEvaluatedValuesBuf[0], operandEvaluatedValuesBuf[1]);
+				writeVariable(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1]);
 				break;
 			case loadw:
-				storeVal = mem.readWord(operandEvaluatedValuesBuf[0] + (operandEvaluatedValuesBuf[1] << 1));
+				storeVal = mem.readWord(operandEvaluatedValuesBufUnsigned[0] + (operandEvaluatedValuesBufUnsigned[1] << 1));
 				break;
 			case storew:
-				dynamicMem.writeWord(operandEvaluatedValuesBuf[0] + (operandEvaluatedValuesBuf[1] << 1), operandEvaluatedValuesBuf[2]);
+				dynamicMem.writeWord(operandEvaluatedValuesBufUnsigned[0] + (operandEvaluatedValuesBufUnsigned[1] << 1), operandEvaluatedValuesBufUnsigned[2]);
+				break;
+			case loadb:
+				storeVal = mem.readByte(operandEvaluatedValuesBufUnsigned[0] + operandEvaluatedValuesBufUnsigned[1]);
 				break;
 			//8.3 Arithmetic
 			case add:
-				storeVal = operandEvaluatedValuesBuf[0] + operandEvaluatedValuesBuf[1];
+				storeVal = operandEvaluatedValuesBufUnsigned[0] + operandEvaluatedValuesBufUnsigned[1];
 				break;
 			case sub:
-				storeVal = operandEvaluatedValuesBuf[0] - operandEvaluatedValuesBuf[1];
+				storeVal = operandEvaluatedValuesBufUnsigned[0] - operandEvaluatedValuesBufUnsigned[1];
+				break;
+			case inc_chk://inc_jg in zmach06.pdf
+				int var = operandEvaluatedValuesBufUnsigned[0];
+				int oldVal = readVariable(var);
+				writeVariable(var, oldVal + 1);
+				//TODO read again or use old value?
+				//Makes a difference for variable 0 (Stack)
+				branchCondition = readVariable(var) > operandEvaluatedValuesBufSigned[1];
+				break;
+			case and:
+				storeVal = operandEvaluatedValuesBufUnsigned[0] & operandEvaluatedValuesBufUnsigned[1];
 				break;
 			//8.4 Comparison and jumps
 			case jz:
-				branchCondition = operandEvaluatedValuesBuf[0] == 0;
+				branchCondition = operandEvaluatedValuesBufUnsigned[0] == 0;
 				break;
 			case je:
-				int compareTo = operandEvaluatedValuesBuf[0];
+				int compareTo = operandEvaluatedValuesBufUnsigned[0];
 				branchCondition = false;
 				for(int i = 1; i < currentInstr.operandCount; i ++)
-					if(compareTo == operandEvaluatedValuesBuf[i])
+					if(compareTo == operandEvaluatedValuesBufUnsigned[i])
 					{
 						branchCondition = true;
 						break;
 					}
 				break;
 			case jump:
-				//TODO Is the branch offset signed if jump is assembled with operand type SMALL_CONSTANT?
-				//I assume it is not (because it's easier to implement ;))
-				//Sign-extend word to Java integer. For an explanation see below.
-				memAtPC.skipBytes(((operandEvaluatedValuesBuf[0] - 2) << 16) >> 16);
+				//Sign-extend 16 to 32 bit
+				//TODO signed or unsigned?
+				memAtPC.skipBytes(((operandEvaluatedValuesBufSigned[0] - 2) << 16) >> 16);
 				break;
 			//8.5 Call and return, throw and catch
 			case call:
-				int routinePackedAddr = operandEvaluatedValuesBuf[0];
+				int routinePackedAddr = operandEvaluatedValuesBufUnsigned[0];
 				if(routinePackedAddr == 0)
 				{
 					storeVal = 0;
 					break;
 				}
 				doStore = false;//return will do this store
-				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandEvaluatedValuesBuf, 1, false, currentInstr.storeTarget);
+				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandEvaluatedValuesBufUnsigned, 1, false, currentInstr.storeTarget);
 				break;
 			case ret:
-				doReturn(operandEvaluatedValuesBuf[0]);
+				doReturn(operandEvaluatedValuesBufUnsigned[0]);
+				break;
+			case rtrue:
+				doReturn(1);
 				break;
 			//8.6 Objects, attributes, and properties
 			case test_attr:
-				branchCondition = objectTree.getAttribute(operandEvaluatedValuesBuf[0], operandEvaluatedValuesBuf[1]) == 1;
+				branchCondition = objectTree.getAttribute(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1]) == 1;
 				break;
 			case put_prop:
-				objectTree.putPropOrThrow(operandEvaluatedValuesBuf[0], operandEvaluatedValuesBuf[1], operandEvaluatedValuesBuf[2]);
+				objectTree.putPropOrThrow(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1], operandEvaluatedValuesBufUnsigned[2]);
 				break;
 			//8.7 Windows
 			//8.8 Input and output streams
@@ -188,24 +206,31 @@ public class ZInterpreter
 			else if(currentInstr.branchOffset == 1)
 				doReturn(1);
 			else
-				//sign-extend the branch offset (ab)using shifts:
-				//0000 0000  0000 0000  0011 1111  1111 1111   highest branch offset (14 bits, signed)
-				//1111 1111  1111 1111  1111 1111  1111 1111   max int (32 bits, signed)
-				//<---18 (32-14) bits---->
+				//Sign-extend 14 to 32 bit
 				memAtPC.skipBytes(((currentInstr.branchOffset - 2) << 18) >> 18);
 		return true;
 	}
-	private int getRawOperandValue(OperandType type, int val)
+	private void putRawOperandValueToBufs(DecodedInstruction currentInstr, int i)
 	{
-		switch(type)
+		int specifiedVal = currentInstr.operandValues[i];
+		switch(currentInstr.operandTypes[i])
 		{
 			case LARGE_CONST:
+				operandEvaluatedValuesBufSigned[i] = specifiedVal;
+				operandEvaluatedValuesBufUnsigned[i] = specifiedVal;
+				break;
 			case SMALL_CONST:
-				return val;
+				//Sign-extend 8 to 16 bit
+				operandEvaluatedValuesBufSigned[i] = ((specifiedVal << 24) >> 24) & 0xFFFF;
+				operandEvaluatedValuesBufUnsigned[i] = specifiedVal;
+				break;
 			case VARIABLE:
-				return readVariable(val);
+				int val = readVariable(specifiedVal);
+				operandEvaluatedValuesBufSigned[i] = val;
+				operandEvaluatedValuesBufUnsigned[i] = val;
+				break;
 			default:
-				throw new IllegalArgumentException("Unknown enum type: " + type);
+				throw new IllegalArgumentException("Unknown enum type: " + currentInstr.operandTypes[i]);
 		}
 	}
 	private int readVariable(int var)
