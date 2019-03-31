@@ -112,6 +112,9 @@ public class ZInterpreter
 		switch(currentInstr.opcode)
 		{
 			//8.2 Reading and writing memory
+			case store:
+				writeVariable(operandEvaluatedValuesBuf[0], operandEvaluatedValuesBuf[1]);
+				break;
 			case loadw:
 				storeVal = mem.readWord(operandEvaluatedValuesBuf[0] + (operandEvaluatedValuesBuf[1] << 1));
 				break;
@@ -160,6 +163,9 @@ public class ZInterpreter
 				doReturn(operandEvaluatedValuesBuf[0]);
 				break;
 			//8.6 Objects, attributes, and properties
+			case test_attr:
+				branchCondition = objectTree.getAttribute(operandEvaluatedValuesBuf[0], operandEvaluatedValuesBuf[1]) == 1;
+				break;
 			case put_prop:
 				objectTree.putPropOrThrow(operandEvaluatedValuesBuf[0], operandEvaluatedValuesBuf[1], operandEvaluatedValuesBuf[2]);
 				break;
