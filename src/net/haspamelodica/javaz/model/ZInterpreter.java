@@ -121,10 +121,17 @@ public class ZInterpreter
 				storeVal = mem.readWord(operandEvaluatedValuesBufUnsigned[0] + (operandEvaluatedValuesBufUnsigned[1] << 1));
 				break;
 			case storew:
+				//TODO enforce header access rules
 				dynamicMem.writeWord(operandEvaluatedValuesBufUnsigned[0] + (operandEvaluatedValuesBufUnsigned[1] << 1), operandEvaluatedValuesBufUnsigned[2]);
 				break;
 			case loadb:
 				storeVal = mem.readByte(operandEvaluatedValuesBufUnsigned[0] + operandEvaluatedValuesBufUnsigned[1]);
+				break;
+			case push:
+				stack.push(operandEvaluatedValuesBufUnsigned[0]);
+				break;
+			case pull_V15:
+				writeVariable(operandEvaluatedValuesBufUnsigned[0], stack.pop());
 				break;
 			//8.3 Arithmetic
 			case add:
@@ -133,13 +140,28 @@ public class ZInterpreter
 			case sub:
 				storeVal = operandEvaluatedValuesBufUnsigned[0] - operandEvaluatedValuesBufUnsigned[1];
 				break;
-			case inc_chk://inc_jg in zmach06.pdf
+			case mul:
+				storeVal = operandEvaluatedValuesBufUnsigned[0] * operandEvaluatedValuesBufUnsigned[1];
+				break;
+			case inc:
 				int var = operandEvaluatedValuesBufUnsigned[0];
+				writeVariable(var, readVariable(var) + 1);
+				break;
+			case inc_chk://inc_jg in zmach06.pdf
+				var = operandEvaluatedValuesBufUnsigned[0];
 				int oldVal = readVariable(var);
 				writeVariable(var, oldVal + 1);
 				//TODO read again or use old value?
 				//Makes a difference for variable 0 (Stack)
 				branchCondition = readVariable(var) > operandEvaluatedValuesBufSigned[1];
+				break;
+			case dec_chk://dec_jl in zmach06.pdf
+				var = operandEvaluatedValuesBufUnsigned[0];
+				oldVal = readVariable(var);
+				writeVariable(var, oldVal - 1);
+				//TODO read again or use old value?
+				//Makes a difference for variable 0 (Stack)
+				branchCondition = readVariable(var) < operandEvaluatedValuesBufSigned[1];
 				break;
 			case and:
 				storeVal = operandEvaluatedValuesBufUnsigned[0] & operandEvaluatedValuesBufUnsigned[1];
@@ -157,6 +179,19 @@ public class ZInterpreter
 						branchCondition = true;
 						break;
 					}
+				break;
+			case jl:
+				branchCondition = operandEvaluatedValuesBufUnsigned[0] < operandEvaluatedValuesBufUnsigned[1];
+				break;
+			case jg:
+				branchCondition = operandEvaluatedValuesBufUnsigned[0] > operandEvaluatedValuesBufUnsigned[1];
+				break;
+			case jin:
+				branchCondition = objectTree.getParent(operandEvaluatedValuesBufUnsigned[0]) == operandEvaluatedValuesBufUnsigned[1];
+				break;
+			case test:
+				int mask = operandEvaluatedValuesBufUnsigned[1];
+				branchCondition = (operandEvaluatedValuesBufUnsigned[0] & mask) == mask;
 				break;
 			case jump:
 				//Sign-extend 16 to 32 bit
@@ -180,12 +215,33 @@ public class ZInterpreter
 			case rtrue:
 				doReturn(1);
 				break;
+			case rfalse:
+				doReturn(0);
+				break;
+			case ret_popped://ret_pulled in zmach06.pdf
+				doReturn(readVariable(0));
+				break;
 			//8.6 Objects, attributes, and properties
+			case get_child:
+				storeVal = objectTree.getChild(operandEvaluatedValuesBufUnsigned[0]);
+				break;
+			case get_parent:
+				storeVal = objectTree.getParent(operandEvaluatedValuesBufUnsigned[0]);
+				break;
+			case insert_obj:
+				objectTree.insertObj(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1]);
+				break;
 			case test_attr:
 				branchCondition = objectTree.getAttribute(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1]) == 1;
 				break;
+			case set_attr:
+				objectTree.setAttribute(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1], 1);
+				break;
 			case put_prop:
 				objectTree.putPropOrThrow(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1], operandEvaluatedValuesBufUnsigned[2]);
+				break;
+			case get_prop:
+				storeVal = objectTree.getPropOrDefault(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1]);
 				break;
 			//8.7 Windows
 			//8.8 Input and output streams
