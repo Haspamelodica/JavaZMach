@@ -122,69 +122,74 @@ public class ZInterpreter
 
 		boolean branchCondition = false;
 
+		int o0U = operandEvaluatedValuesBufUnsigned[0];
+		int o1U = operandEvaluatedValuesBufUnsigned[1];
+		int o2U = operandEvaluatedValuesBufUnsigned[2];
+		int o0S = operandEvaluatedValuesBufSigned[0];
+		int o1S = operandEvaluatedValuesBufSigned[1];
 		//Opcode ordering and section numbering according to zmach06e.pdf
 		//Source: http://mirror.ifarchive.org/indexes/if-archiveXinfocomXinterpretersXspecificationXzspec02.html
 		switch(currentInstr.opcode)
 		{
 			//8.2 Reading and writing memory
 			case store:
-				writeVariable(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1]);
+				writeVariable(o0U, o1U);
 				break;
 			case loadw:
-				storeVal = mem.readWord(operandEvaluatedValuesBufUnsigned[0] + (operandEvaluatedValuesBufUnsigned[1] << 1));
+				storeVal = mem.readWord(o0U + (o1U << 1));
 				break;
 			case storew:
 				//TODO enforce header access rules
-				dynamicMem.writeWord(operandEvaluatedValuesBufUnsigned[0] + (operandEvaluatedValuesBufUnsigned[1] << 1), operandEvaluatedValuesBufUnsigned[2]);
+				dynamicMem.writeWord(o0U + (o1U << 1), o2U);
 				break;
 			case loadb:
-				storeVal = mem.readByte(operandEvaluatedValuesBufUnsigned[0] + operandEvaluatedValuesBufUnsigned[1]);
+				storeVal = mem.readByte(o0U + o1U);
 				break;
 			case push:
-				stack.push(operandEvaluatedValuesBufUnsigned[0]);
+				stack.push(o0U);
 				break;
 			case pull_V15:
-				writeVariable(operandEvaluatedValuesBufUnsigned[0], stack.pop());
+				writeVariable(o0U, stack.pop());
 				break;
 			//8.3 Arithmetic
 			case add:
-				storeVal = operandEvaluatedValuesBufUnsigned[0] + operandEvaluatedValuesBufUnsigned[1];
+				storeVal = o0U + o1U;
 				break;
 			case sub:
-				storeVal = operandEvaluatedValuesBufUnsigned[0] - operandEvaluatedValuesBufUnsigned[1];
+				storeVal = o0U - o1U;
 				break;
 			case mul:
-				storeVal = operandEvaluatedValuesBufUnsigned[0] * operandEvaluatedValuesBufUnsigned[1];
+				storeVal = o0U * o1U;
 				break;
 			case inc:
-				int var = operandEvaluatedValuesBufUnsigned[0];
+				int var = o0U;
 				writeVariable(var, readVariable(var) + 1);
 				break;
 			case inc_chk://inc_jg in zmach06.pdf
-				var = operandEvaluatedValuesBufUnsigned[0];
+				var = o0U;
 				int oldVal = readVariable(var);
 				writeVariable(var, oldVal + 1);
 				//TODO read again or use old value?
 				//Makes a difference for variable 0 (Stack)
-				branchCondition = readVariable(var) > operandEvaluatedValuesBufSigned[1];
+				branchCondition = readVariable(var) > o1S;
 				break;
 			case dec_chk://dec_jl in zmach06.pdf
-				var = operandEvaluatedValuesBufUnsigned[0];
+				var = o0U;
 				oldVal = readVariable(var);
 				writeVariable(var, oldVal - 1);
 				//TODO read again or use old value?
 				//Makes a difference for variable 0 (Stack)
-				branchCondition = readVariable(var) < operandEvaluatedValuesBufSigned[1];
+				branchCondition = readVariable(var) < o1S;
 				break;
 			case and:
-				storeVal = operandEvaluatedValuesBufUnsigned[0] & operandEvaluatedValuesBufUnsigned[1];
+				storeVal = o0U & o1U;
 				break;
 			//8.4 Comparison and jumps
 			case jz:
-				branchCondition = operandEvaluatedValuesBufUnsigned[0] == 0;
+				branchCondition = o0U == 0;
 				break;
 			case je:
-				int compareTo = operandEvaluatedValuesBufUnsigned[0];
+				int compareTo = o0U;
 				branchCondition = false;
 				for(int i = 1; i < currentInstr.operandCount; i ++)
 					if(compareTo == operandEvaluatedValuesBufUnsigned[i])
@@ -194,26 +199,26 @@ public class ZInterpreter
 					}
 				break;
 			case jl:
-				branchCondition = operandEvaluatedValuesBufUnsigned[0] < operandEvaluatedValuesBufUnsigned[1];
+				branchCondition = o0U < o1U;
 				break;
 			case jg:
-				branchCondition = operandEvaluatedValuesBufUnsigned[0] > operandEvaluatedValuesBufUnsigned[1];
+				branchCondition = o0U > o1U;
 				break;
 			case jin:
-				branchCondition = objectTree.getParent(operandEvaluatedValuesBufUnsigned[0]) == operandEvaluatedValuesBufUnsigned[1];
+				branchCondition = objectTree.getParent(o0U) == o1U;
 				break;
 			case test:
-				int mask = operandEvaluatedValuesBufUnsigned[1];
-				branchCondition = (operandEvaluatedValuesBufUnsigned[0] & mask) == mask;
+				int mask = o1U;
+				branchCondition = (o0U & mask) == mask;
 				break;
 			case jump:
 				//Sign-extend 16 to 32 bit
 				//TODO signed or unsigned?
-				memAtPC.skipBytes(((operandEvaluatedValuesBufSigned[0] - 2) << 16) >> 16);
+				memAtPC.skipBytes(((o0S - 2) << 16) >> 16);
 				break;
 			//8.5 Call and return, throw and catch
 			case call:
-				int routinePackedAddr = operandEvaluatedValuesBufUnsigned[0];
+				int routinePackedAddr = o0U;
 				if(routinePackedAddr == 0)
 				{
 					storeVal = 0;
@@ -223,7 +228,7 @@ public class ZInterpreter
 				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandEvaluatedValuesBufUnsigned, 1, false, currentInstr.storeTarget);
 				break;
 			case ret:
-				doReturn(operandEvaluatedValuesBufUnsigned[0]);
+				doReturn(o0U);
 				break;
 			case rtrue:
 				doReturn(1);
@@ -236,31 +241,31 @@ public class ZInterpreter
 				break;
 			//8.6 Objects, attributes, and properties
 			case get_child:
-				storeVal = objectTree.getChild(operandEvaluatedValuesBufUnsigned[0]);
+				storeVal = objectTree.getChild(o0U);
 				break;
 			case get_parent:
-				storeVal = objectTree.getParent(operandEvaluatedValuesBufUnsigned[0]);
+				storeVal = objectTree.getParent(o0U);
 				break;
 			case insert_obj:
-				objectTree.insertObj(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1]);
+				objectTree.insertObj(o0U, o1U);
 				break;
 			case test_attr:
-				branchCondition = objectTree.getAttribute(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1]) == 1;
+				branchCondition = objectTree.getAttribute(o0U, o1U) == 1;
 				break;
 			case set_attr:
-				objectTree.setAttribute(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1], 1);
+				objectTree.setAttribute(o0U, o1U, 1);
 				break;
 			case put_prop:
-				objectTree.putPropOrThrow(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1], operandEvaluatedValuesBufUnsigned[2]);
+				objectTree.putPropOrThrow(o0U, o1U, o2U);
 				break;
 			case get_prop:
-				storeVal = objectTree.getPropOrDefault(operandEvaluatedValuesBufUnsigned[0], operandEvaluatedValuesBufUnsigned[1]);
+				storeVal = objectTree.getPropOrDefault(o0U, o1U);
 				break;
 			//8.7 Windows
 			//8.8 Input and output streams
 			case print_char:
 				//TODO print to all output streams except 4
-				ioCard.printZSCII(operandEvaluatedValuesBufUnsigned[0]);
+				ioCard.printZSCII(o0U);
 				break;
 			case new_line:
 				ioCard.printZSCII(13);//TODO very wrong!
@@ -269,14 +274,14 @@ public class ZInterpreter
 				textConvFromPC.decode(ioCard::printZSCII);
 				break;
 			case print_num:
-				int num = operandEvaluatedValuesBufSigned[0];
+				int num = o0S;
 				//Sign-extend 16 to 32 bit
 				String numStr = String.valueOf((num << 16) >> 16);
 				for(int i = 0; i < numStr.length(); i ++)
 					ioCard.printZSCII(numStr.charAt(i));
 				break;
 			case print_obj:
-				textConvSeqMem.setAddress(objectTree.getObjectNameLoc(operandEvaluatedValuesBufUnsigned[0]));
+				textConvSeqMem.setAddress(objectTree.getObjectNameLoc(o0U));
 				textConv.decode(ioCard::printZSCII);
 				break;
 			//8.9 Input
@@ -300,10 +305,10 @@ public class ZInterpreter
 				memAtPC.skipBytes(((currentInstr.branchOffset - 2) << 18) >> 18);
 		return true;
 	}
-	private void putRawOperandValueToBufs(DecodedInstruction currentInstr, int i)
+	private void putRawOperandValueToBufs(DecodedInstruction instr, int i)
 	{
-		int specifiedVal = currentInstr.operandValues[i];
-		switch(currentInstr.operandTypes[i])
+		int specifiedVal = instr.operandValues[i];
+		switch(instr.operandTypes[i])
 		{
 			case LARGE_CONST:
 				operandEvaluatedValuesBufSigned[i] = specifiedVal;
@@ -320,7 +325,7 @@ public class ZInterpreter
 				operandEvaluatedValuesBufUnsigned[i] = val;
 				break;
 			default:
-				throw new IllegalArgumentException("Unknown enum type: " + currentInstr.operandTypes[i]);
+				throw new IllegalArgumentException("Unknown enum type: " + instr.operandTypes[i]);
 		}
 	}
 	private int readVariable(int var)
