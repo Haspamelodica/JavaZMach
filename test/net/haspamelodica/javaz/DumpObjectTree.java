@@ -26,30 +26,54 @@ public class DumpObjectTree
 		tree.reset();
 		for(int objNumber = 1; objNumber < 255; objNumber ++)
 			if(tree.getParent(objNumber) == 0)
-				printObjTree(tree, objNumber, textConvSeqMem, textConv);
+				printObjTree(version, tree, objNumber, textConvSeqMem, textConv);
 	}
-	private static void printObjTree(ObjectTree tree, int topLevelObjNumber, SequentialMemoryAccess textConvSeqMem, ZCharsToZSCIIConverter textConv)
+	private static void printObjTree(int version, ObjectTree tree, int topLevelObjNumber, SequentialMemoryAccess seqMem, ZCharsToZSCIIConverter textConv)
 	{
 		boolean[] hasSiblingsStack = new boolean[255];
 		for(int objNumber = topLevelObjNumber, depth = 0; objNumber != 0;)
 		{
-			for(int i = 0; i < depth - 1; i ++)
-				System.out.print(hasSiblingsStack[i] ? " |" : "  ");
-			if(depth > 0)
-				System.out.print(" +");
+			printLineStart(hasSiblingsStack, depth, true);
 			System.out.print(objNumber);
 			System.out.print(" \"");
 			if(tree.getObjectNameWords(objNumber) != 0)
 			{
-				textConvSeqMem.setAddress(tree.getObjectNameLoc(objNumber));
+				seqMem.setAddress(tree.getObjectNameLoc(objNumber));
 				textConv.decode(zsciiChar -> System.out.print((char) zsciiChar));
 			}
 			System.out.print('"');
 			System.out.println();
+
 			int child = tree.getChild(objNumber);
 			int sibling = tree.getSibling(objNumber);
 			if(depth > 0)
 				hasSiblingsStack[depth - 1] = sibling != 0;
+			hasSiblingsStack[depth] = child != 0;
+
+			depth ++;
+
+			printLineStart(hasSiblingsStack, depth, false);
+			System.out.print(" attrs:");
+			for(int attrNum = version > 3 ? 48 : 32; attrNum >= 0; attrNum --)
+				if(tree.getAttribute(objNumber, attrNum) == 1)
+					System.out.printf(" %2d", attrNum);
+			System.out.println();
+
+
+			for(int propAddr = tree.getFirstPropAddr(objNumber); propAddr != -1; propAddr = tree.getNextPropAddr(propAddr))
+			{
+				int propNumber = tree.getPropNumber(propAddr);
+				int propSize = tree.getPropSize(propAddr);
+				printLineStart(hasSiblingsStack, depth, false);
+				System.out.printf(" prop %2d:", propNumber);
+				seqMem.setAddress(propAddr);
+				for(int i = 0; i < propSize; i ++)
+					System.out.printf(" 0x%02x", seqMem.readNextByte());
+				System.out.println();
+			}
+
+			depth --;
+
 			if(child != 0)
 			{
 				objNumber = child;
@@ -67,5 +91,12 @@ public class DumpObjectTree
 					objNumber = tree.getSibling(objNumber);
 			}
 		}
+	}
+	private static void printLineStart(boolean[] hasSiblingsStack, int depth, boolean isFirstLineForThisObject)
+	{
+		for(int i = 0; i < depth - 1; i ++)
+			System.out.print(hasSiblingsStack[i] ? " |" : "  ");
+		if(depth > 0)
+			System.out.print(isFirstLineForThisObject ? " +" : hasSiblingsStack[depth - 1] ? " |" : "  ");
 	}
 }

@@ -82,7 +82,7 @@ public class ZInterpreter
 		else
 		{
 			stack.pushCallFrame(-1, 0, variablesInitialValuesBuf, 0, true, 0);
-			memAtPC.setAddress(headerParser.getField(InitialPCLoc));
+			memAtPC.setAddress(headerParser.getField(InitialPCLoc));//TODO also versions 7-8?
 		}
 		if(DEBUG_SYSOUTS)
 			System.out.println("Reset complete!");
@@ -160,6 +160,9 @@ public class ZInterpreter
 				doReturn(operandEvaluatedValuesBuf[0]);
 				break;
 			//8.6 Objects, attributes, and properties
+			case put_prop:
+				objectTree.putPropOrThrow(operandEvaluatedValuesBuf[0], operandEvaluatedValuesBuf[1], operandEvaluatedValuesBuf[2]);
+				break;
 			//8.7 Windows
 			//8.8 Input and output streams
 			//8.9 Input
