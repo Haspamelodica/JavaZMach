@@ -38,7 +38,7 @@ public class ZInterpreter
 
 	private int	r_o_8;
 	private int	s_o_8;
-	private int	globalVariablesTableLoc;
+	private int	globalVariablesOffset;
 
 	private final DecodedInstruction	currentInstr;
 	private final int[]					variablesInitialValuesBuf;
@@ -77,7 +77,7 @@ public class ZInterpreter
 			r_o_8 = 8 * headerParser.getField(RoutinesOffLoc);
 			s_o_8 = 8 * headerParser.getField(StringsOffLoc);
 		}
-		globalVariablesTableLoc = headerParser.getField(GlobalVarTableLocLoc);
+		globalVariablesOffset = headerParser.getField(GlobalVarTableLocLoc) - 0x20;
 		objectTree.reset();
 		if(version == 6)
 			doCallTo(headerParser.getField(MainLocLoc), 0, null, 0, true, 0);
@@ -240,7 +240,7 @@ public class ZInterpreter
 		else if(var > 0 && var < 0x10)
 			return stack.readLocalVariable(var);
 		else
-			return dynamicMem.readWord(globalVariablesTableLoc + var - 0x10);
+			return dynamicMem.readWord(globalVariablesOffset + (var << 1));
 	}
 	private void writeVariable(int var, int val)
 	{
@@ -249,7 +249,7 @@ public class ZInterpreter
 		else if(var > 0 && var < 0x10)
 			stack.writeLocalVariable(var, val);
 		else
-			dynamicMem.writeWord(globalVariablesTableLoc + var - 0x10, val);
+			dynamicMem.writeWord(globalVariablesOffset + (var << 1), val);
 	}
 
 	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget)
