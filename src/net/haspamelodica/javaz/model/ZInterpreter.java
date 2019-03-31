@@ -12,16 +12,19 @@ import java.util.Arrays;
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.model.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.model.instructions.InstructionDecoder;
-import net.haspamelodica.javaz.model.instructions.OperandType;
 import net.haspamelodica.javaz.model.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.model.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.model.memory.WritableMemory;
 import net.haspamelodica.javaz.model.objects.ObjectTree;
 import net.haspamelodica.javaz.model.stack.CallStack;
+import net.haspamelodica.javaz.model.text.ZCharsSeqMemUnpacker;
+import net.haspamelodica.javaz.model.text.ZCharsToZSCIIConverter;
+import net.haspamelodica.javaz.model.ui.IOCard;
+import net.haspamelodica.javaz.model.ui.VideoCardDefinition;
 
 public class ZInterpreter
 {
-	private static final boolean DEBUG_SYSOUTS = false;
+	private static boolean DEBUG_SYSOUTS = false;
 
 	private final int version;
 
@@ -35,6 +38,10 @@ public class ZInterpreter
 	private final SequentialMemoryAccess	memAtPC;
 	private final InstructionDecoder		instrDecoder;
 	private final ObjectTree				objectTree;
+	private final SequentialMemoryAccess	textConvSeqMem;
+	private final ZCharsToZSCIIConverter	textConv;
+	private final ZCharsToZSCIIConverter	textConvFromPC;
+	private final IOCard					ioCard;
 
 	private int	r_o_8;
 	private int	s_o_8;
@@ -45,11 +52,11 @@ public class ZInterpreter
 	private final int[]					operandEvaluatedValuesBufSigned;
 	private final int[]					operandEvaluatedValuesBufUnsigned;
 
-	public ZInterpreter(GlobalConfig config, WritableMemory dynamicMem, ReadOnlyMemory mem)
+	public ZInterpreter(GlobalConfig config, WritableMemory dynamicMem, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
 	{
-		this(config, -1, dynamicMem, mem);
+		this(config, -1, dynamicMem, mem, vCardDef);
 	}
-	public ZInterpreter(GlobalConfig config, int versionOverride, WritableMemory dynamicMem, ReadOnlyMemory mem)
+	public ZInterpreter(GlobalConfig config, int versionOverride, WritableMemory dynamicMem, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
 	{
 		this.headerParser = new HeaderParser(dynamicMem);
 		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(VersionLoc);
@@ -63,6 +70,10 @@ public class ZInterpreter
 		this.memAtPC = new SequentialMemoryAccess(mem);
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
 		this.objectTree = new ObjectTree(config, version, headerParser, dynamicMem);
+		this.textConvSeqMem = new SequentialMemoryAccess(mem);
+		this.textConv = new ZCharsToZSCIIConverter(config, version, headerParser, mem, new ZCharsSeqMemUnpacker(textConvSeqMem));
+		this.textConvFromPC = new ZCharsToZSCIIConverter(config, version, headerParser, mem, new ZCharsSeqMemUnpacker(memAtPC));
+		this.ioCard = new IOCard(config, version, headerParser, mem, vCardDef);
 
 		this.currentInstr = new DecodedInstruction();
 		this.variablesInitialValuesBuf = new int[16];
@@ -79,6 +90,8 @@ public class ZInterpreter
 		}
 		globalVariablesOffset = headerParser.getField(GlobalVarTableLocLoc) - 0x20;
 		objectTree.reset();
+		textConv.reset();
+		textConvFromPC.reset();
 		if(version == 6)
 			doCallTo(headerParser.getField(MainLocLoc), 0, null, 0, true, 0);
 		else
@@ -245,6 +258,27 @@ public class ZInterpreter
 				break;
 			//8.7 Windows
 			//8.8 Input and output streams
+			case print_char:
+				//TODO print to all output streams except 4
+				ioCard.printZSCII(operandEvaluatedValuesBufUnsigned[0]);
+				break;
+			case new_line:
+				ioCard.printZSCII(13);//TODO very wrong!
+				break;
+			case print:
+				textConvFromPC.decode(ioCard::printZSCII);
+				break;
+			case print_num:
+				int num = operandEvaluatedValuesBufSigned[0];
+				//Sign-extend 16 to 32 bit
+				String numStr = String.valueOf((num << 16) >> 16);
+				for(int i = 0; i < numStr.length(); i ++)
+					ioCard.printZSCII(numStr.charAt(i));
+				break;
+			case print_obj:
+				textConvSeqMem.setAddress(objectTree.getObjectNameLoc(operandEvaluatedValuesBufUnsigned[0]));
+				textConv.decode(ioCard::printZSCII);
+				break;
 			//8.9 Input
 			//8.10 Character based output
 			//8.11 Miscellaneous screen output
