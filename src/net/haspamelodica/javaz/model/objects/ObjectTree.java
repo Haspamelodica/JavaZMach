@@ -63,6 +63,36 @@ public class ObjectTree
 		mem.writeByte(objAddress + attributeByte, (oldVal & ~attributeBitMask) | attributeBitMask);
 	}
 
+	public void insertObj(int objChild, int objNewParent)
+	{
+		removeObj(objChild);
+		int objOldFirstChild = getChild(objNewParent);
+		setChild(objNewParent, objChild);
+		setSibling(objChild, objOldFirstChild);
+	}
+	public void removeObj(int objNumber)
+	{
+		int oldParent = getParent(objNumber);
+		int sibling = getSibling(objNumber);
+		if(oldParent == 0)
+			return;
+		if(getChild(oldParent) == objNumber)
+			setChild(oldParent, sibling);
+		else
+			setSibling(getPreviousSibling(objNumber), sibling);
+		setParent(objNumber, 0);
+	}
+	private int getPreviousSibling(int objNumber)
+	{
+		int sibling = getChild(getParent(objNumber));
+		int previousSibling = 0;
+		while(sibling != objNumber)
+		{
+			previousSibling = sibling;
+			sibling = getSibling(sibling);
+		}
+		return previousSibling;
+	}
 	public int getParent(int objNumber)
 	{
 		int objAddress = getObjAddress(objNumber);
