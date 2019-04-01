@@ -24,7 +24,7 @@ import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
 
 public class ZInterpreter
 {
-	private static boolean DEBUG_SYSOUTS = false;
+	private static final boolean DEBUG_SYSOUTS = false;
 
 	private final int version;
 
@@ -228,7 +228,10 @@ public class ZInterpreter
 				memAtPC.skipBytes(((o0S - 2) << 16) >> 16);
 				break;
 			//8.5 Call and return, throw and catch
-			case call:
+			case call_1s://call_f0 in zmach06e.pdf
+			case call_1n://call_p0 in zmach06e.pdf
+			case call://call_fv in zmach06e.pdf
+			case call_vs://call_fv in zmach06e.pdf
 				doStore = false;//return will do this store
 				int argCount = currentInstr.operandCount - 1;
 				boolean discardRetVal = !currentInstr.opcode.isStoreOpcode;
