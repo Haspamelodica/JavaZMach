@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import net.haspamelodica.javaz.model.ZInterpreter;
-import net.haspamelodica.javaz.model.memory.WritableFixedSizeMemory;
-import net.haspamelodica.javaz.model.ui.console.ConsoleVideoCard;
+import net.haspamelodica.javaz.core.ZInterpreter;
+import net.haspamelodica.javaz.core.memory.WritableFixedSizeMemory;
+import net.haspamelodica.javaz.ui.console.ConsoleVideoCard;
 
 public class JavaZ
 {

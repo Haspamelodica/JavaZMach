@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import net.haspamelodica.javaz.model.HeaderParser;
-import net.haspamelodica.javaz.model.memory.SequentialMemoryAccess;
-import net.haspamelodica.javaz.model.memory.WritableFixedSizeMemory;
-import net.haspamelodica.javaz.model.objects.ObjectTree;
-import net.haspamelodica.javaz.model.text.ZCharsSeqMemUnpacker;
-import net.haspamelodica.javaz.model.text.ZCharsToZSCIIConverter;
+import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
+import net.haspamelodica.javaz.core.memory.WritableFixedSizeMemory;
+import net.haspamelodica.javaz.core.objects.ObjectTree;
+import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
+import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
 
 public class DumpObjectTree
 {

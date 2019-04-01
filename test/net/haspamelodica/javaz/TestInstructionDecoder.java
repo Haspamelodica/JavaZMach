@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import net.haspamelodica.javaz.model.instructions.DecodedInstruction;
-import net.haspamelodica.javaz.model.instructions.InstructionDecoder;
-import net.haspamelodica.javaz.model.memory.SequentialMemoryAccess;
-import net.haspamelodica.javaz.model.memory.WritableFixedSizeMemory;
+import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
+import net.haspamelodica.javaz.core.instructions.InstructionDecoder;
+import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
+import net.haspamelodica.javaz.core.memory.WritableFixedSizeMemory;
 
 public class TestInstructionDecoder
 {

@@ -1,6 +1,6 @@
 package net.haspamelodica.javaz;
 
-import net.haspamelodica.javaz.model.stack.CallStack;
+import net.haspamelodica.javaz.core.stack.CallStack;
 
 public class TestCallStack
 {
