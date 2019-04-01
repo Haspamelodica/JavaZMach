@@ -62,9 +62,8 @@ public class ObjectTree
 		int attributeBit = ~attribute & 0x7;//equal to 7 - (attribute & 0x7)
 		int attributeByte = attribute >>> 3;
 
-		int attributeBitMask = val << attributeBit;
 		int oldVal = mem.readByte(objAddress + attributeByte);
-		mem.writeByte(objAddress + attributeByte, (oldVal & ~attributeBitMask) | attributeBitMask);
+		mem.writeByte(objAddress + attributeByte, (oldVal & ~(1 << attributeBit)) | val << attributeBit);
 	}
 
 	public void insertObj(int objChild, int objNewParent)
