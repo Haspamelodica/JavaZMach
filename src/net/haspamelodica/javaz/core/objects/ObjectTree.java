@@ -305,8 +305,6 @@ public class ObjectTree
 		while(true)
 		{
 			int currentFirstSizeByte = mem.readByte(currentPropSizeAddr);
-			if(currentFirstSizeByte == 0)
-				return -1;
 			int currentPropNumber = getPropNumberByFirstSizeByte(currentFirstSizeByte);
 			if(currentPropNumber == propNumber)
 				return currentPropSizeAddr;
@@ -319,6 +317,8 @@ public class ObjectTree
 			lastPropNumber = currentPropNumber;
 			int currentPropAddr = currentPropSizeAddr + getPropAddrPropSizeAddrDeltaBySizeByte(currentFirstSizeByte);
 			currentPropSizeAddr = getNextPropSizeAddrByPropAddr(currentPropAddr);
+			if(currentPropSizeAddr == -1)
+				return -1;
 		}
 	}
 	private int getNextPropSizeAddrByPropAddr(int propAddr)
