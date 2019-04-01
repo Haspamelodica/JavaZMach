@@ -162,24 +162,21 @@ public class ZInterpreter
 				storeVal = o0U * o1U;
 				break;
 			case inc:
-				int var = o0U;
-				writeVariable(var, readVariable(var) + 1);
+				writeVariable(o0U, readVariable(o0U) + 1);
 				break;
 			case inc_chk://inc_jg in zmach06.pdf
-				var = o0U;
-				int oldVal = readVariable(var);
-				writeVariable(var, oldVal + 1);
+				int oldVal = readVariable(o0U);
+				writeVariable(o0U, oldVal + 1);
 				//TODO read again or use old value?
 				//Makes a difference for variable 0 (Stack)
-				branchCondition = readVariable(var) > o1S;
+				branchCondition = readVariable(o0U) > o1S;
 				break;
 			case dec_chk://dec_jl in zmach06.pdf
-				var = o0U;
-				oldVal = readVariable(var);
-				writeVariable(var, oldVal - 1);
+				oldVal = readVariable(o0U);
+				writeVariable(o0U, oldVal - 1);
 				//TODO read again or use old value?
 				//Makes a difference for variable 0 (Stack)
-				branchCondition = readVariable(var) < o1S;
+				branchCondition = readVariable(o0U) < o1S;
 				break;
 			case and:
 				storeVal = o0U & o1U;
@@ -189,10 +186,9 @@ public class ZInterpreter
 				branchCondition = o0U == 0;
 				break;
 			case je:
-				int compareTo = o0U;
 				branchCondition = false;
 				for(int i = 1; i < currentInstr.operandCount; i ++)
-					if(compareTo == operandEvaluatedValuesBufUnsigned[i])
+					if(o0U == operandEvaluatedValuesBufUnsigned[i])
 					{
 						branchCondition = true;
 						break;
@@ -208,8 +204,7 @@ public class ZInterpreter
 				branchCondition = objectTree.getParent(o0U) == o1U;
 				break;
 			case test:
-				int mask = o1U;
-				branchCondition = (o0U & mask) == mask;
+				branchCondition = (o0U & o1U) == o1U;
 				break;
 			case jump:
 				//Sign-extend 16 to 32 bit
@@ -218,14 +213,13 @@ public class ZInterpreter
 				break;
 			//8.5 Call and return, throw and catch
 			case call:
-				int routinePackedAddr = o0U;
-				if(routinePackedAddr == 0)
+				if(o0U == 0)
 				{
 					storeVal = 0;
 					break;
 				}
 				doStore = false;//return will do this store
-				doCallTo(routinePackedAddr, currentInstr.operandCount - 1, operandEvaluatedValuesBufUnsigned, 1, false, currentInstr.storeTarget);
+				doCallTo(o0U, currentInstr.operandCount - 1, operandEvaluatedValuesBufUnsigned, 1, false, currentInstr.storeTarget);
 				break;
 			case ret:
 				doReturn(o0U);
@@ -268,7 +262,8 @@ public class ZInterpreter
 				ioCard.printZSCII(o0U);
 				break;
 			case new_line:
-				ioCard.printZSCII(13);//TODO very wrong!
+				//TODO very wrong!
+				ioCard.printZSCII(13);
 				break;
 			case print:
 				textConvFromPC.decode(ioCard::printZSCII);
