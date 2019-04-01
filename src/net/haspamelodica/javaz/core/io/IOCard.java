@@ -126,7 +126,7 @@ public class IOCard
 	{
 		WindowPropsAttrs properties = currentWindow.getProperties();
 		int bufferPrintIndex;
-		if(!extraNL && outputBufferWidth > properties.getProperty(CursorXProp))
+		if(!extraNL && outputBufferWidth > properties.getAttribute(MarginRProp) - properties.getProperty(CursorXProp))
 		{
 			if(firstNonSpaceIndex < 0)
 				firstNonSpaceIndex = outputBufferLength;
@@ -147,7 +147,8 @@ public class IOCard
 			do
 			{
 				//zmach06e.pdf says to use a loop here. This seems wrong.
-				if(outputBufferWidths[bufferPrintIndex] > properties.getAttribute(CursorXProp))
+				if(outputBufferWidths[bufferPrintIndex] > properties.getAttribute(MarginRProp) - properties.getProperty(CursorXProp))
+					//We don't need to set extraNL / we shouldn't, because immediately after this NL a character is showed.
 					currentWindow.newline();
 
 				charDescrBuf.unicodeChar = outputBufferChars[bufferPrintIndex];
