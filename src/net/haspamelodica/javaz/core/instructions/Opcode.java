@@ -34,7 +34,7 @@ public enum Opcode
 	mod/*            */(0x18, OP2, SBT.S__, 1, "mod"),
 	call_2s/*        */(0x19, OP2, SBT.S__, 4, "call_2s"),
 	call_2n/*        */(0x1A, OP2, SBT.___, 5, "call_2n"),
-	set_colour/*     */(0x1B, OP2, SBT.___, 5, "set_colour"),
+	set_color/*      */(0x1B, OP2, SBT.___, 5, "set_color"),
 	throw_/*         */(0x1C, OP2, SBT.___, 5, "throw"),
 
 	jz/*             */(0x00, OP1, SBT._B_, 1, "jz"),
@@ -122,7 +122,7 @@ public enum Opcode
 	restore_undo/*   */(0x0A, EXT, SBT.S__, 5, "restore_undo"),
 	print_unicode/*  */(0x0B, EXT, SBT.___, 5, "print_unicode"),
 	check_unicode/*  */(0x0C, EXT, SBT.S__, 5, "check_unicode"),
-	set_true_colour/**/(0x0D, EXT, SBT.___, 5, "set_true_colour"),
+	set_true_color/* */(0x0D, EXT, SBT.___, 5, "set_true_color"),
 	move_window/*    */(0x10, EXT, SBT.___, 6, "move_window"),
 	window_size/*    */(0x11, EXT, SBT.___, 6, "window_size"),
 	window_style/*   */(0x12, EXT, SBT.___, 6, "window_style"),
