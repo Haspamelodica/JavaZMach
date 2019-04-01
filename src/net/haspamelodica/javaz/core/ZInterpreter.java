@@ -30,6 +30,7 @@ public class ZInterpreter
 
 	private final boolean	dontIgnoreIllegalVariableCount;
 	private final boolean	readMoreThan15VarsForIllegalVariableCount;
+	private final boolean	dontIgnoreDiv0;
 
 	private final HeaderParser				headerParser;
 	private final WritableMemory			dynamicMem;
@@ -64,6 +65,7 @@ public class ZInterpreter
 
 		this.dontIgnoreIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.dont_ignore");
 		this.readMoreThan15VarsForIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.allow_read_more_than_15_vars");
+		this.dontIgnoreDiv0 = config.getBool("interpreter.dont_ignore_div0");
 
 		this.dynamicMem = dynamicMem;
 		this.mem = mem;
@@ -150,6 +152,10 @@ public class ZInterpreter
 			case loadb:
 				storeVal = mem.readByte(o0U + o1U);
 				break;
+			case storeb:
+				//TODO enforce header access rules
+				dynamicMem.writeByte(o0U + o1U, o2U);
+				break;
 			case push:
 				stack.push(o0U);
 				break;
@@ -165,6 +171,11 @@ public class ZInterpreter
 				break;
 			case mul:
 				storeVal = o0U * o1U;
+				break;
+			case div:
+				if(o1S == 0 && dontIgnoreDiv0)
+					throw new ArithmeticException("Division by 0");
+				storeVal = o0S / o1S;
 				break;
 			case inc:
 				writeVariable(o0U, readVariable(o0U) + 1);
@@ -306,6 +317,8 @@ public class ZInterpreter
 			//8.12 Sound, mouse, and menus
 			//8.13 Save, restore, and undo
 			//8.14 Miscellaneous
+			case quit:
+				return false;
 			default:
 				throw new IllegalStateException("Instruction not yet implemented: " + currentInstr.opcode);
 		}
