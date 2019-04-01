@@ -41,6 +41,7 @@ public class ObjectTree
 		//31 / 63 words (property defaults table) minus 6 / 14 bytes (object tree starts with object number 1)
 		objectsOffset = propDefaultTableLoc + (version < 4 ? 53 : 112);
 	}
+
 	/**
 	 * Returns 1 if the given attribute is set, 0 if clear.
 	 */
@@ -68,14 +69,15 @@ public class ObjectTree
 		removeObj(objChild);
 		int objOldFirstChild = getChild(objNewParent);
 		setChild(objNewParent, objChild);
+		setParent(objChild, objNewParent);
 		setSibling(objChild, objOldFirstChild);
 	}
 	public void removeObj(int objNumber)
 	{
 		int oldParent = getParent(objNumber);
-		int sibling = getSibling(objNumber);
 		if(oldParent == 0)
 			return;
+		int sibling = getSibling(objNumber);
 		if(getChild(oldParent) == objNumber)
 			setChild(oldParent, sibling);
 		else
@@ -376,6 +378,8 @@ public class ObjectTree
 	}
 	private int getObjAddress(int objNumber)
 	{
+		if(objNumber < 1 || objNumber > 255)
+			throw new ObjectException("Illegal object number: " + objNumber);
 		return objNumber * (version < 4 ? 9 : 14) + objectsOffset;
 	}
 }
