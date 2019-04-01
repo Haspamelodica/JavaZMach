@@ -14,6 +14,11 @@ public class FramedStack
 	public FramedStack()
 	{
 		this.mem = new short[SIZE_OVERHEAD];
+	}
+
+	public void reset()
+	{
+		this.sp = 0;
 		this.fp = -1;
 	}
 

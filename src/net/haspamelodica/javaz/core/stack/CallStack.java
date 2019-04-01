@@ -11,6 +11,11 @@ public class CallStack
 		stack = new FramedStack();
 	}
 
+	public void reset()
+	{
+		stack.reset();
+	}
+
 	public int pop()
 	{
 		return stack.pop();

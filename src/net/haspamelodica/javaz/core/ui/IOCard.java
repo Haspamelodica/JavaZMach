@@ -23,6 +23,11 @@ public class IOCard
 		this.charDescrBuf = new CharacterDescription();
 	}
 
+	public void reset()
+	{
+		//TODO
+	}
+
 	public void printZSCII(int zsciiChar)
 	{
 		charDescrBuf.unicodeCodepoint = (char) zsciiChar;

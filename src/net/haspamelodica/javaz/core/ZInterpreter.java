@@ -91,9 +91,12 @@ public class ZInterpreter
 			s_o_8 = 8 * headerParser.getField(StringsOffLoc);
 		}
 		globalVariablesOffset = headerParser.getField(GlobalVarTableLocLoc) - 0x20;
+		stack.reset();
 		objectTree.reset();
 		textConv.reset();
 		textConvFromPC.reset();
+		ioCard.reset();
+		//TODO set header fields
 		if(version == 6)
 			doCallTo(headerParser.getField(MainLocLoc), 0, null, 0, true, 0);
 		else
