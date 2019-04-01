@@ -13,7 +13,7 @@ public class ConsoleVideoCard implements VideoCard
 	public void showStatusBar(int locationStartByteAddr, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame)
 	{}
 	@Override
-	public void scrollWindows(int window, int y)
+	public void scrollWindow(int window, int y)
 	{}
 	@Override
 	public void showChar(CharacterDescription charDescr)

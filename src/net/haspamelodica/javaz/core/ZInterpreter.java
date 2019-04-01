@@ -164,14 +164,14 @@ public class ZInterpreter
 			case inc:
 				writeVariable(o0U, readVariable(o0U) + 1);
 				break;
-			case inc_chk://inc_jg in zmach06.pdf
+			case inc_chk://inc_jg in zmach06e.pdf
 				int oldVal = readVariable(o0U);
 				writeVariable(o0U, oldVal + 1);
 				//TODO read again or use old value?
 				//Makes a difference for variable 0 (Stack)
 				branchCondition = readVariable(o0U) > o1S;
 				break;
-			case dec_chk://dec_jl in zmach06.pdf
+			case dec_chk://dec_jl in zmach06e.pdf
 				oldVal = readVariable(o0U);
 				writeVariable(o0U, oldVal - 1);
 				//TODO read again or use old value?
@@ -230,7 +230,7 @@ public class ZInterpreter
 			case rfalse:
 				doReturn(0);
 				break;
-			case ret_popped://ret_pulled in zmach06.pdf
+			case ret_popped://ret_pulled in zmach06e.pdf
 				doReturn(readVariable(0));
 				break;
 			//8.6 Objects, attributes, and properties
