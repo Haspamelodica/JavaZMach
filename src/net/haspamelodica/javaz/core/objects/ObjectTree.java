@@ -19,7 +19,7 @@ public class ObjectTree
 
 	private final int propNumberMask;
 
-	private int	propDefaultTableLoc;
+	private int	propDefaultsOffset;
 	private int	objectsOffset;
 
 	public ObjectTree(GlobalConfig config, int version, HeaderParser headerParser, WritableMemory mem)
@@ -37,7 +37,8 @@ public class ObjectTree
 	}
 	public void reset()
 	{
-		propDefaultTableLoc = headerParser.getField(ObjTableLocLoc);
+		int propDefaultTableLoc = headerParser.getField(ObjTableLocLoc);
+		propDefaultsOffset = propDefaultTableLoc - 2;
 		//31 / 63 words (property defaults table) minus 6 / 14 bytes (object tree starts with object number 1)
 		objectsOffset = propDefaultTableLoc + (version < 4 ? 53 : 112);
 	}
@@ -371,7 +372,7 @@ public class ObjectTree
 	}
 	public int getPropDefault(int propNumber)
 	{
-		return mem.readWord(propDefaultTableLoc + (propNumber << 1));
+		return mem.readWord(propDefaultsOffset + (propNumber << 1));
 	}
 
 	private int getPropertiesTableLoc(int objNumber)

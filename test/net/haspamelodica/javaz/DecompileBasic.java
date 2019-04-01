@@ -29,7 +29,6 @@ public class DecompileBasic
 		textConverter.reset();
 		memSeq.setAddress(header.getField(HeaderParser.InitialPCLoc));
 		memSeq.setAddress(0x535E);//address of Overview example
-		memSeq.setAddress(0x8ee8);//address where ZORK print_paddr interpreter bug probably happens
 		DecodedInstruction instr = new DecodedInstruction();
 		do
 		{
