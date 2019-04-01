@@ -48,10 +48,9 @@ public class DecodedInstruction
 		}
 		if(opcode.isBranchOpcode)
 		{
+			result.append(" ?");
 			if(branchOnConditionFalse)
-				result.append(" ~");
-			else
-				result.append(' ');
+				result.append('~');
 			if(branchOffset == 0)
 				result.append("rfalse");
 			else if(branchOffset == 1)
