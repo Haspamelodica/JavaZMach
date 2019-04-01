@@ -1,4 +1,4 @@
-package net.haspamelodica.javaz.core.ui;
+package net.haspamelodica.javaz.core.io;
 
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.HeaderParser;

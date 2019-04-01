@@ -1,0 +1,165 @@
+package net.haspamelodica.javaz.core.io;
+
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.*;
+
+import java.util.Arrays;
+
+import net.haspamelodica.javaz.GlobalConfig;
+import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
+
+public class IOCard
+{
+	private static final int OUTPUT_BUFFER_OVERHEAD = 20;
+
+	private final int version;
+
+	private final boolean replaceAllSpacesWithExtraNL;
+
+	private final HeaderParser	headerParser;
+	private final VideoCard		videoCard;
+	private final Window[]		windows;
+
+	private boolean	extraNL;
+	private int		firstNonSpaceIndex;
+	private char[]	outputBufferChars;
+	private int[]	outputBufferFonts;
+	private int[]	outputBufferFGs;
+	private int[]	outputBufferBGs;
+	private int[]	outputBufferWidths;
+	private int		outputBufferLength;
+	private int		outputBufferWidth;
+	private Window	currentWindow;
+
+	private final CharacterDescription charDescrBuf;
+
+	public IOCard(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
+	{
+		this.version = version;
+
+		this.replaceAllSpacesWithExtraNL = config.getBool("io.wrapping.replace_all_spaces");
+
+		this.headerParser = headerParser;
+		this.videoCard = vCardDef.create(config, version, headerParser);
+		int windowCount = version < 3 ? 1 : version == 6 ? 8 : 2;
+		this.windows = new Window[windowCount];
+		for(int w = 0; w < windowCount; w ++)
+			windows[w] = videoCard.createWindow();
+
+		this.outputBufferChars = new char[OUTPUT_BUFFER_OVERHEAD];
+		this.outputBufferFonts = new int[OUTPUT_BUFFER_OVERHEAD];
+		this.outputBufferFGs = new int[OUTPUT_BUFFER_OVERHEAD];
+		this.outputBufferBGs = new int[OUTPUT_BUFFER_OVERHEAD];
+		this.outputBufferWidths = new int[OUTPUT_BUFFER_OVERHEAD];
+
+		this.charDescrBuf = new CharacterDescription();
+	}
+
+	public void reset()
+	{
+		extraNL = false;
+		outputBufferLength = 0;
+		firstNonSpaceIndex = -1;
+		currentWindow = windows[0];//TODO is this correct for all versions?
+	}
+
+	public void printZSCII(int zsciiChar)
+	{
+		boolean isSpace = zsciiChar == 9 || zsciiChar == 11 || zsciiChar == 32;
+		if(zsciiChar == 13)
+		{
+			flushBuffer();
+			extraNL = false;
+			currentWindow.newline();
+		} else
+		{
+			WindowPropsAttrs properties = currentWindow.getProperties();
+			//If in V6character 9 is to be output, and the cursor is to the right of the left margin, or ExtraNL
+			//is true, then character 32 is used instead.
+			if(zsciiChar == 9 && (extraNL || properties.getProperty(CursorXProp) > properties.getProperty(MarginLProp)))
+				zsciiChar = 32;
+			if(firstNonSpaceIndex >= 0 && isSpace)
+				flushBuffer();
+			appendToBuffer((char) zsciiChar, isSpace);//TODO proper ZSCII->Unicode translation
+			if(properties.getAttribute(BufferedAttr) == 0)
+				flushBuffer();
+		}
+	}
+	public void showStatusBar()
+	{
+
+	}
+
+	private void appendToBuffer(char unicodeChar, boolean isSpace)
+	{
+		int bufferI = outputBufferLength ++;
+		if(bufferI == outputBufferChars.length)
+		{
+			outputBufferChars = Arrays.copyOf(outputBufferChars, bufferI + OUTPUT_BUFFER_OVERHEAD);
+			outputBufferFonts = Arrays.copyOf(outputBufferFonts, bufferI + OUTPUT_BUFFER_OVERHEAD);
+			outputBufferFGs = Arrays.copyOf(outputBufferFGs, bufferI + OUTPUT_BUFFER_OVERHEAD);
+			outputBufferBGs = Arrays.copyOf(outputBufferBGs, bufferI + OUTPUT_BUFFER_OVERHEAD);
+			outputBufferWidths = Arrays.copyOf(outputBufferWidths, bufferI + OUTPUT_BUFFER_OVERHEAD);
+		}
+		if(!isSpace && firstNonSpaceIndex < 0)
+			firstNonSpaceIndex = bufferI;
+
+		int font = currentWindow.getProperties().getProperty(FontNumProp);
+		int col = currentWindow.getProperties().getProperty(ColorDataProp);
+		int trueFG = videoCard.getTrueColor(col & 0xFF);
+		int trueBG = videoCard.getTrueColor(col >>> 8);
+
+		charDescrBuf.unicodeChar = unicodeChar;
+		charDescrBuf.fontNumber = font;
+		charDescrBuf.trueForegroundColor = trueFG;
+		charDescrBuf.trueBackgroundColor = trueBG;
+		int width = videoCard.getCharWidth(charDescrBuf);
+		outputBufferWidth += width;
+
+		outputBufferChars[bufferI] = unicodeChar;
+		outputBufferFonts[bufferI] = font;
+		outputBufferFGs[bufferI] = trueFG;
+		outputBufferBGs[bufferI] = trueBG;
+		outputBufferWidths[bufferI] = width;
+	}
+	private void flushBuffer()
+	{
+		WindowPropsAttrs properties = currentWindow.getProperties();
+		int bufferPrintIndex;
+		if(!extraNL && outputBufferWidth > properties.getProperty(CursorXProp))
+		{
+			if(firstNonSpaceIndex < 0)
+				firstNonSpaceIndex = outputBufferLength;
+			if(replaceAllSpacesWithExtraNL)
+				bufferPrintIndex = firstNonSpaceIndex;
+			else if(firstNonSpaceIndex > 0)
+				bufferPrintIndex = 1;
+			else
+				bufferPrintIndex = 0;
+			currentWindow.newline();
+			extraNL = true;
+		} else
+			bufferPrintIndex = 0;
+
+		if(bufferPrintIndex < outputBufferLength)
+		{
+			extraNL = false;
+			do
+			{
+				//zmach06e.pdf says to use a loop here. This seems wrong.
+				if(outputBufferWidths[bufferPrintIndex] > properties.getAttribute(CursorXProp))
+					currentWindow.newline();
+
+				charDescrBuf.unicodeChar = outputBufferChars[bufferPrintIndex];
+				charDescrBuf.fontNumber = outputBufferFonts[bufferPrintIndex];
+				charDescrBuf.trueForegroundColor = outputBufferFGs[bufferPrintIndex];
+				charDescrBuf.trueBackgroundColor = outputBufferBGs[bufferPrintIndex];
+				currentWindow.showChar(charDescrBuf);
+				bufferPrintIndex ++;
+			} while(bufferPrintIndex < outputBufferLength);
+		}
+
+		outputBufferLength = 0;
+		firstNonSpaceIndex = -1;
+	}
+}

@@ -12,6 +12,8 @@ import java.util.Arrays;
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.core.instructions.InstructionDecoder;
+import net.haspamelodica.javaz.core.io.IOCard;
+import net.haspamelodica.javaz.core.io.VideoCardDefinition;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.core.memory.WritableMemory;
@@ -19,8 +21,6 @@ import net.haspamelodica.javaz.core.objects.ObjectTree;
 import net.haspamelodica.javaz.core.stack.CallStack;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
-import net.haspamelodica.javaz.core.ui.IOCard;
-import net.haspamelodica.javaz.core.ui.VideoCardDefinition;
 
 public class ZInterpreter
 {
