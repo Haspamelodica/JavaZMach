@@ -51,6 +51,7 @@ public class ZInterpreter
 	private final int[]					variablesInitialValuesBuf;
 	private final int[]					operandEvaluatedValuesBufSigned;
 	private final int[]					operandEvaluatedValuesBufUnsigned;
+	private final StringBuilder			stringBuf;
 
 	public ZInterpreter(GlobalConfig config, WritableMemory dynamicMem, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
 	{
@@ -79,6 +80,7 @@ public class ZInterpreter
 		this.variablesInitialValuesBuf = new int[16];
 		this.operandEvaluatedValuesBufSigned = new int[8];
 		this.operandEvaluatedValuesBufUnsigned = new int[8];
+		this.stringBuf = new StringBuilder();
 	}
 
 	public void reset()
@@ -263,15 +265,22 @@ public class ZInterpreter
 			//8.7 Windows
 			//8.8 Input and output streams
 			case print_char:
-				//TODO print to all output streams except 4
 				ioCard.printZSCII(o0U);
 				break;
 			case new_line:
-				//TODO very wrong!
 				ioCard.printZSCII(13);
 				break;
 			case print:
 				textConvFromPC.decode(ioCard::printZSCII);
+				break;
+			case print_ret://print_rtrue in zmach06e.pdf
+				textConvFromPC.decode(ioCard::printZSCII);
+				ioCard.printZSCII(13);
+				doReturn(1);
+				break;
+			case print_addr:
+				textConvSeqMem.setAddress(o0U);
+				textConv.decode(ioCard::printZSCII);
 				break;
 			case print_paddr:
 				textConvSeqMem.setAddress(packedToByteAddr(o0U, false));
@@ -279,9 +288,10 @@ public class ZInterpreter
 				break;
 			case print_num:
 				//Sign-extend 16 to 32 bit
-				String numStr = String.valueOf((o0S << 16) >> 16);
-				for(int i = 0; i < numStr.length(); i ++)
-					ioCard.printZSCII(numStr.charAt(i));
+				stringBuf.append((o0S << 16) >> 16);
+				for(int i = 0; i < stringBuf.length(); i ++)
+					ioCard.printZSCII(stringBuf.charAt(i));
+				stringBuf.setLength(0);
 				break;
 			case print_obj:
 				textConvSeqMem.setAddress(objectTree.getObjectNameLoc(o0U));
