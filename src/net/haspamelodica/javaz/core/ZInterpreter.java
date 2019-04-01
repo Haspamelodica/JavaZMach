@@ -100,7 +100,7 @@ public class ZInterpreter
 		ioCard.reset();
 		//TODO set header fields
 		if(version == 6)
-			doCallTo(headerParser.getField(MainLocLoc), 0, null, 0, true, 0);
+			doCallTo(headerParser.getField(MainLocLoc), 0, null, 0, true, 0, false);
 		else
 		{
 			stack.pushCallFrame(-1, 0, variablesInitialValuesBuf, 0, true, 0);
@@ -229,13 +229,10 @@ public class ZInterpreter
 				break;
 			//8.5 Call and return, throw and catch
 			case call:
-				if(o0U == 0)
-				{
-					storeVal = 0;
-					break;
-				}
 				doStore = false;//return will do this store
-				doCallTo(o0U, currentInstr.operandCount - 1, operandEvaluatedValuesBufUnsigned, 1, false, currentInstr.storeTarget);
+				int argCount = currentInstr.operandCount - 1;
+				boolean discardRetVal = !currentInstr.opcode.isStoreOpcode;
+				doCallTo(o0U, argCount, operandEvaluatedValuesBufUnsigned, 1, discardRetVal, currentInstr.storeTarget, true);
 				break;
 			case ret:
 				doReturn(o0U);
@@ -376,31 +373,44 @@ public class ZInterpreter
 			dynamicMem.writeWord(globalVariablesOffset + (var << 1), val);
 	}
 
-	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget)
+	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget, boolean callTo0Allowed)
 	{
 		int returnPC = memAtPC.getAddress();
-		memAtPC.setAddress(packedToByteAddr(packedRoutineAddress, true));
-		int specifiedVarCount = memAtPC.readNextByte();
-		int variablesCount;
-		if(specifiedVarCount >>> 4 == 0)//only the lower 4 bit are allowed to be set
-			variablesCount = specifiedVarCount;
-		else if(dontIgnoreIllegalVariableCount)
-			throw new VariableException("Illegal variable count: " + specifiedVarCount);
+		if(packedRoutineAddress == 0)
+			if(callTo0Allowed)
+			{
+				if(!discardReturnValue)
+				{
+					stack.pushCallFrame(returnPC, 0, variablesInitialValuesBuf, 0, false, storeTarget);
+					doReturn(0);
+				}
+			} else
+				throw new ControlFlowException("Call to routine at packed address 0");
 		else
-			variablesCount = 15;//the maximum we can supply
-		suppliedArgumentCount = Math.min(suppliedArgumentCount, variablesCount);//discard last arguments if there are too many
-		if(version < 5)
 		{
-			memAtPC.skipWords(suppliedArgumentCount);//skip overwritten initial values
-			for(int i = suppliedArgumentCount; i < variablesCount; i ++)
-				variablesInitialValuesBuf[i] = memAtPC.readNextWord();
-			if(readMoreThan15VarsForIllegalVariableCount && specifiedVarCount >>> 4 != 0)
-				memAtPC.skipWords(specifiedVarCount - 15);
-		} else
-			Arrays.fill(variablesInitialValuesBuf, suppliedArgumentCount, variablesCount, 0);
-		for(int i = 0; i < suppliedArgumentCount; i ++)
-			variablesInitialValuesBuf[i] = arguments[i + argsOff];
-		stack.pushCallFrame(returnPC, variablesCount, variablesInitialValuesBuf, suppliedArgumentCount, discardReturnValue, storeTarget);
+			memAtPC.setAddress(packedToByteAddr(packedRoutineAddress, true));
+			int specifiedVarCount = memAtPC.readNextByte();
+			int variablesCount;
+			if(specifiedVarCount >>> 4 == 0)//only the lower 4 bit are allowed to be set
+				variablesCount = specifiedVarCount;
+			else if(dontIgnoreIllegalVariableCount)
+				throw new VariableException("Illegal variable count: " + specifiedVarCount);
+			else
+				variablesCount = 15;//the maximum we can supply
+			suppliedArgumentCount = Math.min(suppliedArgumentCount, variablesCount);//discard last arguments if there are too many
+			if(version < 5)
+			{
+				memAtPC.skipWords(suppliedArgumentCount);//skip overwritten initial values
+				for(int i = suppliedArgumentCount; i < variablesCount; i ++)
+					variablesInitialValuesBuf[i] = memAtPC.readNextWord();
+				if(readMoreThan15VarsForIllegalVariableCount && specifiedVarCount >>> 4 != 0)
+					memAtPC.skipWords(specifiedVarCount - 15);
+			} else
+				Arrays.fill(variablesInitialValuesBuf, suppliedArgumentCount, variablesCount, 0);
+			for(int i = 0; i < suppliedArgumentCount; i ++)
+				variablesInitialValuesBuf[i] = arguments[i + argsOff];
+			stack.pushCallFrame(returnPC, variablesCount, variablesInitialValuesBuf, suppliedArgumentCount, discardReturnValue, storeTarget);
+		}
 	}
 	public void doReturn(int returnVal)
 	{
