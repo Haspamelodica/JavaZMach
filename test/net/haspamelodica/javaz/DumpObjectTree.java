@@ -54,7 +54,7 @@ public class DumpObjectTree
 
 			printLineStart(hasSiblingsStack, depth, false);
 			System.out.print(" attrs:");
-			for(int attrNum = version > 3 ? 48 : 32; attrNum >= 0; attrNum --)
+			for(int attrNum = version > 3 ? 47 : 31; attrNum >= 0; attrNum --)
 				if(tree.getAttribute(objNumber, attrNum) == 1)
 					System.out.printf(" %2d", attrNum);
 			System.out.println();
@@ -86,7 +86,7 @@ public class DumpObjectTree
 				{
 					objNumber = tree.getParent(objNumber);
 					depth --;
-				} while(tree.getSibling(objNumber) == 0 && objNumber != 0);
+				} while(objNumber != 0 && tree.getSibling(objNumber) == 0);
 				if(objNumber != 0)
 					objNumber = tree.getSibling(objNumber);
 			}
