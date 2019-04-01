@@ -234,8 +234,13 @@ public class ZInterpreter
 				doReturn(readVariable(0));
 				break;
 			//8.6 Objects, attributes, and properties
+			case get_sibling:
+				storeVal = objectTree.getSibling(o0U);
+				branchCondition = storeVal != 0;
+				break;
 			case get_child:
 				storeVal = objectTree.getChild(o0U);
+				branchCondition = storeVal != 0;
 				break;
 			case get_parent:
 				storeVal = objectTree.getParent(o0U);
@@ -268,10 +273,13 @@ public class ZInterpreter
 			case print:
 				textConvFromPC.decode(ioCard::printZSCII);
 				break;
+			case print_paddr:
+				textConvSeqMem.setAddress(packedToByteAddr(o0U, false));
+				textConv.decode(ioCard::printZSCII);
+				break;
 			case print_num:
-				int num = o0S;
 				//Sign-extend 16 to 32 bit
-				String numStr = String.valueOf((num << 16) >> 16);
+				String numStr = String.valueOf((o0S << 16) >> 16);
 				for(int i = 0; i < numStr.length(); i ++)
 					ioCard.printZSCII(numStr.charAt(i));
 				break;
@@ -344,8 +352,6 @@ public class ZInterpreter
 
 	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget)
 	{
-		if(DEBUG_SYSOUTS)
-			System.out.println("call");
 		int returnPC = memAtPC.getAddress();
 		memAtPC.setAddress(packedToByteAddr(packedRoutineAddress, true));
 		int specifiedVarCount = memAtPC.readNextByte();
@@ -372,8 +378,6 @@ public class ZInterpreter
 	}
 	public void doReturn(int returnVal)
 	{
-		if(DEBUG_SYSOUTS)
-			System.out.println("return");
 		boolean discardReturnValue = stack.getCurrentCallFrameDiscardReturnValue();
 		int storeTarget = stack.getCurrentCallFrameStoreTarget();
 		memAtPC.setAddress(stack.popCallFrame());
