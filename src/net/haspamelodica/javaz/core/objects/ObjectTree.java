@@ -146,77 +146,6 @@ public class ObjectTree
 	{
 		return mem.readByte(getPropertiesTableLoc(objNumber));
 	}
-	//	public int getPropAsWord(int objNumber, int propNumber)
-	//	{
-	//		int propAddr = getPropAddr(objNumber, propNumber);
-	//		if(propAddr == -1)
-	//			return getPropDefault(propNumber);
-	//		return getPropAsWord(propAddr);
-	//	}
-	//	public int getPropAsWord(int propAddr)
-	//	{
-	//		return getPropSize(propAddr) == 1 ? mem.readByte(propAddr) : mem.readWord(propAddr);
-	//	}
-	//	public int getNextProp(int objNumber, int propNumber)
-	//	{
-	//		int propAddr = getPropAddr(objNumber, propNumber);
-	//		int propSize = getPropSize(propAddr);
-	//		int nextPropSizeByte = mem.readByte(propAddr + propSize);
-	//		int nextPropNumber = nextPropSizeByte & sizeByteMaskPropNumber;
-	//		if(nextPropNumber == 0 && nextPropSizeByte != 0 && checkNoProp0)
-	//			throw new ObjectException("Property nubmer 0 illegal");
-	//		return nextPropNumber;
-	//	}
-	//	public int getPropSize(int propAddr)
-	//	{
-	//		int propSizeByte = mem.readByte(propAddr - 1);
-	//		if(version > 3)
-	//			if((propSizeByte & 0x80) == 0)
-	//				return ((propSizeByte & 0x40) >> 6) + 1;//bit 6
-	//			else
-	//				return ((propSizeByte - 1) & 0x3F) + 1;//bits 5-0. For an explanation of -1 and +1 see below.
-	//		else
-	//			return ((propSizeByte & 0xE0) >> 5) + 1;
-	//	}
-	//	public int getPropAddr(int objNumber, int propNumber)
-	//	{
-	//		if((propNumber & ~sizeByteMaskPropNumber) != 0)
-	//			throw new IllegalArgumentException("Invalid property number: " + propNumber);
-	//		int propSizeAddr = getFirstPropSizeAddr(objNumber);
-	//		int lastPropNumber = 0xFF;
-	//		while(true)
-	//		{
-	//			int propSizeByte = mem.readByte(propSizeAddr);
-	//			if(propSizeByte == 0)
-	//				return -1;
-	//
-	//			int currentPropNumber = propSizeByte & sizeByteMaskPropNumber;
-	//
-	//			if(currentPropNumber == 0 && checkNoProp0)
-	//				throw new ObjectException("Property nubmer 0 illegal");
-	//			if(currentPropNumber >= lastPropNumber && checkPropsDescending)
-	//				throw new ObjectException("Properties not in descending order");
-	//			lastPropNumber = currentPropNumber;
-	//
-	//			if(currentPropNumber == propNumber)
-	//				//If version is 4+ and bit 7 of the (first) property size byte is set, a second size byte follows.
-	//				return propSizeAddr + (version > 3 && (propSizeByte & 0x80) != 0 ? 2 : 1);
-	//
-	//			if(version < 4)
-	//				propSizeAddr += ((propSizeByte & 0xE0) >> 5) + 2;//bits 7-5
-	//			else if((propSizeByte & 0x80) == 0)
-	//				propSizeAddr += ((propSizeByte & 0x40) >> 6) + 2;//bit 6
-	//			else
-	//				//"In the second byte, bits 0 to 5 contain the property data length"
-	//				//"A value of 0 as property data length (in the second byte) should be interpreted as a length of 64"
-	//				propSizeAddr += ((mem.readByte(propSizeAddr + 1) - 1) & 0x3F) + 1;//bits 5-0
-	//		}
-	//	}
-	//
-	//	public int getPropDefault(int prop)
-	//	{
-	//		return mem.readWord(propDefaultTableLoc + (prop << 1));
-	//	}
 	public int getPropOrThrow(int objNumber, int propNumber)
 	{
 		int propAddr = getPropAddrOrThrow(objNumber, propNumber);
@@ -345,13 +274,13 @@ public class ObjectTree
 	{
 		if(version > 3)
 			if((lastPropSizeByte & 0x80) == 0)//bit 7
-				return ((lastPropSizeByte & 0x40) >> 6) + 1;//bit 6
+				return ((lastPropSizeByte & 0x40) >>> 6) + 1;//bit 6
 			else
 				//"In the second byte, bits 0 to 5 contain the property data length"
 				//"A value of 0 as property data length (in the second byte) should be interpreted as a length of 64"
 				return ((lastPropSizeByte - 1) & 0x3F) + 1;//bits 5-0
 		else
-			return ((lastPropSizeByte & 0xE0) >> 5) + 1;//bits 7-5
+			return ((lastPropSizeByte & 0xE0) >>> 5) + 1;//bits 7-5
 	}
 	private int getFirstPropSizeAddr(int objNumber)
 	{
