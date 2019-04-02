@@ -1,12 +1,19 @@
 package net.haspamelodica.javaz.core.io;
 
-import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.*;
+import static net.haspamelodica.javaz.core.HeaderParser.StatLineTypeLoc;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.BufferedAttr;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.ColorDataProp;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.CursorXProp;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.FontNumProp;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.MarginLProp;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.MarginRProp;
 
 import java.util.Arrays;
 
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.HeaderParser;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
+import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
 
 public class IOCard
 {
@@ -19,6 +26,8 @@ public class IOCard
 	private final HeaderParser	headerParser;
 	private final VideoCard		videoCard;
 	private final Window[]		windows;
+
+	private boolean isTimeGame;
 
 	private boolean	extraNL;
 	private int		firstNonSpaceIndex;
@@ -57,6 +66,7 @@ public class IOCard
 
 	public void reset()
 	{
+		isTimeGame = version == 3 && headerParser.getField(StatLineTypeLoc) == 1;
 		extraNL = false;
 		outputBufferLength = 0;
 		firstNonSpaceIndex = -1;
@@ -85,9 +95,9 @@ public class IOCard
 				flushBuffer();
 		}
 	}
-	public void showStatusBar()
+	public void showStatusBar(ZCharsToZSCIIConverter locationConv,int scoreOrHours,int turnsOrMinutes)
 	{
-
+		videoCard.showStatusBar(locationConv, scoreOrHours, turnsOrMinutes, isTimeGame);
 	}
 
 	private void appendToBuffer(char unicodeChar, boolean isSpace)

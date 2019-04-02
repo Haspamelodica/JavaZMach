@@ -5,6 +5,7 @@ import net.haspamelodica.javaz.core.HeaderParser;
 import net.haspamelodica.javaz.core.io.CharacterDescription;
 import net.haspamelodica.javaz.core.io.VideoCard;
 import net.haspamelodica.javaz.core.io.Window;
+import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
 
 public class ConsoleVideoCard implements VideoCard
 {
@@ -28,7 +29,7 @@ public class ConsoleVideoCard implements VideoCard
 		return 0;
 	}
 	@Override
-	public void showStatusBar(int locationStartByteAddr, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame)
+	public void showStatusBar(ZCharsToZSCIIConverter locationConv, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame)
 	{}
 
 	@Override
