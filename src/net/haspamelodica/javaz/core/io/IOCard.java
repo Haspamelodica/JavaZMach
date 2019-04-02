@@ -13,6 +13,7 @@ import java.util.Arrays;
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.HeaderParser;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
+import net.haspamelodica.javaz.core.text.UnicodeZSCIIConverter;
 import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
 
 public class IOCard
@@ -23,9 +24,10 @@ public class IOCard
 
 	private final boolean replaceAllSpacesWithExtraNL;
 
-	private final HeaderParser	headerParser;
-	private final VideoCard		videoCard;
-	private final Window[]		windows;
+	private final HeaderParser			headerParser;
+	private final UnicodeZSCIIConverter	unicodeConv;
+	private final VideoCard				videoCard;
+	private final Window[]				windows;
 
 	private boolean isTimeGame;
 
@@ -49,6 +51,7 @@ public class IOCard
 		this.replaceAllSpacesWithExtraNL = config.getBool("io.wrapping.replace_all_spaces");
 
 		this.headerParser = headerParser;
+		this.unicodeConv = new UnicodeZSCIIConverter(config);
 		this.videoCard = vCardDef.create(config, version, headerParser);
 		int windowCount = version < 3 ? 1 : version == 6 ? 8 : 2;
 		this.windows = new Window[windowCount];
@@ -84,18 +87,18 @@ public class IOCard
 		} else
 		{
 			WindowPropsAttrs properties = currentWindow.getProperties();
-			//If in V6character 9 is to be output, and the cursor is to the right of the left margin, or ExtraNL
-			//is true, then character 32 is used instead.
+			//"If in V6character 9 is to be output, and the cursor is to the right of the left margin, or ExtraNL
+			//is true, then character 32 is used instead." - zmach06e.pdf, page 28
 			if(zsciiChar == 9 && (extraNL || properties.getProperty(CursorXProp) > properties.getProperty(MarginLProp)))
 				zsciiChar = 32;
 			if(firstNonSpaceIndex >= 0 && isSpace)
 				flushBuffer();
-			appendToBuffer((char) zsciiChar, isSpace);//TODO proper ZSCII->Unicode translation
+			appendToBuffer(unicodeConv.zsciiToUnicodeNoNL(zsciiChar), isSpace);
 			if(properties.getAttribute(BufferedAttr) == 0)
 				flushBuffer();
 		}
 	}
-	public void showStatusBar(ZCharsToZSCIIConverter locationConv,int scoreOrHours,int turnsOrMinutes)
+	public void showStatusBar(ZCharsToZSCIIConverter locationConv, int scoreOrHours, int turnsOrMinutes)
 	{
 		videoCard.showStatusBar(locationConv, scoreOrHours, turnsOrMinutes, isTimeGame);
 	}
