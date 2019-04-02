@@ -35,7 +35,10 @@ public class UnicodeZSCIIConverter
 		else if(zsciiChar > 31 && zsciiChar < 127)
 			return (char) zsciiChar;
 		else if(dontIgnoreIllegalZSCIIChars)
-			throw new TextException("ZSCII char is undefined for output: " + zsciiChar);
+			if(zsciiChar == 13)
+				throw new IllegalArgumentException("NL (ZSCII 13) given to zsciiToUnicodeNoNL");
+			else
+				throw new TextException("ZSCII char is undefined for output: " + zsciiChar);
 		else
 			return '?';
 	}
