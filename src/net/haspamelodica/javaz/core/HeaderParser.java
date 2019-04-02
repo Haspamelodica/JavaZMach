@@ -10,11 +10,11 @@ public class HeaderParser
 	public static final int	Flags1Loc				= 0x01;
 	/** <code>V5+    IR</code> */
 	public static final int	ColorsAvailLoc			= 0x00_01_01;
-	/** <code>V1-3     </code> */
+	/** <code>V3        </code> */
 	public static final int	StatLineTypeLoc			= 0x01_01_01;
 	/** <code>V6+    IR</code> */
 	public static final int	PicDisplayingAvailLoc	= 0x01_01_01;
-	/** <code>V1-3     </code> */
+	/** <code>V3       </code> */
 	public static final int	StoryfileSplitLoc		= 0x02_01_01;
 	/** <code>V4+    IR</code> */
 	public static final int	BoldfaceAvailLoc		= 0x02_01_01;
@@ -22,15 +22,15 @@ public class HeaderParser
 	public static final int	TandyLoc				= 0x03_01_01;
 	/** <code>V4+    IR</code> */
 	public static final int	ItalicAvailLoc			= 0x03_01_01;
-	/** <code>V1-3   IR</code> */
+	/** <code>V3     IR</code> */
 	public static final int	StatLineNotAvailLoc		= 0x04_01_01;
 	/** <code>V4+    IR</code> */
 	public static final int	FixedSpaceAvailLoc		= 0x04_01_01;
-	/** <code>V1-3   IR</code> */
+	/** <code>V3     IR</code> */
 	public static final int	ScrSplitAvailLoc		= 0x05_01_01;
 	/** <code>V6+    IR</code> */
 	public static final int	SoundFXAvailLoc			= 0x05_01_01;
-	/** <code>V1-3   IR</code> */
+	/** <code>V???   IR</code> */
 	public static final int	VarPitchFontDefaultLoc	= 0x06_01_01;
 	/** <code>V4+    IR</code> */
 	public static final int	TimedKeyInputAvailLoc	= 0x07_01_01;

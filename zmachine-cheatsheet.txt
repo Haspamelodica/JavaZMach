@@ -38,17 +38,17 @@ Rst means the interpreter must set this byte / bit correctly after loading / res
  00    |   | 1+  |   |   |   | Version number. 1 to 6
  01    | . | 1+  | . | . | . | Flags 1
   .0   |   | 5+  |   | * | * | Colors available?
-  .1   |   | 1-3 |   |   |   | Status line type (0=score/turns, 1=hours:mins)
+  .1   |   | 3   |   |   |   | Status line type (0=score/turns, 1=hours:mins)
        |   | 6+  |   | * | * | Picture displaying available?
-  .2   |   | 1-3 |   |   |   | Story file split across two disks?
+  .2   |   | 3   |   |   |   | Story file split across two disks?
        |   | 4+  |   | * | * | Boldface available?
   .3   | * | 3   |   | * |   | Tandy bit (triggers some games to be less offensive)
        |   | 4+  |   | * | * | Italic available?
-  .4   |   | 1-3 |   | * | * | Status line not available?
+  .4   |   | 3   |   | * | * | Status line not available?
        |   | 4+  |   | * | * | Fixed-space style available?
-  .5   |   | 1-3 |   | * | * | Screen splitting available?
+  .5   |   | 3   |   | * | * | Screen splitting available?
        |   | 6+  |   | * | * | Sound effects available?
-  .6   |   | 1-3 |   | * | * | Is a variable-pitch font the default? (Maybe also valid in higher versions)
+  .6   |   | ??? |   | * | * | Is a variable-pitch font the default? (Maybe also valid in higher versions)
   .7   |   | 4+  |   | * | * | Timed keyboard input available?
  02-03 | * | 1+  |   |   |   | Release number
  04-05 |   | 1+  |   |   |   | High memory base (byte address)
