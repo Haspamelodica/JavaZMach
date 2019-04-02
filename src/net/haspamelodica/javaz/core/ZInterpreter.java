@@ -21,6 +21,7 @@ import net.haspamelodica.javaz.core.objects.ObjectTree;
 import net.haspamelodica.javaz.core.stack.CallStack;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
+import net.haspamelodica.javaz.core.text.ZSCIICharStreamReceiver;
 
 public class ZInterpreter
 {
@@ -43,6 +44,7 @@ public class ZInterpreter
 	private final ZCharsToZSCIIConverter	textConv;
 	private final ZCharsToZSCIIConverter	textConvFromPC;
 	private final IOCard					ioCard;
+	private final ZSCIICharStreamReceiver	printZSCIITarget;
 
 	private int	r_o_8;
 	private int	s_o_8;
@@ -77,6 +79,7 @@ public class ZInterpreter
 		this.textConv = new ZCharsToZSCIIConverter(config, version, headerParser, mem, new ZCharsSeqMemUnpacker(textConvSeqMem));
 		this.textConvFromPC = new ZCharsToZSCIIConverter(config, version, headerParser, mem, new ZCharsSeqMemUnpacker(memAtPC));
 		this.ioCard = new IOCard(config, version, headerParser, mem, vCardDef);
+		this.printZSCIITarget = ioCard::printZSCII;
 
 		this.currentInstr = new DecodedInstruction();
 		this.variablesInitialValuesBuf = new int[16];
@@ -285,20 +288,20 @@ public class ZInterpreter
 				ioCard.printZSCII(13);
 				break;
 			case print:
-				textConvFromPC.decode(ioCard::printZSCII);
+				textConvFromPC.decode(printZSCIITarget);
 				break;
 			case print_ret://print_rtrue in zmach06e.pdf
-				textConvFromPC.decode(ioCard::printZSCII);
+				textConvFromPC.decode(printZSCIITarget);
 				ioCard.printZSCII(13);
 				doReturn(1);
 				break;
 			case print_addr:
 				textConvSeqMem.setAddress(o0U);
-				textConv.decode(ioCard::printZSCII);
+				textConv.decode(printZSCIITarget);
 				break;
 			case print_paddr:
 				textConvSeqMem.setAddress(packedToByteAddr(o0U, false));
-				textConv.decode(ioCard::printZSCII);
+				textConv.decode(printZSCIITarget);
 				break;
 			case print_num:
 				//Sign-extend 16 to 32 bit
@@ -309,7 +312,7 @@ public class ZInterpreter
 				break;
 			case print_obj:
 				textConvSeqMem.setAddress(objectTree.getObjectNameLoc(o0U));
-				textConv.decode(ioCard::printZSCII);
+				textConv.decode(printZSCIITarget);
 				break;
 			//8.9 Input
 			//8.10 Character based output
