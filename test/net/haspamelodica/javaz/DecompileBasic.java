@@ -26,7 +26,9 @@ public class DecompileBasic
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess memSeq = new SequentialMemoryAccess(mem);
 		InstructionDecoder decoder = new InstructionDecoder(config, version, memSeq);
-		ZCharsToZSCIIConverter textConverter = new ZCharsToZSCIIConverter(config, version, header, mem, new ZCharsAlphabet(config, version, header, mem), new ZCharsSeqMemUnpacker(memSeq));
+		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
+		ZCharsToZSCIIConverter textConverter = new ZCharsToZSCIIConverter(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(memSeq));
+		alphabet.reset();
 		textConverter.reset();
 		memSeq.setAddress(header.getField(HeaderParser.InitialPCLoc));
 		memSeq.setAddress(0x535E);//address of Overview example

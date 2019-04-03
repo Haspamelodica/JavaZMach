@@ -22,7 +22,9 @@ public class DumpObjectTree
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess textConvSeqMem = new SequentialMemoryAccess(mem);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);
-		ZCharsToZSCIIConverter textConv = new ZCharsToZSCIIConverter(config, version, header, mem, new ZCharsAlphabet(config, version, header, mem), new ZCharsSeqMemUnpacker(textConvSeqMem));
+		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
+		ZCharsToZSCIIConverter textConv = new ZCharsToZSCIIConverter(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(textConvSeqMem));
+		alphabet.reset();
 		textConv.reset();
 		tree.reset();
 		for(int objNumber = 1; objNumber < 255; objNumber ++)
