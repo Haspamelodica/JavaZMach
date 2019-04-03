@@ -28,7 +28,7 @@ public class CallStack
 	 * Call frame format:
 	 * fp-4   MSWord of return PC
 	 * fp-3   LSWord of return PC
-	 * fp-2   000p vvvv  ssss ssss:   p: return value discarded, v: local variable count, s: store target (variable number)
+	 * fp-2   aaap vvvv  ssss ssss:   a: supplied argument count, p: return value discarded, v: local variable count, s: store target (variable number)
 	 * fp-1   MSWord of return FP
 	 * fp     LSWord of return FP
 	 * fp+1   1st local variable
@@ -44,7 +44,7 @@ public class CallStack
 
 		stack.push(returnPC >>> 16);
 		stack.push(returnPC & 0xFFFF);
-		stack.push((discardReturnValue ? 0x10_00 : 0x00_00) | (variablesCount << 8) | storeTarget);
+		stack.push((suppliedArgumentCount << 13) | (discardReturnValue ? 0x10_00 : 0x00_00) | (variablesCount << 8) | storeTarget);
 		stack.push(returnFP >>> 16);
 		stack.setFPSPRelative(0);
 		stack.push(returnFP & 0xFFFF);
@@ -58,6 +58,10 @@ public class CallStack
 	public int getCurrentCallFrameLocalVariableCount()
 	{
 		return (stack.readFPRelative(-2) & 0x0F_00) >>> 8;
+	}
+	public int getCurrentCallFrameSuppliedArgumentsCount()
+	{
+		return (stack.readFPRelative(-2) & 0xE0_00) >>> 13;
 	}
 	public int getCurrentCallFrameStoreTarget()
 	{

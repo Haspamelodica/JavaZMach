@@ -49,7 +49,7 @@ public class ObjectTree
 	public int getAttribute(int objNumber, int attribute)
 	{
 		if(attribute < 0 || attribute > (version < 4 ? 31 : 47))
-			throw new ObjectException("Illegal attribute");
+			throw new ObjectException("Illegal attribute: " + attribute);
 		int objAddress = getObjAddress(objNumber);
 		int attributeBit = ~attribute & 0x7;//equal to 7 - (attribute & 0x7)
 		int attributeByte = attribute >>> 3;
@@ -179,10 +179,10 @@ public class ObjectTree
 		if(propNumber == 0)
 			propSizeAddr = getFirstPropSizeAddr(objNumber);
 		else
-			propSizeAddr = getPropSizeAddrOrThrow(objNumber, propNumber);
+			propSizeAddr = getNextPropSizeAddrByPropAddr(getPropAddr(objNumber, propNumber));
 		if(propSizeAddr == -1)
 			return 0;
-		return getPropNumberByPropSizeAddr(getNextPropSizeAddrByPropAddr(getPropAddrByPropSizeAddr(propSizeAddr)));
+		return getPropNumberByPropSizeAddr(propSizeAddr);
 	}
 	public int getPropAddrOrThrow(int objNumber, int propNumber)
 	{

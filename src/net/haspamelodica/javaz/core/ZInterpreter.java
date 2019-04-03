@@ -1,5 +1,7 @@
 package net.haspamelodica.javaz.core;
 
+import static net.haspamelodica.javaz.core.HeaderParser.FileChecksumLoc;
+import static net.haspamelodica.javaz.core.HeaderParser.FileLengthLoc;
 import static net.haspamelodica.javaz.core.HeaderParser.GlobalVarTableLocLoc;
 import static net.haspamelodica.javaz.core.HeaderParser.InitialPCLoc;
 import static net.haspamelodica.javaz.core.HeaderParser.MainLocLoc;
@@ -8,6 +10,7 @@ import static net.haspamelodica.javaz.core.HeaderParser.StringsOffLoc;
 import static net.haspamelodica.javaz.core.HeaderParser.VersionLoc;
 
 import java.util.Arrays;
+import java.util.Random;
 
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
@@ -27,7 +30,8 @@ public class ZInterpreter
 {
 	private static final boolean DEBUG_SYSOUTS = false;
 
-	private final int version;
+	private final int	version;
+	private final int	checksum;
 
 	private final boolean	dontIgnoreIllegalVariableCount;
 	private final boolean	readMoreThan15VarsForIllegalVariableCount;
@@ -40,11 +44,13 @@ public class ZInterpreter
 	private final SequentialMemoryAccess	memAtPC;
 	private final InstructionDecoder		instrDecoder;
 	private final ObjectTree				objectTree;
-	private final SequentialMemoryAccess	textConvSeqMem;
-	private final ZCharsToZSCIIConverter	textConv;
-	private final ZCharsToZSCIIConverter	textConvFromPC;
 	private final IOCard					ioCard;
+	private final SequentialMemoryAccess	seqMemROBuf;
+	private final ZCharsToZSCIIConverter	textConvFromSeqMemROBuf;
+	private final ZCharsToZSCIIConverter	textConvFromPC;
 	private final ZSCIICharStreamReceiver	printZSCIITarget;
+	private final Random					trueRandom;
+	private final Random					rand;
 
 	private int	r_o_8;
 	private int	s_o_8;
@@ -52,8 +58,8 @@ public class ZInterpreter
 
 	private final DecodedInstruction	currentInstr;
 	private final int[]					variablesInitialValuesBuf;
-	private final int[]					operandEvaluatedValuesBufSigned;
 	private final int[]					operandEvaluatedValuesBufUnsigned;
+	private final int[]					operandEvaluatedValuesBufSigned;
 	private final StringBuilder			stringBuf;
 
 	public ZInterpreter(GlobalConfig config, WritableMemory dynamicMem, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
@@ -75,16 +81,20 @@ public class ZInterpreter
 		this.memAtPC = new SequentialMemoryAccess(mem);
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
 		this.objectTree = new ObjectTree(config, version, headerParser, dynamicMem);
-		this.textConvSeqMem = new SequentialMemoryAccess(mem);
-		this.textConv = new ZCharsToZSCIIConverter(config, version, headerParser, mem, new ZCharsSeqMemUnpacker(textConvSeqMem));
+		this.seqMemROBuf = new SequentialMemoryAccess(mem);
+		this.textConvFromSeqMemROBuf = new ZCharsToZSCIIConverter(config, version, headerParser, mem, new ZCharsSeqMemUnpacker(seqMemROBuf));
 		this.textConvFromPC = new ZCharsToZSCIIConverter(config, version, headerParser, mem, new ZCharsSeqMemUnpacker(memAtPC));
 		this.ioCard = new IOCard(config, version, headerParser, mem, vCardDef);
 		this.printZSCIITarget = ioCard::printZSCII;
+		this.trueRandom = new Random();
+		this.rand = new Random();
+
+		this.checksum = calculateChecksum();//calculate before memory is changed
 
 		this.currentInstr = new DecodedInstruction();
 		this.variablesInitialValuesBuf = new int[16];
-		this.operandEvaluatedValuesBufSigned = new int[8];
 		this.operandEvaluatedValuesBufUnsigned = new int[8];
+		this.operandEvaluatedValuesBufSigned = new int[8];
 		this.stringBuf = new StringBuilder();
 	}
 
@@ -98,7 +108,7 @@ public class ZInterpreter
 		globalVariablesOffset = headerParser.getField(GlobalVarTableLocLoc) - 0x20;
 		stack.reset();
 		objectTree.reset();
-		textConv.reset();
+		textConvFromSeqMemROBuf.reset();
 		textConvFromPC.reset();
 		ioCard.reset();
 		//TODO set header fields
@@ -137,13 +147,19 @@ public class ZInterpreter
 		int o2U = operandEvaluatedValuesBufUnsigned[2];
 		int o0S = operandEvaluatedValuesBufSigned[0];
 		int o1S = operandEvaluatedValuesBufSigned[1];
+		//Sign-extend 16 to 32 bit
+		int o0E = (o0S << 16) >> 16;
+		int o1E = (o1S << 16) >> 16;
 		//Opcode ordering and section numbering according to zmach06e.pdf
 		//Source: http://mirror.ifarchive.org/indexes/if-archiveXinfocomXinterpretersXspecificationXzspec02.html
 		switch(currentInstr.opcode)
 		{
 			//8.2 Reading and writing memory
+			case load:
+				storeVal = readVariable(o0U, true);
+				break;
 			case store:
-				writeVariable(o0U, o1U);
+				writeVariable(o0U, o1U, true);
 				break;
 			case loadw:
 				storeVal = mem.readWord(o0U + (o1U << 1));
@@ -163,7 +179,7 @@ public class ZInterpreter
 				stack.push(o0U);
 				break;
 			case pull_V15:
-				writeVariable(o0U, stack.pop());
+				writeVariable(o0U, stack.pop(), true);
 				break;
 			//8.3 Arithmetic
 			case add:
@@ -180,25 +196,43 @@ public class ZInterpreter
 					throw new ArithmeticException("Division by 0");
 				storeVal = o0S / o1S;
 				break;
+			case mod:
+				if(o1S == 0 && dontIgnoreDiv0)
+					throw new ArithmeticException("Division by 0");
+				storeVal = o0S % o1S;
+				break;
 			case inc:
 				writeVariable(o0U, readVariable(o0U) + 1);
 				break;
+			case dec:
+				writeVariable(o0U, readVariable(o0U) - 1);
+				break;
 			case inc_chk://inc_jg in zmach06e.pdf
-				int oldVal = readVariable(o0U);
-				writeVariable(o0U, oldVal + 1);
-				//TODO read again or use old value?
-				//Makes a difference for variable 0 (Stack)
-				branchCondition = readVariable(o0U) > o1S;
+				int newVal = readVariable(o0U) + 1;
+				writeVariable(o0U, newVal);
+				branchCondition = (newVal << 16) >> 16 > o1E;
 				break;
 			case dec_chk://dec_jl in zmach06e.pdf
-				oldVal = readVariable(o0U);
-				writeVariable(o0U, oldVal - 1);
-				//TODO read again or use old value?
-				//Makes a difference for variable 0 (Stack)
-				branchCondition = readVariable(o0U) < o1S;
+				newVal = readVariable(o0U) - 1;
+				writeVariable(o0U, newVal);
+				branchCondition = (newVal << 16) >> 16 < o1E;
+				break;
+			case or:
+				storeVal = o0U | o1U;
 				break;
 			case and:
 				storeVal = o0U & o1U;
+				break;
+			case not_V14:
+			case not_V5:
+				//TODO what for 8 bit arguments?
+				storeVal = ~o0U;
+				break;
+			case art_shift:
+				storeVal = o1E < 0 ? o0S >> -o1E : o0U << o1E;
+				break;
+			case log_shift:
+				storeVal = o1E < 0 ? o0U >>> -o1E : o0U << o1E;
 				break;
 			//8.4 Comparison and jumps
 			case jz:
@@ -214,10 +248,10 @@ public class ZInterpreter
 					}
 				break;
 			case jl:
-				branchCondition = o0U < o1U;
+				branchCondition = o0E < o1E;
 				break;
 			case jg:
-				branchCondition = o0U > o1U;
+				branchCondition = o0E > o1E;
 				break;
 			case jin:
 				branchCondition = objectTree.getParent(o0U) == o1U;
@@ -233,8 +267,13 @@ public class ZInterpreter
 			//8.5 Call and return, throw and catch
 			case call_1s://call_f0 in zmach06e.pdf
 			case call_1n://call_p0 in zmach06e.pdf
+			case call_2s://call_f1 in zmach06e.pdf
+			case call_2n://call_p1 in zmach06e.pdf
 			case call://call_fv in zmach06e.pdf
 			case call_vs://call_fv in zmach06e.pdf
+			case call_vn://call_pv in zmach06e.pdf
+			case call_vs2://call_fd in zmach06e.pdf
+			case call_vn2://call_pd in zmach06e.pdf
 				doStore = false;//return will do this store
 				int argCount = currentInstr.operandCount - 1;
 				boolean discardRetVal = !currentInstr.opcode.isStoreOpcode;
@@ -252,6 +291,9 @@ public class ZInterpreter
 			case ret_popped://ret_pulled in zmach06e.pdf
 				doReturn(readVariable(0));
 				break;
+			case check_arg_count:
+				branchCondition = stack.getCurrentCallFrameSuppliedArgumentsCount() >= o0U;
+				break;
 			//8.6 Objects, attributes, and properties
 			case get_sibling:
 				storeVal = objectTree.getSibling(o0U);
@@ -264,6 +306,9 @@ public class ZInterpreter
 			case get_parent:
 				storeVal = objectTree.getParent(o0U);
 				break;
+			case remove_obj:
+				objectTree.removeObj(o0U);
+				break;
 			case insert_obj:
 				objectTree.insertObj(o0U, o1U);
 				break;
@@ -273,11 +318,23 @@ public class ZInterpreter
 			case set_attr:
 				objectTree.setAttribute(o0U, o1U, 1);
 				break;
+			case clear_attr:
+				objectTree.setAttribute(o0U, o1U, 0);
+				break;
 			case put_prop:
 				objectTree.putPropOrThrow(o0U, o1U, o2U);
 				break;
 			case get_prop:
 				storeVal = objectTree.getPropOrDefault(o0U, o1U);
+				break;
+			case get_prop_addr:
+				storeVal = objectTree.getPropAddr(o0U, o1U);
+				break;
+			case get_next_prop:
+				storeVal = objectTree.getNextProp(o0U, o1U);
+				break;
+			case get_prop_len:
+				storeVal = objectTree.getPropSize(o0U);
 				break;
 			//8.7 Windows
 			//8.8 Input and output streams
@@ -296,12 +353,12 @@ public class ZInterpreter
 				doReturn(1);
 				break;
 			case print_addr:
-				textConvSeqMem.setAddress(o0U);
-				textConv.decode(printZSCIITarget);
+				seqMemROBuf.setAddress(o0U);
+				textConvFromSeqMemROBuf.decode(printZSCIITarget);
 				break;
 			case print_paddr:
-				textConvSeqMem.setAddress(packedToByteAddr(o0U, false));
-				textConv.decode(printZSCIITarget);
+				seqMemROBuf.setAddress(packedToByteAddr(o0U, false));
+				textConvFromSeqMemROBuf.decode(printZSCIITarget);
 				break;
 			case print_num:
 				//Sign-extend 16 to 32 bit
@@ -311,15 +368,34 @@ public class ZInterpreter
 				stringBuf.setLength(0);
 				break;
 			case print_obj:
-				textConvSeqMem.setAddress(objectTree.getObjectNameLoc(o0U));
-				textConv.decode(printZSCIITarget);
+				seqMemROBuf.setAddress(objectTree.getObjectNameLoc(o0U));
+				textConvFromSeqMemROBuf.decode(printZSCIITarget);
 				break;
 			//8.11 Miscellaneous screen output
 			//8.12 Sound, mouse, and menus
 			//8.13 Save, restore, and undo
 			//8.14 Miscellaneous
+			case random:
+				if(o0E > 0)
+					storeVal = rand.nextInt(o0U);
+				else
+				{
+					storeVal = 0;
+					if(o0U == 0)
+						rand.setSeed(trueRandom.nextLong());
+					else
+						rand.setSeed(-o0E);
+				}
+				break;
 			case quit:
 				return false;
+			case verify:
+				int expectedChecksum = headerParser.getField(FileChecksumLoc);
+				branchCondition = checksum == expectedChecksum;
+				break;
+			case piracy:
+				branchCondition = true;//"Look! It says 'gullible' on the ceiling!" :)
+				break;
 			default:
 				throw new IllegalStateException("Instruction not yet implemented: " + currentInstr.opcode);
 		}
@@ -334,6 +410,16 @@ public class ZInterpreter
 				//Sign-extend 14 to 32 bit
 				memAtPC.skipBytes(((currentInstr.branchOffset - 2) << 18) >> 18);
 		return true;
+	}
+	private int calculateChecksum()
+	{
+		int fileLengthField = headerParser.getField(FileLengthLoc);
+		//Actually, version 1-2 can't occur, since verify exists since V3
+		int fileLengthScaleFactor = version > 5 ? 8 : (version > 3 ? 4 : (version > 2 ? 2 : 1));
+		int checksum = 0;
+		for(int a = fileLengthField * fileLengthScaleFactor - 1; a > 0x3F; a --)
+			checksum += mem.readByte(a);
+		return checksum & 0xFFFF;
 	}
 	private void putRawOperandValueToBufs(DecodedInstruction instr, int i)
 	{
@@ -350,13 +436,21 @@ public class ZInterpreter
 				operandEvaluatedValuesBufUnsigned[i] = specifiedVal;
 				break;
 			case VARIABLE:
-				int val = readVariable(specifiedVal);
-				operandEvaluatedValuesBufSigned[i] = val;
-				operandEvaluatedValuesBufUnsigned[i] = val;
+				int valU = readVariable(specifiedVal);
+				//Sign-extend 16 to 32 bit
+				operandEvaluatedValuesBufSigned[i] = (valU << 16) >> 16;
+				operandEvaluatedValuesBufUnsigned[i] = valU;
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown enum type: " + instr.operandTypes[i]);
 		}
+	}
+	private int readVariable(int var, boolean var0DoesntPop)
+	{
+		int val = readVariable(var);
+		if(var0DoesntPop && var == 0)
+			stack.push(val);
+		return val;
 	}
 	private int readVariable(int var)
 	{
@@ -366,6 +460,12 @@ public class ZInterpreter
 			return stack.readLocalVariable(var);
 		else
 			return dynamicMem.readWord(globalVariablesOffset + (var << 1));
+	}
+	private void writeVariable(int var, int val, boolean var0DoesntPush)
+	{
+		if(var0DoesntPush && var == 0)
+			stack.pop();
+		writeVariable(var, val);
 	}
 	private void writeVariable(int var, int val)
 	{

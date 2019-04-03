@@ -88,7 +88,7 @@ public enum Opcode
 	pull_V6/*        */(0x09, VAR, SBT.S__, 6, "pull"),
 	split_window/*   */(0x0A, VAR, SBT.___, 3, "split_window"),
 	set_window/*     */(0x0B, VAR, SBT.___, 3, "set_window"),
-	call_vs2/*       */(0x0C, VAR, SBT.S__, 4, true, "call_vs2"),
+	call_vs2/*       */(0x0C, VAR, SBT.S__, 4, 1, 8, true, "call_vs2"),
 	erase_window/*   */(0x0D, VAR, SBT.___, 4, "erase_window"),
 	erase_line/*     */(0x0E, VAR, SBT.___, 4, "erase_line"),
 	set_cursor/*     */(0x0F, VAR, SBT.___, 4, "set_cursor"),
@@ -102,7 +102,7 @@ public enum Opcode
 	scan_table/*     */(0x17, VAR, SBT.SB_, 4, "scan_table"),//TODO is this correct? where is the branch target specified? See documentation...
 	not_V5/*         */(0x18, VAR, SBT.S__, 5, "not"),
 	call_vn/*        */(0x19, VAR, SBT.___, 5, "call_vn"),
-	call_vn2/*       */(0x1A, VAR, SBT.___, 5, true, "call_vn2"),
+	call_vn2/*       */(0x1A, VAR, SBT.___, 5, 1, 8, true, "call_vn2"),
 	tokenise/*       */(0x1B, VAR, SBT.___, 5, "tokenise"),
 	encode_text/*    */(0x1C, VAR, SBT.___, 5, "encode_text"),
 	copy_table/*     */(0x1D, VAR, SBT.___, 5, "copy_table"),

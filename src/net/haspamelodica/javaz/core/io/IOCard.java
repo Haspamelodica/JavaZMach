@@ -95,7 +95,8 @@ public class IOCard
 				zsciiChar = 32;
 			if(firstNonSpaceIndex >= 0 && isSpace)
 				flushBuffer();
-			appendToBuffer(unicodeConv.zsciiToUnicodeNoNL(zsciiChar), isSpace);
+			if(zsciiChar != 0)//ZSCII 0 is "no char"
+				appendToBuffer(unicodeConv.zsciiToUnicodeNoNL(zsciiChar), isSpace);
 			if(properties.getAttribute(BufferedAttr) == 0)
 				flushBuffer();
 		}

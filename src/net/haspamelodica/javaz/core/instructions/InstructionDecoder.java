@@ -84,6 +84,7 @@ public class InstructionDecoder
 				}
 				break;
 			case VAR:
+			case EXT:
 				decodeVarParams(opcode.hasTwoOperandTypeBytes, target);
 				break;
 			default:
