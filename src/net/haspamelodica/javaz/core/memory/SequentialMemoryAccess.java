@@ -3,7 +3,7 @@ package net.haspamelodica.javaz.core.memory;
 public class SequentialMemoryAccess
 {
 	private final ReadOnlyMemory	mem;
-	private int						addr;
+	protected int					addr;
 
 	public SequentialMemoryAccess(ReadOnlyMemory mem)
 	{
