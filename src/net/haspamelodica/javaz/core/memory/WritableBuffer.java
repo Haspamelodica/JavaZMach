@@ -10,6 +10,12 @@ public class WritableBuffer extends BaseBuffer
 		this.mem = mem;
 	}
 
+	@Override
+	public void reset(int baseAddr, boolean zeroTerminated, int entryByteSize)
+	{
+		super.reset(baseAddr, zeroTerminated, entryByteSize);
+		writeLength();
+	}
 	public boolean isFull()
 	{
 		return getCapacity() * entryByteSize <= addr - dataStartAddr;
@@ -27,6 +33,10 @@ public class WritableBuffer extends BaseBuffer
 		if(isFull())
 			throw new MemoryException("Buffer overflow");
 		advanceToNextEntryUnchecked();
+		writeLength();
+	}
+	private void writeLength()
+	{
 		if(zeroTerminated)
 			mem.writeByte(addr, 0);
 		else
