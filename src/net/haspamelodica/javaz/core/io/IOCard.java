@@ -87,7 +87,7 @@ public class IOCard
 		} else
 		{
 			WindowPropsAttrs properties = currentWindow.getProperties();
-			//"If in V6character 9 is to be output, and the cursor is to the right of the left margin, or ExtraNL
+			//"If in V6 character 9 is to be output, and the cursor is to the right of the left margin, or ExtraNL
 			//is true, then character 32 is used instead." - zmach06e.pdf, page 28
 			if(zsciiChar == 9 && (extraNL || properties.getProperty(CursorXProp) > properties.getProperty(MarginLProp)))
 				zsciiChar = 32;
