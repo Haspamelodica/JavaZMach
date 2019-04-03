@@ -12,9 +12,11 @@ import java.util.Arrays;
 
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.memory.ReadOnlyByteSet;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
+import net.haspamelodica.javaz.core.memory.SequentialRWMemoryAccess;
 import net.haspamelodica.javaz.core.text.UnicodeZSCIIConverter;
-import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
+import net.haspamelodica.javaz.core.text.ZSCIICharStream;
 
 public class IOCard
 {
@@ -52,7 +54,7 @@ public class IOCard
 
 		this.headerParser = headerParser;
 		this.unicodeConv = new UnicodeZSCIIConverter(config);
-		this.videoCard = vCardDef.create(config, version, headerParser);
+		this.videoCard = vCardDef.create(config, version, headerParser, unicodeConv);
 		int windowCount = version < 3 ? 1 : version == 6 ? 8 : 2;
 		this.windows = new Window[windowCount];
 		for(int w = 0; w < windowCount; w ++)
@@ -98,9 +100,23 @@ public class IOCard
 				flushBuffer();
 		}
 	}
-	public void showStatusBar(ZCharsToZSCIIConverter locationConv, int scoreOrHours, int turnsOrMinutes)
+	public void showStatusBar(ZSCIICharStream zsciiChars, int scoreOrHours, int turnsOrMinutes)
 	{
-		videoCard.showStatusBar(locationConv, scoreOrHours, turnsOrMinutes, isTimeGame);
+		videoCard.showStatusBar(zsciiChars, scoreOrHours, turnsOrMinutes, isTimeGame);
+	}
+	/**
+	 * Stores ZSCII chars as bytes in <code>targetTextBuffer</code> from the current input stream.
+	 * Input runs until <code>maxZSCIIChars</code> ZSCII chars have been read,
+	 * or ZSCII 13 or one of <code>terminatingZSCIIChars</code> has been read.
+	 * The terminating ZSCII character (if any) is not stored.
+	 * Returns the terminating ZSCII character,
+	 * or -1 if <code>maxZSCIIChars</code> have been read,
+	 * or -2 if the end of input has been reached,
+	 * or -3 if an IO error occurred.
+	 */
+	public int inputToTextBuffer(int maxZSCIIChars, SequentialRWMemoryAccess targetTextBuffer, ReadOnlyByteSet terminatingZSCIIChars)
+	{
+		return currentWindow.inputToTextBuffer(maxZSCIIChars, targetTextBuffer, terminatingZSCIIChars);
 	}
 
 	private void appendToBuffer(char unicodeChar, boolean isSpace)
