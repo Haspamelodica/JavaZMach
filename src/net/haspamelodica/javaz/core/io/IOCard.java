@@ -1,6 +1,7 @@
 package net.haspamelodica.javaz.core.io;
 
 import static net.haspamelodica.javaz.core.HeaderParser.StatLineTypeLoc;
+import static net.haspamelodica.javaz.core.HeaderParser.TermCharsTableLocLoc;
 import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.BufferedAttr;
 import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.ColorDataProp;
 import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.CursorXProp;
@@ -12,9 +13,9 @@ import java.util.Arrays;
 
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.HeaderParser;
-import net.haspamelodica.javaz.core.memory.ReadOnlyByteSet;
+import net.haspamelodica.javaz.core.memory.WritableBuffer;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
-import net.haspamelodica.javaz.core.memory.SequentialRWMemoryAccess;
+import net.haspamelodica.javaz.core.memory.ZeroTerminatedReadOnlyByteSet;
 import net.haspamelodica.javaz.core.text.UnicodeZSCIIConverter;
 import net.haspamelodica.javaz.core.text.ZSCIICharStream;
 
@@ -44,7 +45,8 @@ public class IOCard
 	private int		outputBufferWidth;
 	private Window	currentWindow;
 
-	private final CharacterDescription charDescrBuf;
+	private final CharacterDescription			charDescrBuf;
+	private final ZeroTerminatedReadOnlyByteSet	terminatingZSCIIChars;
 
 	public IOCard(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
 	{
@@ -67,6 +69,7 @@ public class IOCard
 		this.outputBufferWidths = new int[OUTPUT_BUFFER_OVERHEAD];
 
 		this.charDescrBuf = new CharacterDescription();
+		this.terminatingZSCIIChars = new ZeroTerminatedReadOnlyByteSet(mem);
 	}
 
 	public void reset()
@@ -76,6 +79,8 @@ public class IOCard
 		outputBufferLength = 0;
 		firstNonSpaceIndex = -1;
 		currentWindow = windows[0];//TODO is this correct for all versions?
+		int terminatingCharsTableLoc = headerParser.getField(TermCharsTableLocLoc);
+		terminatingZSCIIChars.setStartAddr(terminatingCharsTableLoc == 0 ? -1 : terminatingCharsTableLoc);
 	}
 
 	public void printZSCII(int zsciiChar)
@@ -112,12 +117,11 @@ public class IOCard
 	 * The terminating ZSCII character (if any) is not stored.
 	 * Returns the terminating ZSCII character,
 	 * or -1 if <code>maxZSCIIChars</code> have been read,
-	 * or -2 if the end of input has been reached,
-	 * or -3 if an IO error occurred.
+	 * or -2 if the end of input has been reached.
 	 */
-	public int inputToTextBuffer(int maxZSCIIChars, SequentialRWMemoryAccess targetTextBuffer, ReadOnlyByteSet terminatingZSCIIChars)
+	public int inputToTextBuffer(WritableBuffer targetTextBuffer)
 	{
-		return currentWindow.inputToTextBuffer(maxZSCIIChars, targetTextBuffer, terminatingZSCIIChars);
+		return currentWindow.inputToTextBuffer(targetTextBuffer, terminatingZSCIIChars);
 	}
 
 	private void appendToBuffer(char unicodeChar, boolean isSpace)

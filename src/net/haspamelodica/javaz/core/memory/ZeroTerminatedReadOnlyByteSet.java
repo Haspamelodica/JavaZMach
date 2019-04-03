@@ -11,6 +11,9 @@ public class ZeroTerminatedReadOnlyByteSet implements ReadOnlyByteSet
 		this.mem = mem;
 	}
 
+	/**
+	 * A value of -1 means "pseudo set containing nothing"
+	 */
 	public void setStartAddr(int startAddr)
 	{
 		this.startAddr = startAddr;
@@ -19,6 +22,8 @@ public class ZeroTerminatedReadOnlyByteSet implements ReadOnlyByteSet
 	@Override
 	public boolean contains(int val)
 	{
+		if(startAddr == -1)
+			return false;
 		for(int addr = startAddr;; addr ++)
 		{
 			int b = mem.readByte(addr);
