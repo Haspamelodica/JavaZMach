@@ -22,6 +22,7 @@ import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.core.memory.WritableMemory;
 import net.haspamelodica.javaz.core.objects.ObjectTree;
 import net.haspamelodica.javaz.core.stack.CallStack;
+import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
 import net.haspamelodica.javaz.core.text.ZSCIICharStreamReceiver;
@@ -46,6 +47,7 @@ public class ZInterpreter
 	private final ObjectTree				objectTree;
 	private final IOCard					ioCard;
 	private final SequentialMemoryAccess	seqMemROBuf;
+	private final ZCharsAlphabet			alphabet;
 	private final ZCharsToZSCIIConverter	textConvFromSeqMemROBuf;
 	private final ZCharsToZSCIIConverter	textConvFromPC;
 	private final ZSCIICharStreamReceiver	printZSCIITarget;
@@ -82,8 +84,9 @@ public class ZInterpreter
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
 		this.objectTree = new ObjectTree(config, version, headerParser, dynamicMem);
 		this.seqMemROBuf = new SequentialMemoryAccess(mem);
-		this.textConvFromSeqMemROBuf = new ZCharsToZSCIIConverter(config, version, headerParser, mem, new ZCharsSeqMemUnpacker(seqMemROBuf));
-		this.textConvFromPC = new ZCharsToZSCIIConverter(config, version, headerParser, mem, new ZCharsSeqMemUnpacker(memAtPC));
+		this.alphabet = new ZCharsAlphabet(config, version, headerParser, mem);
+		this.textConvFromSeqMemROBuf = new ZCharsToZSCIIConverter(config, version, headerParser, mem, alphabet, new ZCharsSeqMemUnpacker(seqMemROBuf));
+		this.textConvFromPC = new ZCharsToZSCIIConverter(config, version, headerParser, mem, alphabet, new ZCharsSeqMemUnpacker(memAtPC));
 		this.ioCard = new IOCard(config, version, headerParser, mem, vCardDef);
 		this.printZSCIITarget = ioCard::printZSCII;
 		this.trueRandom = new Random();
@@ -108,6 +111,7 @@ public class ZInterpreter
 		globalVariablesOffset = headerParser.getField(GlobalVarTableLocLoc) - 0x20;
 		stack.reset();
 		objectTree.reset();
+		alphabet.reset();
 		textConvFromSeqMemROBuf.reset();
 		textConvFromPC.reset();
 		ioCard.reset();

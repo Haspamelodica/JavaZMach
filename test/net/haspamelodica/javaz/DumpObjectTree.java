@@ -8,6 +8,7 @@ import net.haspamelodica.javaz.core.HeaderParser;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.core.memory.WritableFixedSizeMemory;
 import net.haspamelodica.javaz.core.objects.ObjectTree;
+import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
 
@@ -21,7 +22,7 @@ public class DumpObjectTree
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess textConvSeqMem = new SequentialMemoryAccess(mem);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);
-		ZCharsToZSCIIConverter textConv = new ZCharsToZSCIIConverter(config, version, header, mem, new ZCharsSeqMemUnpacker(textConvSeqMem));
+		ZCharsToZSCIIConverter textConv = new ZCharsToZSCIIConverter(config, version, header, mem, new ZCharsAlphabet(config, version, header, mem), new ZCharsSeqMemUnpacker(textConvSeqMem));
 		textConv.reset();
 		tree.reset();
 		for(int objNumber = 1; objNumber < 255; objNumber ++)

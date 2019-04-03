@@ -12,6 +12,7 @@ import net.haspamelodica.javaz.core.instructions.OperandType;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.core.memory.WritableFixedSizeMemory;
 import net.haspamelodica.javaz.core.memory.WritableMemory;
+import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
 
@@ -25,7 +26,7 @@ public class DecompileBasic
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess memSeq = new SequentialMemoryAccess(mem);
 		InstructionDecoder decoder = new InstructionDecoder(config, version, memSeq);
-		ZCharsToZSCIIConverter textConverter = new ZCharsToZSCIIConverter(config, version, header, mem, new ZCharsSeqMemUnpacker(memSeq));
+		ZCharsToZSCIIConverter textConverter = new ZCharsToZSCIIConverter(config, version, header, mem, new ZCharsAlphabet(config, version, header, mem), new ZCharsSeqMemUnpacker(memSeq));
 		textConverter.reset();
 		memSeq.setAddress(header.getField(HeaderParser.InitialPCLoc));
 		memSeq.setAddress(0x535E);//address of Overview example
