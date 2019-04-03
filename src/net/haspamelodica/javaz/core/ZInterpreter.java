@@ -314,8 +314,6 @@ public class ZInterpreter
 				textConvSeqMem.setAddress(objectTree.getObjectNameLoc(o0U));
 				textConv.decode(printZSCIITarget);
 				break;
-			//8.9 Input
-			//8.10 Character based output
 			//8.11 Miscellaneous screen output
 			//8.12 Sound, mouse, and menus
 			//8.13 Save, restore, and undo
