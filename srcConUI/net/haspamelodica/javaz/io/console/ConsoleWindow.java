@@ -53,6 +53,10 @@ public class ConsoleWindow implements Window
 				if(nextChar == -1)
 					throw new IOException("EOF");
 				int zsciiChar = unicodeConv.unicodeToZSCII((char) nextChar);
+				//Range 'A'-'Z'
+				if(zsciiChar > 0x40 && zsciiChar < 0x5B)
+					//convert to lower case
+					zsciiChar += 0x20;
 				if(zsciiChar != -1)
 				{
 					if(zsciiChar == 13 || terminatingZSCIIChars.contains(zsciiChar))

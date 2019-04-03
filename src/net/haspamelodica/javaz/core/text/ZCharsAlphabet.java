@@ -64,4 +64,26 @@ public class ZCharsAlphabet
 			throw new TextException("Out-of-range ZSCII char: " + zscii);
 		return zscii;
 	}
+	public void translateZSCIIToZChars(int zsciiChar, ZCharStreamReceiver target)
+	{
+		if(zsciiChar == 32)
+			target.accept((byte) 0);
+		if(zsciiChar == 13 && version == 1)
+			target.accept((byte) 1);
+		//TODO make the following faster
+		for(byte zChar = 6; zChar < 32; zChar ++)
+			if(translateZCharToZSCII(zChar, 0) == zsciiChar)
+				target.accept(zChar);
+		for(int alph = 1; alph < 3; alph ++)
+			for(byte zChar = 6; zChar < 32; zChar ++)
+				if(translateZCharToZSCII(zChar, alph) == zsciiChar)
+				{
+					//In V1+2, 2 & 3 are shift chars. In V3+, 4 & 5 are shift chars.
+					target.accept((byte) (alph + (version < 3 ? 1 : 3)));
+					target.accept(zChar);
+				}
+		target.accept((byte) 6);
+		target.accept((byte) (zsciiChar >>> 5));
+		target.accept((byte) (zsciiChar & 32));
+	}
 }

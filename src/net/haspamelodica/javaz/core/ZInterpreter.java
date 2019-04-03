@@ -17,11 +17,14 @@ import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.core.instructions.InstructionDecoder;
 import net.haspamelodica.javaz.core.io.IOCard;
 import net.haspamelodica.javaz.core.io.VideoCardDefinition;
+import net.haspamelodica.javaz.core.memory.ReadOnlyBuffer;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
+import net.haspamelodica.javaz.core.memory.WritableBuffer;
 import net.haspamelodica.javaz.core.memory.WritableMemory;
 import net.haspamelodica.javaz.core.objects.ObjectTree;
 import net.haspamelodica.javaz.core.stack.CallStack;
+import net.haspamelodica.javaz.core.text.Tokeniser;
 import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
@@ -46,11 +49,14 @@ public class ZInterpreter
 	private final InstructionDecoder		instrDecoder;
 	private final ObjectTree				objectTree;
 	private final IOCard					ioCard;
+	private final ReadOnlyBuffer			rBuf;
+	private final WritableBuffer			wBuf;
 	private final SequentialMemoryAccess	seqMemROBuf;
 	private final ZCharsAlphabet			alphabet;
 	private final ZCharsToZSCIIConverter	textConvFromSeqMemROBuf;
 	private final ZCharsToZSCIIConverter	textConvFromPC;
 	private final ZSCIICharStreamReceiver	printZSCIITarget;
+	private final Tokeniser					tokeniser;
 	private final Random					trueRandom;
 	private final Random					rand;
 
@@ -83,12 +89,15 @@ public class ZInterpreter
 		this.memAtPC = new SequentialMemoryAccess(mem);
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
 		this.objectTree = new ObjectTree(config, version, headerParser, dynamicMem);
+		this.rBuf = new ReadOnlyBuffer(mem);
+		this.wBuf = new WritableBuffer(dynamicMem);
 		this.seqMemROBuf = new SequentialMemoryAccess(mem);
 		this.alphabet = new ZCharsAlphabet(config, version, headerParser, mem);
 		this.textConvFromSeqMemROBuf = new ZCharsToZSCIIConverter(config, version, headerParser, mem, alphabet, new ZCharsSeqMemUnpacker(seqMemROBuf));
 		this.textConvFromPC = new ZCharsToZSCIIConverter(config, version, headerParser, mem, alphabet, new ZCharsSeqMemUnpacker(memAtPC));
 		this.ioCard = new IOCard(config, version, headerParser, mem, vCardDef);
 		this.printZSCIITarget = ioCard::printZSCII;
+		this.tokeniser = new Tokeniser(config, version, headerParser, mem, alphabet);
 		this.trueRandom = new Random();
 		this.rand = new Random();
 
@@ -342,6 +351,16 @@ public class ZInterpreter
 				break;
 			//8.7 Windows
 			//8.8 Input and output streams
+			case sread://read in zmach06e.pdf
+				//TODO timeouts
+				wBuf.reset(o0U, version < 5, 1);
+				storeVal = ioCard.inputToTextBuffer(wBuf);
+				rBuf.reset(o0U, version < 5, 1);
+				wBuf.reset(o1U, false, 4);
+				tokeniser.tokenise(rBuf, wBuf);
+				break;
+			//8.9 Input
+			//8.10 Character based output
 			case print_char:
 				ioCard.printZSCII(o0U);
 				break;
