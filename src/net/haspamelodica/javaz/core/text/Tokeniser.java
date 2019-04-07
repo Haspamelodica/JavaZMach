@@ -4,29 +4,26 @@ import static net.haspamelodica.javaz.core.HeaderParser.DictionaryLocLoc;
 
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.memory.LengthStartedReadOnlyByteSet;
 import net.haspamelodica.javaz.core.memory.ReadOnlyBuffer;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.core.memory.WritableBuffer;
 
 public class Tokeniser
 {
-	private final int version;
-
 	private final HeaderParser							headerParser;
-	private final ReadOnlyMemory						mem;
 	private final ZCharsAlphabet						alphabet;
 	private final DictionaryLookupZCharStreamReceiver	dictLookupZRecv;
+	private final LengthStartedReadOnlyByteSet			wordSeparatorSet;
 
 	private int defaultDictionary;
 
 	public Tokeniser(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem, ZCharsAlphabet alphabet)
 	{
-		this.version = version;
-
 		this.headerParser = headerParser;
-		this.mem = mem;
 		this.alphabet = alphabet;
 		this.dictLookupZRecv = new DictionaryLookupZCharStreamReceiver(config, version, mem);
+		this.wordSeparatorSet = new LengthStartedReadOnlyByteSet(mem, false);
 	}
 	public void reset()
 	{
@@ -45,6 +42,51 @@ public class Tokeniser
 	{
 		if(dictionary == 0)
 			dictionary = defaultDictionary;
-		//TODO
+		int textBufOff = 1;
+		int textBufOffFirstLetter = -1;
+		int zsciiLen = 0;
+		wordSeparatorSet.setStartAddr(dictionary);
+		dictLookupZRecv.reset(dictionary);
+
+		while(textBuf.hasNext())
+		{
+			int zsciiChar = textBuf.readNextEntryByte(0);
+			textBuf.finishEntry();
+			if(wordSeparatorSet.contains(zsciiChar))
+			{
+				writeParsedResultAndResetDictLookup(textBufOffFirstLetter, zsciiLen, skipWordsNotInDict, targetBuf, dictionary);
+				alphabet.translateZSCIIToZChars(zsciiChar, dictLookupZRecv);
+				zsciiLen = 1;
+				writeParsedResultAndResetDictLookup(textBufOffFirstLetter, zsciiLen, skipWordsNotInDict, targetBuf, dictionary);
+				zsciiLen = 0;
+			} else if(zsciiChar == 32)
+			{
+				writeParsedResultAndResetDictLookup(textBufOffFirstLetter, zsciiLen, skipWordsNotInDict, targetBuf, dictionary);
+				zsciiLen = 0;
+			} else
+			{
+				if(zsciiLen == 0)
+					textBufOffFirstLetter = textBufOff;
+				alphabet.translateZSCIIToZChars(zsciiChar, dictLookupZRecv);
+				zsciiLen ++;
+			}
+			textBufOff ++;
+		}
+		writeParsedResultAndResetDictLookup(textBufOffFirstLetter, zsciiLen, skipWordsNotInDict, targetBuf, dictionary);
+	}
+	private void writeParsedResultAndResetDictLookup(int textBufOffFirstLetter, int zsciiLen, boolean skipWordsNotInDict, WritableBuffer targetBuf, int dictionary)
+	{
+		if(zsciiLen > 0)
+		{
+			int wordAddr = dictLookupZRecv.finishAndGetWordAddr();
+			if(wordAddr >= 0 || !skipWordsNotInDict)
+			{
+				targetBuf.writeNextEntryWord(0, wordAddr < 0 ? 0 : wordAddr);
+				targetBuf.writeNextEntryByte(2, zsciiLen);
+				targetBuf.writeNextEntryByte(3, textBufOffFirstLetter);
+				targetBuf.finishEntry();
+			}
+			dictLookupZRecv.reset(dictionary);
+		}
 	}
 }

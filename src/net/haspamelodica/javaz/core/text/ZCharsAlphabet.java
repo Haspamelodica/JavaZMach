@@ -73,7 +73,10 @@ public class ZCharsAlphabet
 		//TODO make the following faster
 		for(byte zChar = 6; zChar < 32; zChar ++)
 			if(translateZCharToZSCII(zChar, 0) == zsciiChar)
+			{
 				target.accept(zChar);
+				return;
+			}
 		for(int alph = 1; alph < 3; alph ++)
 			for(byte zChar = 6; zChar < 32; zChar ++)
 				if(translateZCharToZSCII(zChar, alph) == zsciiChar)
@@ -81,6 +84,7 @@ public class ZCharsAlphabet
 					//In V1+2, 2 & 3 are shift chars. In V3+, 4 & 5 are shift chars.
 					target.accept((byte) (alph + (version < 3 ? 1 : 3)));
 					target.accept(zChar);
+					return;
 				}
 		target.accept((byte) 6);
 		target.accept((byte) (zsciiChar >>> 5));

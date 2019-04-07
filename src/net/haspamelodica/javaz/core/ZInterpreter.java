@@ -122,6 +122,7 @@ public class ZInterpreter
 		textConvFromSeqMemROBuf.reset();
 		textConvFromPC.reset();
 		ioCard.reset();
+		tokeniser.reset();
 		//TODO set header fields
 		if(version == 6)
 			doCallTo(headerParser.getField(MainLocLoc), 0, null, 0, true, 0, false);
@@ -356,9 +357,12 @@ public class ZInterpreter
 				//TODO timeouts
 				wBuf.reset(o0, version < 5, 1);
 				storeVal = ioCard.inputToTextBuffer(wBuf);
-				rBuf.reset(o0, version < 5, 1);
-				wBuf.reset(o1, false, 4);
-				tokeniser.tokenise(rBuf, wBuf);
+				if(o1 != 0)
+				{
+					rBuf.reset(o0, version < 5, 1);
+					wBuf.reset(o1, false, 4);
+					tokeniser.tokenise(rBuf, wBuf);
+				}
 				break;
 			case read_char:
 				storeVal = ioCard.inputSingleChar();
