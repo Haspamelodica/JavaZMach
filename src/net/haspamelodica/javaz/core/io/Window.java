@@ -20,5 +20,6 @@ public interface Window
 	 * or -1 if the end of <code>targetTextBuffer</code> has been read.
 	 */
 	public int inputToTextBuffer(WritableBuffer targetTextBuffer, ReadOnlyByteSet terminatingZSCIIChars);
+	public int inputSingleChar();
 	public WindowPropsAttrs getProperties();
 }

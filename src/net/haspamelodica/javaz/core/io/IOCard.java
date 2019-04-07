@@ -123,6 +123,10 @@ public class IOCard
 	{
 		return currentWindow.inputToTextBuffer(targetTextBuffer, terminatingZSCIIChars);
 	}
+	public int inputSingleChar()
+	{
+		return currentWindow.inputSingleChar();
+	}
 
 	private void appendToBuffer(char unicodeChar, boolean isSpace)
 	{

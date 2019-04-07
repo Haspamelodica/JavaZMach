@@ -360,6 +360,9 @@ public class ZInterpreter
 				wBuf.reset(o1, false, 4);
 				tokeniser.tokenise(rBuf, wBuf);
 				break;
+			case read_char:
+				storeVal = ioCard.inputSingleChar();
+				break;
 			//8.10 Character based output
 			case print_char:
 				ioCard.printZSCII(o0);
