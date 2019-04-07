@@ -13,8 +13,13 @@ public class JavaZ
 	public static void main(String[] args) throws IOException
 	{
 		//TODO read config and game path from commandline / args
-		WritableFixedSizeMemory mem = new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3")));
-		ZInterpreter zInterpreter = new ZInterpreter(new GlobalConfig(), mem, mem, ConsoleVideoCard::new);
+		GlobalConfig config = new GlobalConfig();
+		config.setBool("interpreter.debug.logs.instructions", false);
+		//String filepath = "storyfiles/tests/etude/etude.z5";
+		//String filepath = "storyfiles/tests/czechmodded.z5";
+		String filepath = "storyfiles/zork1.z3";
+		WritableFixedSizeMemory mem = new WritableFixedSizeMemory(Files.readAllBytes(Paths.get(filepath)));
+		ZInterpreter zInterpreter = new ZInterpreter(config, mem, mem, ConsoleVideoCard::new);
 		zInterpreter.reset();
 		while(zInterpreter.step());
 	}
