@@ -18,7 +18,7 @@ public class DumpObjectTree
 	{
 		int version = 3;
 		GlobalConfig config = new GlobalConfig();
-		WritableFixedSizeMemory mem = new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("ZORK1.z3")));
+		WritableFixedSizeMemory mem = new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3")));
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess textConvSeqMem = new SequentialMemoryAccess(mem);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);

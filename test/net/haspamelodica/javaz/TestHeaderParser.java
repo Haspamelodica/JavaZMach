@@ -14,7 +14,7 @@ public class TestHeaderParser
 	private static HeaderParser p;
 	public static void main(String[] args) throws IOException
 	{
-		p = new HeaderParser(new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("ZORK1.z3"))));
+		p = new HeaderParser(new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3"))));
 		print("Version", VersionLoc);
 		print("Flags1", Flags1Loc);
 		print("ColorsAvail", ColorsAvailLoc);
