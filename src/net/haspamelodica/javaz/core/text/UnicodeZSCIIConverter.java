@@ -7,7 +7,7 @@ public class UnicodeZSCIIConverter
 	private final boolean	dontIgnoreIllegalZSCIIChars;
 	private final char[]	zscii13Equivalent;
 
-	private boolean afterFirstNewlineChar;
+	private boolean afterCR;
 
 	public UnicodeZSCIIConverter(GlobalConfig config)
 	{
@@ -23,8 +23,8 @@ public class UnicodeZSCIIConverter
 	{
 		if(zsciiChar == 13)
 		{
-			target.accept('\r');
-			target.accept('\n');
+			for(int i = 0; i < zscii13Equivalent.length; i ++)
+				target.accept(zscii13Equivalent[i]);
 		} else
 			target.accept(zsciiToUnicodeNoNL(zsciiChar));
 	}
@@ -44,25 +44,25 @@ public class UnicodeZSCIIConverter
 	}
 	public void resetUnicodeToZSCII()
 	{
-		afterFirstNewlineChar = false;
+		afterCR = false;
 	}
 	/**
 	 * A return value of -1 means "no ZSCII char".
-	 * This happens when NL consists of two chars.
+	 * This happens when NL consists of CRLF.
 	 */
 	public int unicodeToZSCII(char unicodeChar)
 	{
-		if(unicodeChar == zscii13Equivalent[0])
+		if(unicodeChar == '\r')
 		{
-			afterFirstNewlineChar = true;
+			afterCR = true;
 			return 13;
-		} else if(afterFirstNewlineChar && zscii13Equivalent.length > 1 && unicodeChar == zscii13Equivalent[1])
+		} else if(afterCR && unicodeChar == '\n')
 		{
-			afterFirstNewlineChar = false;
+			afterCR = false;
 			return -1;
 		} else
 		{
-			afterFirstNewlineChar = false;
+			afterCR = false;
 			if(unicodeChar == '\t')
 				return 9;
 			else if(unicodeChar > 31 && unicodeChar < 127)
