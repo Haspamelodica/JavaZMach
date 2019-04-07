@@ -32,11 +32,10 @@ import net.haspamelodica.javaz.core.text.ZSCIICharStreamReceiver;
 
 public class ZInterpreter
 {
-	private static final boolean DEBUG_SYSOUTS = false;
-
 	private final int	version;
 	private final int	checksum;
 
+	private final boolean	logInstructions;
 	private final boolean	dontIgnoreIllegalVariableCount;
 	private final boolean	readMoreThan15VarsForIllegalVariableCount;
 	private final boolean	dontIgnoreDiv0;
@@ -78,6 +77,7 @@ public class ZInterpreter
 		this.headerParser = new HeaderParser(dynamicMem);
 		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(VersionLoc);
 
+		this.logInstructions = config.getBool("interpreter.debug.logs.instructions");
 		this.dontIgnoreIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.dont_ignore");
 		this.readMoreThan15VarsForIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.allow_read_more_than_15_vars");
 		this.dontIgnoreDiv0 = config.getBool("interpreter.dont_ignore_div0");
@@ -130,7 +130,7 @@ public class ZInterpreter
 			stack.pushCallFrame(-1, 0, variablesInitialValuesBuf, 0, true, 0);
 			memAtPC.setAddress(headerParser.getField(InitialPCLoc));//TODO also versions 7-8?
 		}
-		if(DEBUG_SYSOUTS)
+		if(logInstructions)
 			System.out.println("Reset complete!");
 	}
 	/**
@@ -140,7 +140,7 @@ public class ZInterpreter
 	{
 		int currentInstrPC = memAtPC.getAddress();
 		instrDecoder.decode(currentInstr);
-		if(DEBUG_SYSOUTS)
+		if(logInstructions)
 		{
 			System.out.printf("pc=%05x (to %05x): ", currentInstrPC, memAtPC.getAddress() - 1);
 			System.out.println(currentInstr);
