@@ -67,6 +67,7 @@ public class ZInterpreter
 	private final int[]					variablesInitialValuesBuf;
 	private final int[]					operandEvaluatedValuesBuf;
 	private final StringBuilder			stringBuf;
+	private int							callDepth;
 
 	public ZInterpreter(GlobalConfig config, WritableMemory dynamicMem, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
 	{
@@ -131,6 +132,7 @@ public class ZInterpreter
 			stack.pushCallFrame(-1, 0, variablesInitialValuesBuf, 0, true, 0);
 			memAtPC.setAddress(headerParser.getField(InitialPCLoc));//TODO also versions 7-8?
 		}
+		callDepth = 0;
 		if(logInstructions)
 			System.out.println("Reset complete!");
 	}
@@ -143,6 +145,8 @@ public class ZInterpreter
 		instrDecoder.decode(currentInstr);
 		if(logInstructions)
 		{
+			for(int i = 0; i < callDepth; i ++)
+				System.out.print("  ");
 			System.out.printf("pc=%05x (to %05x): ", currentInstrPC, memAtPC.getAddress() - 1);
 			System.out.println(currentInstr);
 		}
@@ -504,6 +508,7 @@ public class ZInterpreter
 
 	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget, boolean callTo0Allowed)
 	{
+		callDepth ++;
 		int returnPC = memAtPC.getAddress();
 		if(packedRoutineAddress == 0)
 			if(callTo0Allowed)
@@ -543,6 +548,7 @@ public class ZInterpreter
 	}
 	public void doReturn(int returnVal)
 	{
+		callDepth --;
 		boolean discardReturnValue = stack.getCurrentCallFrameDiscardReturnValue();
 		int storeTarget = stack.getCurrentCallFrameStoreTarget();
 		memAtPC.setAddress(stack.popCallFrame());
