@@ -32,8 +32,7 @@ import net.haspamelodica.javaz.core.text.ZSCIICharStreamReceiver;
 
 public class ZInterpreter
 {
-	private final int	version;
-	private final int	checksum;
+	private final int version;
 
 	private final boolean	logInstructions;
 	private final boolean	dontIgnoreIllegalVariableCount;
@@ -41,6 +40,7 @@ public class ZInterpreter
 	private final boolean	dontIgnoreDiv0;
 
 	private final HeaderParser				headerParser;
+	private final ReadOnlyMemory			storyfileROM;
 	private final CopyOnWriteMemory			mem;
 	private final CallStack					stack;
 	private final SequentialMemoryAccess	memAtPC;
@@ -74,6 +74,7 @@ public class ZInterpreter
 	}
 	public ZInterpreter(GlobalConfig config, int versionOverride, ReadOnlyMemory storyfileROM, VideoCardDefinition vCardDef)
 	{
+		this.storyfileROM = storyfileROM;
 		this.mem = new CopyOnWriteMemory(storyfileROM);
 		this.headerParser = new HeaderParser(mem);
 		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(VersionLoc);
@@ -98,8 +99,6 @@ public class ZInterpreter
 		this.tokeniser = new Tokeniser(config, version, headerParser, mem, alphabet);
 		this.trueRandom = new Random();
 		this.rand = new Random();
-
-		this.checksum = calculateChecksum();//calculate before memory is changed
 
 		this.currentInstr = new DecodedInstruction();
 		this.variablesInitialValuesBuf = new int[16];
@@ -455,7 +454,7 @@ public class ZInterpreter
 				return false;
 			case verify:
 				int expectedChecksum = headerParser.getField(FileChecksumLoc);
-				branchCondition = checksum == expectedChecksum;
+				branchCondition = calculateChecksum() == expectedChecksum;
 				break;
 			case piracy:
 				branchCondition = true;//"Look! It says 'gullible' on the ceiling!" :)
@@ -492,7 +491,7 @@ public class ZInterpreter
 		int fileLengthScaleFactor = version > 5 ? 8 : (version > 3 ? 4 : (version > 2 ? 2 : 1));
 		int checksum = 0;
 		for(int a = fileLengthField * fileLengthScaleFactor - 1; a > 0x3F; a --)
-			checksum += mem.readByte(a);
+			checksum += storyfileROM.readByte(a);
 		return checksum & 0xFFFF;
 	}
 	private void putRawOperandValueToBufs(DecodedInstruction instr, int i)
