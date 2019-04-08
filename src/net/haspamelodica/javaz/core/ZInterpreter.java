@@ -203,7 +203,18 @@ public class ZInterpreter
 				stack.push(o0);
 				break;
 			case pull_V15:
+			case pull_V7:
 				writeVariable(o0, stack.pop(), true);
+				break;
+			case pull_V6:
+				if(currentInstr.operandCount == 0)
+					storeVal = stack.pop();
+				else
+				{
+					int sp = mem.readWord(o0) + 1;
+					storeVal = mem.readWord(o0 + (sp << 1));
+					mem.writeWord(o0, sp);
+				}
 				break;
 			//8.3 Arithmetic
 			case add:
@@ -418,6 +429,8 @@ public class ZInterpreter
 			//8.12 Sound, mouse, and menus
 			//8.13 Save, restore, and undo
 			//8.14 Miscellaneous
+			case nop:
+				break;
 			case random:
 				if(o0E > 0)
 					storeVal = rand.nextInt(o0);
@@ -429,6 +442,10 @@ public class ZInterpreter
 					else
 						rand.setSeed(-o0E);
 				}
+				break;
+			case restart:
+				//TODO keep "transcribe to printer" and "use fixed pitch font" bits; reset everything else
+				reset();
 				break;
 			case quit:
 				return false;
@@ -445,7 +462,7 @@ public class ZInterpreter
 		if(doStore)
 		{
 			if(logInstructions)
-				System.out.printf("; store val: 0x%04x", storeVal);
+				System.out.printf("; store val: 0x%04x", storeVal & 0xFFFF);
 			writeVariable(currentInstr.storeTarget, storeVal);
 		}
 		if(currentInstr.opcode.isBranchOpcode && (branchCondition ^ currentInstr.branchOnConditionFalse))
