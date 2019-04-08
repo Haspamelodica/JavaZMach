@@ -142,16 +142,26 @@ public class ZInterpreter
 	public boolean step()
 	{
 		int currentInstrPC = memAtPC.getAddress();
-		instrDecoder.decode(currentInstr);
 		if(logInstructions)
 		{
 			for(int i = 0; i < callDepth; i ++)
 				System.out.print("  ");
 			System.out.printf("pc=%05x (to %05x): ", currentInstrPC, memAtPC.getAddress() - 1);
-			System.out.println(currentInstr);
 		}
+		instrDecoder.decode(currentInstr);
 		for(int i = 0; i < currentInstr.operandCount; i ++)
 			putRawOperandValueToBufs(currentInstr, i);
+
+		if(logInstructions)
+		{
+			System.out.print(currentInstr);
+			if(currentInstr.operandCount != 0)
+			{
+				System.out.printf("; evaluated args: 0x%04x", operandEvaluatedValuesBuf[0]);
+				for(int i = 1; i < currentInstr.operandCount; i ++)
+					System.out.printf(", 0x%04x", operandEvaluatedValuesBuf[i]);
+			}
+		}
 
 		boolean doStore = currentInstr.opcode.isStoreOpcode;
 		int storeVal = -1;
@@ -434,8 +444,15 @@ public class ZInterpreter
 				throw new IllegalStateException("Instruction not yet implemented: " + currentInstr.opcode);
 		}
 		if(doStore)
+		{
+			if(logInstructions)
+				System.out.printf("; store val: 0x%04x", storeVal);
 			writeVariable(currentInstr.storeTarget, storeVal);
+		}
 		if(currentInstr.opcode.isBranchOpcode && (branchCondition ^ currentInstr.branchOnConditionFalse))
+		{
+			if(logInstructions)
+				System.out.print("; branch taken");
 			if(currentInstr.branchOffset == 0)
 				doReturn(0);
 			else if(currentInstr.branchOffset == 1)
@@ -443,6 +460,9 @@ public class ZInterpreter
 			else
 				//Sign-extend 14 to 32 bit
 				memAtPC.skipBytes(((currentInstr.branchOffset - 2) << 18) >> 18);
+		}
+		if(logInstructions)
+			System.out.println();
 		return true;
 	}
 	private int calculateChecksum()
