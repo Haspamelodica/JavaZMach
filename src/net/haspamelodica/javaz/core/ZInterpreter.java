@@ -373,7 +373,11 @@ public class ZInterpreter
 				storeVal = objectTree.getNextProp(o0, o1);
 				break;
 			case get_prop_len:
-				storeVal = objectTree.getPropSize(o0);
+				//See note in section 15
+				if(o0 == 0)
+					storeVal = 0;
+				else
+					storeVal = objectTree.getPropSize(o0);
 				break;
 			//8.7 Windows
 			//8.8 Input and output streams

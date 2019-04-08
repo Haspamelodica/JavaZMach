@@ -15,7 +15,7 @@ public class GlobalConfig
 	private static final Set<String>	boolFalse	= Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
 			"no", "n", "false", "n", "0")));
 
-	private static final String		stringDefalut	= "";
+	private static final String		stringDefault	= "";
 	private static final boolean	boolDefault		= true;
 	private static final int		intDefault		= 0;
 
@@ -34,7 +34,7 @@ public class GlobalConfig
 
 	public String getString(String name)
 	{
-		return getGeneric(name, "string", Function.identity(), stringDefalut, Function.identity());
+		return getGeneric(name, "string", Function.identity(), stringDefault, Function.identity());
 	}
 	public boolean getBool(String name)
 	{
