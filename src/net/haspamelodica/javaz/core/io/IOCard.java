@@ -8,13 +8,14 @@ import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.CursorXProp;
 import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.FontNumProp;
 import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.MarginLProp;
 import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.MarginRProp;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.SizeYProp;
 
 import java.util.Arrays;
 
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.HeaderParser;
-import net.haspamelodica.javaz.core.memory.WritableBuffer;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
+import net.haspamelodica.javaz.core.memory.WritableBuffer;
 import net.haspamelodica.javaz.core.memory.ZeroTerminatedReadOnlyByteSet;
 import net.haspamelodica.javaz.core.text.UnicodeZSCIIConverter;
 import net.haspamelodica.javaz.core.text.ZSCIICharStream;
@@ -121,10 +122,12 @@ public class IOCard
 	 */
 	public int inputToTextBuffer(WritableBuffer targetTextBuffer)
 	{
+		flushBuffer();
 		return currentWindow.inputToTextBuffer(targetTextBuffer, terminatingZSCIIChars);
 	}
 	public int inputSingleChar()
 	{
+		flushBuffer();
 		return currentWindow.inputSingleChar();
 	}
 
@@ -164,7 +167,7 @@ public class IOCard
 	{
 		WindowPropsAttrs properties = currentWindow.getProperties();
 		int bufferPrintIndex;
-		if(!extraNL && outputBufferWidth > properties.getAttribute(MarginRProp) - properties.getProperty(CursorXProp))
+		if(!extraNL && outputBufferWidth > properties.getProperty(SizeYProp) - properties.getProperty(MarginRProp) - properties.getProperty(CursorXProp))
 		{
 			if(firstNonSpaceIndex < 0)
 				firstNonSpaceIndex = outputBufferLength;
@@ -185,7 +188,7 @@ public class IOCard
 			do
 			{
 				//zmach06e.pdf says to use a loop here. This seems wrong.
-				if(outputBufferWidths[bufferPrintIndex] > properties.getAttribute(MarginRProp) - properties.getProperty(CursorXProp))
+				if(outputBufferWidths[bufferPrintIndex] > properties.getProperty(SizeYProp) - properties.getProperty(MarginRProp) - properties.getProperty(CursorXProp))
 					//We don't need to set extraNL / we shouldn't, because immediately after this NL a character is showed.
 					currentWindow.newline();
 
@@ -199,6 +202,7 @@ public class IOCard
 		}
 
 		outputBufferLength = 0;
+		outputBufferWidth = 0;
 		firstNonSpaceIndex = -1;
 	}
 }
