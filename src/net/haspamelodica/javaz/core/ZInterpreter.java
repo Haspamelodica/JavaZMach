@@ -145,9 +145,11 @@ public class ZInterpreter
 		{
 			for(int i = 0; i < callDepth; i ++)
 				System.out.print("  ");
-			System.out.printf("pc=%05x (to %05x): ", currentInstrPC, memAtPC.getAddress() - 1);
+			System.out.printf("pc=%05x ", currentInstrPC);
 		}
 		instrDecoder.decode(currentInstr);
+		if(logInstructions)
+			System.out.printf("(to %05x): ", memAtPC.getAddress() - 1);
 		for(int i = 0; i < currentInstr.operandCount; i ++)
 			putRawOperandValueToBufs(currentInstr, i);
 
