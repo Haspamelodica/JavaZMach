@@ -101,7 +101,7 @@ public class InstructionDecoder
 			int branchOffsetByte = mem.readNextByte();
 			target.branchOnConditionFalse = (branchOffsetByte & 0x80) == 0;//bit 7
 			if((branchOffsetByte & 0x40) == 0)//bit 6
-				target.branchOffset = mem.readNextByte() | ((branchOffsetByte & 0x3) << 8);//bits 5-0
+				target.branchOffset = mem.readNextByte() | ((branchOffsetByte & 0x3F) << 8);//bits 5-0
 			else
 				target.branchOffset = branchOffsetByte & 0x3F;//bits 5-0
 		}
