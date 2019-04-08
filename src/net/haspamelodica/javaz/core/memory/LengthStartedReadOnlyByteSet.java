@@ -20,9 +20,9 @@ public class LengthStartedReadOnlyByteSet implements ReadOnlyByteSet
 	 */
 	public void setStartAddr(int startAddr)
 	{
-		this.startAddr = startAddr;
+		this.startAddr = startAddr + 1;
 		if(startAddr >= 0)
-			firstAddrAfterSet = startAddr + (lengthIsWord ? mem.readWord(startAddr) : mem.readByte(startAddr));
+			firstAddrAfterSet = startAddr + (lengthIsWord ? mem.readWord(startAddr) + 2 : mem.readByte(startAddr) + 1);
 	}
 
 	@Override
