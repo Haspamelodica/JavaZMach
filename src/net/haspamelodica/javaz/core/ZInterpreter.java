@@ -213,7 +213,7 @@ public class ZInterpreter
 				storeVal = o0 - o1;
 				break;
 			case mul:
-				storeVal = o0 * o1;
+				storeVal = o0E * o1E;
 				break;
 			case div:
 				if(o1E == 0 && dontIgnoreDiv0)
@@ -249,7 +249,6 @@ public class ZInterpreter
 				break;
 			case not_V14:
 			case not_V5:
-				//TODO what for 8 bit arguments?
 				storeVal = ~o0;
 				break;
 			case art_shift:
