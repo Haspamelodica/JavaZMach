@@ -14,10 +14,11 @@ public class JavaZ
 	{
 		//TODO read config and game path from commandline / args
 		GlobalConfig config = new GlobalConfig();
-		//config.setBool("interpreter.debug.logs.instructions", false);
+		config.setBool("interpreter.debug.logs.instructions", false);
+		//String filepath = "storyfiles/tests/czech_0_8/czech.z5";
 		//String filepath = "storyfiles/tests/etude/etude.z5";
-		//String filepath = "storyfiles/tests/czechmodded.z5";
 		String filepath = "storyfiles/zork1.z3";
+		//String filepath = "storyfiles/trinity.z4";
 		WritableFixedSizeMemory mem = new WritableFixedSizeMemory(Files.readAllBytes(Paths.get(filepath)));
 		ZInterpreter zInterpreter = new ZInterpreter(config, mem, mem, ConsoleVideoCard::new);
 		zInterpreter.reset();
