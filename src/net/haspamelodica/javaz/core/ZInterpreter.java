@@ -366,6 +366,9 @@ public class ZInterpreter
 				break;
 			case get_prop_addr:
 				storeVal = objectTree.getPropAddr(o0, o1);
+				//Error in zmach06e.pdf!
+				if(storeVal == -1)
+					storeVal = 0;
 				break;
 			case get_next_prop:
 				storeVal = objectTree.getNextProp(o0, o1);

@@ -14,7 +14,7 @@ public class JavaZ
 	{
 		//TODO read config and game path from commandline / args
 		GlobalConfig config = new GlobalConfig();
-		config.setBool("interpreter.debug.logs.instructions", true);
+		config.setBool("interpreter.debug.logs.instructions", false);
 		//String filepath = "storyfiles/tests/czech_0_8/czech.z5";
 		//String filepath = "storyfiles/tests/etude/etude.z5";
 		String filepath = "storyfiles/zork1.z3";
