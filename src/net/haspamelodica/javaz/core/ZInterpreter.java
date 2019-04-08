@@ -17,11 +17,11 @@ import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.core.instructions.InstructionDecoder;
 import net.haspamelodica.javaz.core.io.IOCard;
 import net.haspamelodica.javaz.core.io.VideoCardDefinition;
+import net.haspamelodica.javaz.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javaz.core.memory.ReadOnlyBuffer;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.core.memory.WritableBuffer;
-import net.haspamelodica.javaz.core.memory.WritableMemory;
 import net.haspamelodica.javaz.core.objects.ObjectTree;
 import net.haspamelodica.javaz.core.stack.CallStack;
 import net.haspamelodica.javaz.core.text.Tokeniser;
@@ -41,8 +41,7 @@ public class ZInterpreter
 	private final boolean	dontIgnoreDiv0;
 
 	private final HeaderParser				headerParser;
-	private final WritableMemory			dynamicMem;
-	private final ReadOnlyMemory			mem;
+	private final CopyOnWriteMemory			mem;
 	private final CallStack					stack;
 	private final SequentialMemoryAccess	memAtPC;
 	private final InstructionDecoder		instrDecoder;
@@ -69,13 +68,14 @@ public class ZInterpreter
 	private final StringBuilder			stringBuf;
 	private int							callDepth;
 
-	public ZInterpreter(GlobalConfig config, WritableMemory dynamicMem, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
+	public ZInterpreter(GlobalConfig config, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
 	{
-		this(config, -1, dynamicMem, mem, vCardDef);
+		this(config, -1, mem, vCardDef);
 	}
-	public ZInterpreter(GlobalConfig config, int versionOverride, WritableMemory dynamicMem, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
+	public ZInterpreter(GlobalConfig config, int versionOverride, ReadOnlyMemory storyfileROM, VideoCardDefinition vCardDef)
 	{
-		this.headerParser = new HeaderParser(dynamicMem);
+		this.mem = new CopyOnWriteMemory(storyfileROM);
+		this.headerParser = new HeaderParser(mem);
 		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(VersionLoc);
 
 		this.logInstructions = config.getBool("interpreter.debug.logs.instructions");
@@ -83,14 +83,12 @@ public class ZInterpreter
 		this.readMoreThan15VarsForIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.allow_read_more_than_15_vars");
 		this.dontIgnoreDiv0 = config.getBool("interpreter.dont_ignore_div0");
 
-		this.dynamicMem = dynamicMem;
-		this.mem = mem;
 		this.stack = new CallStack();
 		this.memAtPC = new SequentialMemoryAccess(mem);
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
-		this.objectTree = new ObjectTree(config, version, headerParser, dynamicMem);
+		this.objectTree = new ObjectTree(config, version, headerParser, mem);
 		this.rBuf = new ReadOnlyBuffer(mem);
-		this.wBuf = new WritableBuffer(dynamicMem);
+		this.wBuf = new WritableBuffer(mem);
 		this.seqMemROBuf = new SequentialMemoryAccess(mem);
 		this.alphabet = new ZCharsAlphabet(config, version, headerParser, mem);
 		this.textConvFromSeqMemROBuf = new ZCharsToZSCIIConverter(config, version, headerParser, mem, alphabet, new ZCharsSeqMemUnpacker(seqMemROBuf));
@@ -111,6 +109,7 @@ public class ZInterpreter
 
 	public void reset()
 	{
+		mem.reset();
 		if(version == 6 || version == 7)
 		{
 			r_o_8 = 8 * headerParser.getField(RoutinesOffLoc);
@@ -190,14 +189,14 @@ public class ZInterpreter
 				break;
 			case storew:
 				//TODO enforce header access rules
-				dynamicMem.writeWord(o0 + (o1 << 1), o2);
+				mem.writeWord(o0 + (o1 << 1), o2);
 				break;
 			case loadb:
 				storeVal = mem.readByte(o0 + o1);
 				break;
 			case storeb:
 				//TODO enforce header access rules
-				dynamicMem.writeByte(o0 + o1, o2);
+				mem.writeByte(o0 + o1, o2);
 				break;
 			case push:
 				stack.push(o0);
@@ -524,7 +523,7 @@ public class ZInterpreter
 		else if(var > 0 && var < 0x10)
 			return stack.readLocalVariable(var);
 		else
-			return dynamicMem.readWord(globalVariablesOffset + (var << 1));
+			return mem.readWord(globalVariablesOffset + (var << 1));
 	}
 	private void writeVariable(int var, int val, boolean var0DoesntPush)
 	{
@@ -539,7 +538,7 @@ public class ZInterpreter
 		else if(var > 0 && var < 0x10)
 			stack.writeLocalVariable(var, val);
 		else
-			dynamicMem.writeWord(globalVariablesOffset + (var << 1), val);
+			mem.writeWord(globalVariablesOffset + (var << 1), val);
 	}
 
 	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget, boolean callTo0Allowed)

@@ -7,14 +7,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import net.haspamelodica.javaz.core.HeaderParser;
-import net.haspamelodica.javaz.core.memory.WritableFixedSizeMemory;
+import net.haspamelodica.javaz.core.memory.CopyOnWriteMemory;
+import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
 
 public class TestHeaderParser
 {
 	private static HeaderParser p;
 	public static void main(String[] args) throws IOException
 	{
-		p = new HeaderParser(new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3"))));
+		p = new HeaderParser(new CopyOnWriteMemory(new StaticArrayBackedMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3")))));
 		print("Version", VersionLoc);
 		print("Flags1", Flags1Loc);
 		print("ColorsAvail", ColorsAvailLoc);

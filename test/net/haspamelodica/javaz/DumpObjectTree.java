@@ -5,8 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
-import net.haspamelodica.javaz.core.memory.WritableFixedSizeMemory;
+import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
 import net.haspamelodica.javaz.core.objects.ObjectTree;
 import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
@@ -18,7 +19,7 @@ public class DumpObjectTree
 	{
 		int version = 3;
 		GlobalConfig config = new GlobalConfig();
-		WritableFixedSizeMemory mem = new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3")));
+		CopyOnWriteMemory mem = new CopyOnWriteMemory(new StaticArrayBackedMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3"))));
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess textConvSeqMem = new SequentialMemoryAccess(mem);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);

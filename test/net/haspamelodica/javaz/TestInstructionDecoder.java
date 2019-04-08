@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.core.instructions.InstructionDecoder;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
-import net.haspamelodica.javaz.core.memory.WritableFixedSizeMemory;
+import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
 
 public class TestInstructionDecoder
 {
@@ -22,7 +22,7 @@ public class TestInstructionDecoder
 	private static void print(int version, int... bytes)
 	{
 		DecodedInstruction instr = new DecodedInstruction();
-		SequentialMemoryAccess mem = new SequentialMemoryAccess(new WritableFixedSizeMemory(bs(bytes)));
+		SequentialMemoryAccess mem = new SequentialMemoryAccess(new StaticArrayBackedMemory(bs(bytes)));
 		mem.setAddress(0);
 		InstructionDecoder decoder = new InstructionDecoder(new GlobalConfig(), version, mem);
 		decoder.decode(instr);

@@ -2,19 +2,20 @@ package net.haspamelodica.javaz.core.memory;
 
 import java.util.Arrays;
 
-public class WritableFixedSizeMemory implements WritableMemory
+public class StaticArrayBackedMemory implements ReadOnlyMemory
 {
 	private final byte[] bytes;
 
-	public WritableFixedSizeMemory(int size)
+	public StaticArrayBackedMemory(int size)
 	{
 		this.bytes = new byte[size];
 	}
-	public WritableFixedSizeMemory(byte[] bytes)
+	public StaticArrayBackedMemory(byte[] bytes)
 	{
 		this.bytes = Arrays.copyOf(bytes, bytes.length);
 	}
 
+	@Override
 	public int getSize()
 	{
 		return bytes.length;
@@ -33,15 +34,15 @@ public class WritableFixedSizeMemory implements WritableMemory
 	{
 		return bytes[byteAddr] & 0xFF;
 	}
-	@Override
-	public void writeByte(int byteAddr, int val)
-	{
-		bytes[byteAddr] = (byte) val;
-	}
-	@Override
-	public void writeWord(int byteAddr, int val)
-	{
-		bytes[byteAddr] = (byte) (val >>> 8);
-		bytes[byteAddr + 1] = (byte) val;
-	}
+//	@Override
+//	public void writeByte(int byteAddr, int val)
+//	{
+//		bytes[byteAddr] = (byte) val;
+//	}
+//	@Override
+//	public void writeWord(int byteAddr, int val)
+//	{
+//		bytes[byteAddr] = (byte) (val >>> 8);
+//		bytes[byteAddr + 1] = (byte) val;
+//	}
 }

@@ -9,9 +9,9 @@ import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.core.instructions.InstructionDecoder;
 import net.haspamelodica.javaz.core.instructions.Opcode;
 import net.haspamelodica.javaz.core.instructions.OperandType;
+import net.haspamelodica.javaz.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
-import net.haspamelodica.javaz.core.memory.WritableFixedSizeMemory;
-import net.haspamelodica.javaz.core.memory.WritableMemory;
+import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
 import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
@@ -22,7 +22,7 @@ public class DecompileBasic
 	{
 		int version = 3;
 		GlobalConfig config = new GlobalConfig();
-		WritableMemory mem = new WritableFixedSizeMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3")));
+		CopyOnWriteMemory mem = new CopyOnWriteMemory(new StaticArrayBackedMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3"))));
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess memSeq = new SequentialMemoryAccess(mem);
 		InstructionDecoder decoder = new InstructionDecoder(config, version, memSeq);
