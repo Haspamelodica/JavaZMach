@@ -80,8 +80,8 @@ public class IOCard
 		outputBufferLength = 0;
 		firstNonSpaceIndex = -1;
 		currentWindow = windows[0];//TODO is this correct for all versions?
-		int terminatingCharsTableLoc = headerParser.getField(TermCharsTableLoc);
-		terminatingZSCIIChars.setStartAddr(terminatingCharsTableLoc == 0 || version < 5 ? -1 : terminatingCharsTableLoc);
+		int terminatingCharsTableLoc = version < 5 ? 0 : headerParser.getField(TermCharsTableLoc);
+		terminatingZSCIIChars.setStartAddr(terminatingCharsTableLoc == 0 ? -1 : terminatingCharsTableLoc);
 	}
 
 	public void printZSCII(int zsciiChar)

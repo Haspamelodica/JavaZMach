@@ -21,17 +21,31 @@ public class HeaderParser
 		this.mem = mem;
 	}
 
-	//TODO check version
 	public int getField(HeaderField field)
 	{
+		checkVersion(field);
 		return getFieldUnchecked(this.mem, field);
 	}
-	//TODO enforce header write rules
-	public void setField(HeaderField field, int val)
+	/**
+	 * user:
+	 * 0 means game (Dyn),
+	 * 1 means interpreter (Int),
+	 * 2 means interpreter on reset (Rst);
+	 * other means don't check.
+	 */
+	public void setField(HeaderField field, int val, int user)
 	{
+		checkVersion(field);
+		if((user == 0 && !field.isDyn) || (user == 1 && !field.isInt) || (user == 2 && !field.isRst))
+			throw new HeaderException("Field" + field + " is not dynamic (for " + (user == 0 ? "Dyn)" : user == 1 ? "Int)" : "Rst)"));
 		setFieldUnchecked(this.mem, field, val);
 	}
 	//Maybe support multi-byte fields? (Compiler version...)
+	private void checkVersion(HeaderField field)
+	{
+		if(version < field.minVersion || (field.maxVersion >= 0 && version > field.maxVersion))
+			throw new HeaderException("Field " + field + " doesn't exist in V" + version);
+	}
 
 	public static int getFieldUnchecked(ReadOnlyMemory mem, HeaderField field)
 	{
@@ -45,7 +59,7 @@ public class HeaderParser
 		else if(len == 2)
 			byteOrWord = mem.readWord(addr);
 		else
-			throw new IllegalArgumentException("Field neither byte nor word!");
+			throw new IllegalArgumentException("Field is neither byte nor word!");
 
 		if(isSingleBit)
 			return (byteOrWord >>> field.addr) & 1;

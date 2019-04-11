@@ -115,8 +115,8 @@ public enum HeaderField
 		this.isDyn = cdir.isDyn;
 		this.isInt = cdir.isInt;
 		this.isRst = cdir.isRst;
-		this.minVersion = minVersion < 1 ? -1 : minVersion;
-		this.maxVersion = maxVersion;
+		this.minVersion = minVersion;
+		this.maxVersion = maxVersion < 1 ? -1 : maxVersion;
 	}
 
 	private static enum CDIR
