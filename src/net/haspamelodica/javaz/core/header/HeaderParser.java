@@ -16,7 +16,7 @@ public class HeaderParser
 	{
 		this.version = version;
 
-		this.undefinedHeaderFieldDynamic = config.getBool("header.dont_allow_undefined_field_write");
+		this.undefinedHeaderFieldDynamic = !config.getBool("header.dont_allow_undefined_field_write");
 
 		this.mem = mem;
 	}
@@ -95,12 +95,46 @@ public class HeaderParser
 	{
 		if(byteAddr > 0x3F)
 			return true;
+		HeaderField field = getHeaderField(byteAddr);
+		if(field == null)
+			return undefinedHeaderFieldDynamic;
+		if(field.isBitfield)
+		{
+			int oldVal = mem.readByte(byteAddr);
+			int bitOff = (field.addr + field.len - 1 - byteAddr) << 3;
+			for(int bit = 0; bit < 8; bit ++)
+			{
+				int bitMask = 1 << bit;
+				if((val & bitMask) != (oldVal & bitMask))
+				{
+					HeaderField bitField = getHeaderField(field, bit + bitOff);
+					if(bitField == null)
+					{
+						if(!undefinedHeaderFieldDynamic)
+							return false;
+					} else if(!bitField.isDyn)
+						return false;
+				}
+			}
+			return true;
+		} else
+			return field.isDyn;
+	}
+
+	private HeaderField getHeaderField(int byteAddr)
+	{
+		//TODO make this faster; also don't create objects!
 		for(HeaderField f : HeaderField.values())
-			if(f.addr <= byteAddr && f.addr + f.len > byteAddr)
-				if(f.isBitfield)
-					;
-				else
-					return f.isDyn;
-		return undefinedHeaderFieldDynamic;
+			if(f.bitfield == null && version >= f.minVersion && (version <= f.maxVersion || f.maxVersion < 0) && f.addr <= byteAddr && f.addr + f.len > byteAddr)
+				return f;
+		return null;
+	}
+	private HeaderField getHeaderField(HeaderField bitfield, int bitAddr)
+	{
+		//TODO make this faster; also don't create objects!
+		for(HeaderField f : HeaderField.values())
+			if(f.bitfield == bitfield && version >= f.minVersion && (version <= f.maxVersion || f.maxVersion < 0) && f.addr == bitAddr)
+				return f;
+		return null;
 	}
 }
