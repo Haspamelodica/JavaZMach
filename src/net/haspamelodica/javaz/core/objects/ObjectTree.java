@@ -309,7 +309,7 @@ public class ObjectTree
 	}
 	private int getObjAddress(int objNumber)
 	{
-		if(objNumber < 1 || objNumber > 255)
+		if(objNumber < 1 || objNumber > (version < 4 ? 255 : 65535))
 			throw new ObjectException("Illegal object number: " + objNumber);
 		return objNumber * (version < 4 ? 9 : 14) + objectsOffset;
 	}
