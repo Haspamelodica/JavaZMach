@@ -9,6 +9,9 @@ import static net.haspamelodica.javaz.core.header.HeaderField.MainLoc;
 import static net.haspamelodica.javaz.core.header.HeaderField.RoutinesOff;
 import static net.haspamelodica.javaz.core.header.HeaderField.StringsOff;
 import static net.haspamelodica.javaz.core.header.HeaderField.Version;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.CursorXProp;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.CursorYProp;
+import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.TextStyleProp;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -385,6 +388,59 @@ public class ZInterpreter
 					storeVal = objectTree.getPropSize(o0);
 				break;
 			//8.7 Windows
+			case split_window://split_screen in zmach06e.pdf
+				ioCard.splitScreen(o0);
+				break;
+			case set_window:
+				ioCard.selectWindow(o0);
+				if(o0 == 1)
+					if(version == 3)
+						ioCard.eraseWindow(1);
+					else if(version > 3 && version < 6)
+					{
+						ioCard.setPropertyCurrentWindow(CursorXProp, 1);
+						ioCard.setPropertyCurrentWindow(CursorYProp, 1);
+					}
+				break;
+			case set_cursor:
+				//TODO: "It is an error in V4-5 to use this instruction when window 0 is selected"
+				if(currentInstr.operandCount > 2)
+				{
+					ioCard.setPropertyCurrentWindow(CursorXProp, o1);
+					ioCard.setPropertyCurrentWindow(CursorYProp, o0);
+				} else
+				{
+					ioCard.setProperty(o2, CursorXProp, o1);
+					ioCard.setProperty(o2, CursorYProp, o0);
+				}
+				break;
+			case buffer_mode:
+				if(version == 4)
+				{
+					ioCard.setBufferMode(0, o0);
+					ioCard.setBufferMode(1, o0);
+				} else if(version != 6)
+					ioCard.setBufferMode(0, o0);
+				else
+					ioCard.setBufferMode(o0);
+				break;
+			case set_text_style:
+				if(version > 3 && version != 6)
+				{
+					if(o0 == 0)
+					{
+						ioCard.setProperty(0, TextStyleProp, 0);
+						ioCard.setProperty(1, TextStyleProp, 0);
+					} else
+					{
+						ioCard.setProperty(0, TextStyleProp, o0 | ioCard.getProperty(0, TextStyleProp));
+						ioCard.setProperty(1, TextStyleProp, o0 | ioCard.getProperty(1, TextStyleProp));
+					}
+				} else if(o0 == 0)
+					ioCard.setPropertyCurrentWindow(TextStyleProp, 0);
+				else
+					ioCard.setPropertyCurrentWindow(TextStyleProp, o0 | ioCard.getPropertyCurrentWindow(TextStyleProp));
+				break;
 			//8.8 Input and output streams
 			//8.9 Input
 			case aread://read in zmach06e.pdf
@@ -443,6 +499,9 @@ public class ZInterpreter
 				textConvFromSeqMemROBuf.decode(printZSCIITarget);
 				break;
 			//8.11 Miscellaneous screen output
+			case erase_window:
+				ioCard.eraseWindow(o0E);
+				break;
 			//8.12 Sound, mouse, and menus
 			//8.13 Save, restore, and undo
 			//8.14 Miscellaneous

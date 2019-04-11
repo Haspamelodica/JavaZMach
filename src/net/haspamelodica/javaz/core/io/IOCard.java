@@ -6,7 +6,9 @@ import static net.haspamelodica.javaz.core.header.HeaderField.FontHeightV5;
 import static net.haspamelodica.javaz.core.header.HeaderField.FontHeightV6;
 import static net.haspamelodica.javaz.core.header.HeaderField.FontWidthV5;
 import static net.haspamelodica.javaz.core.header.HeaderField.FontWidthV6;
+import static net.haspamelodica.javaz.core.header.HeaderField.ScrHeightLines;
 import static net.haspamelodica.javaz.core.header.HeaderField.ScrHeightUnits;
+import static net.haspamelodica.javaz.core.header.HeaderField.ScrWidthChars;
 import static net.haspamelodica.javaz.core.header.HeaderField.ScrWidthUnits;
 import static net.haspamelodica.javaz.core.header.HeaderField.StatLineType;
 import static net.haspamelodica.javaz.core.header.HeaderField.TermCharsTableLoc;
@@ -70,7 +72,8 @@ public class IOCard
 	private int		outputBufferLength;
 	private int		outputBufferWidth;
 
-	private WindowPropsAttrs currentWindowProperties;
+	private WindowPropsAttrs	currentWindowProperties;
+	private int					defaultTrueBG;
 
 	private final ZeroTerminatedReadOnlyByteSet terminatingZSCIIChars;
 
@@ -107,7 +110,7 @@ public class IOCard
 		int scrWidth = videoCard.getScreenWidth();
 		int scrHeight = videoCard.getScreenHeight();
 		int defaultTrueFG = videoCard.getDefaultTrueFG();
-		int defaultTrueBG = videoCard.getDefaultTrueFG();
+		defaultTrueBG = videoCard.getDefaultTrueBG();
 		int defaultFG = trueColToCol(defaultTrueFG);
 		int defaultBG = trueColToCol(defaultTrueBG);
 		int colorData = defaultFG + (defaultBG << 8);
@@ -141,6 +144,11 @@ public class IOCard
 			p.setAttribute(TranscriptAttr, w < 1 ? 1 : 0);
 			//Window 1 in V5 is the only combination where buffering is off by default
 			p.setAttribute(BufferedAttr, version == 5 && w == 1 ? 0 : 1);
+		}
+		if(version > 3)
+		{
+			headerParser.setField(ScrWidthChars, scrWidth / fontWidth, 2);
+			headerParser.setField(ScrHeightLines, scrHeight / fontHeight, 2);
 		}
 		if(version > 4)
 		{
@@ -207,6 +215,68 @@ public class IOCard
 				flushBuffer();
 		}
 	}
+	public void selectWindow(int window)
+	{
+		currentWindowProperties = windowProperties[window];
+	}
+	public void eraseWindow(int window)
+	{
+		if(window == -1 || window == -2)
+		{
+			videoCard.eraseArea(0, 0, videoCard.getScreenWidth(), videoCard.getScreenHeight(), defaultTrueBG);
+			if(window == -1)
+				splitScreen(0);
+		}
+	}
+	public void setBufferMode(int window, int bufferMode)
+	{
+		setBufferMode(windowProperties[window], bufferMode);
+	}
+	public void setBufferMode(int bufferMode)
+	{
+		setBufferMode(currentWindowProperties, bufferMode);
+	}
+	private void setBufferMode(WindowPropsAttrs props, int bufferMode)
+	{
+		props.setAttribute(BufferedAttr, bufferMode);
+	}
+	public void splitScreen(int w1Height)
+	{
+		int width = videoCard.getScreenWidth();
+		int screenHeight = videoCard.getScreenHeight();
+		if(w1Height > screenHeight)
+			w1Height = screenHeight;
+		int w0Height = screenHeight - w1Height;
+		setProperty(0, LocXProp, 1);
+		setProperty(1, LocXProp, 1);
+		setProperty(0, LocYProp, 1);
+		setProperty(1, LocYProp, 1);
+		setProperty(0, SizeXProp, width);
+		setProperty(1, SizeXProp, width);
+		setProperty(0, SizeYProp, w0Height);
+		setProperty(1, SizeYProp, w1Height);
+	}
+	public int getProperty(int window, int property)
+	{
+		return windowProperties[window].getProperty(property);
+	}
+	public int getPropertyCurrentWindow(int property)
+	{
+		return currentWindowProperties.getProperty(property);
+	}
+	public void setPropertyCurrentWindow(int property, int val)
+	{
+		setProperty(currentWindowProperties, property, val);
+	}
+	public void setProperty(int window, int property, int val)
+	{
+		setProperty(windowProperties[window], property, val);
+	}
+	private void setProperty(WindowPropsAttrs properties, int property, int val)
+	{
+		properties.setProperty(property, val);
+		//TODO update other properties, header fields...
+	}
 	public void showStatusBar(ZSCIICharStream zsciiChars, int scoreOrHours, int turnsOrMinutes)
 	{
 		videoCard.showStatusBar(zsciiChars, scoreOrHours, turnsOrMinutes, isTimeGame);
@@ -249,7 +319,6 @@ public class IOCard
 		flushBuffer();
 		return videoCard.inputSingleChar();
 	}
-
 	private void appendToBuffer(char unicodeChar, boolean isSpace)
 	{
 		int bufferI = outputBufferLength ++;
@@ -330,7 +399,7 @@ public class IOCard
 		int oldCursorX = currentWindowProperties.getProperty(CursorXProp);
 		int oldCursorY = currentWindowProperties.getProperty(CursorYProp);
 		videoCard.showChar(unicodeChar, font, style, trueFG, trueBG, oldCursorX, oldCursorY);
-		currentWindowProperties.setProperty(CursorXProp, oldCursorX + width);
+		setPropertyCurrentWindow(CursorXProp, oldCursorX + width);
 	}
 	private void newlineMoveCursor()
 	{
@@ -341,7 +410,7 @@ public class IOCard
 		if(newCursorY > maxCursorY)
 			videoCard.scroll(newCursorY - maxCursorY);
 		else
-			currentWindowProperties.setProperty(CursorYProp, newCursorY);
-		currentWindowProperties.setProperty(CursorXProp, 1);
+			setPropertyCurrentWindow(CursorYProp, newCursorY);
+		setPropertyCurrentWindow(CursorXProp, 1);
 	}
 }
