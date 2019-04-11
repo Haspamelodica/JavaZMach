@@ -1,7 +1,7 @@
 package net.haspamelodica.javaz.core.io;
 
-import static net.haspamelodica.javaz.core.HeaderParser.StatLineTypeLoc;
-import static net.haspamelodica.javaz.core.HeaderParser.TermCharsTableLocLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.StatLineType;
+import static net.haspamelodica.javaz.core.header.HeaderField.TermCharsTableLoc;
 import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.BufferedAttr;
 import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.ColorDataProp;
 import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.CursorXProp;
@@ -13,7 +13,7 @@ import static net.haspamelodica.javaz.core.io.WindowPropsAttrs.SizeYProp;
 import java.util.Arrays;
 
 import net.haspamelodica.javaz.GlobalConfig;
-import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.core.memory.WritableBuffer;
 import net.haspamelodica.javaz.core.memory.ZeroTerminatedReadOnlyByteSet;
@@ -75,12 +75,12 @@ public class IOCard
 
 	public void reset()
 	{
-		isTimeGame = version == 3 && headerParser.getField(StatLineTypeLoc) == 1;
+		isTimeGame = version == 3 && headerParser.getField(StatLineType) == 1;
 		extraNL = false;
 		outputBufferLength = 0;
 		firstNonSpaceIndex = -1;
 		currentWindow = windows[0];//TODO is this correct for all versions?
-		int terminatingCharsTableLoc = headerParser.getField(TermCharsTableLocLoc);
+		int terminatingCharsTableLoc = headerParser.getField(TermCharsTableLoc);
 		terminatingZSCIIChars.setStartAddr(terminatingCharsTableLoc == 0 || version < 5 ? -1 : terminatingCharsTableLoc);
 	}
 

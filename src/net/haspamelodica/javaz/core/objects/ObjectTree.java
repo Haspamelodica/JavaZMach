@@ -1,9 +1,9 @@
 package net.haspamelodica.javaz.core.objects;
 
-import static net.haspamelodica.javaz.core.HeaderParser.ObjTableLocLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.ObjTableLoc;
 
 import net.haspamelodica.javaz.GlobalConfig;
-import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.memory.WritableMemory;
 
 public class ObjectTree
@@ -37,7 +37,7 @@ public class ObjectTree
 	}
 	public void reset()
 	{
-		int propDefaultTableLoc = headerParser.getField(ObjTableLocLoc);
+		int propDefaultTableLoc = headerParser.getField(ObjTableLoc);
 		propDefaultsOffset = propDefaultTableLoc - 2;
 		//31 / 63 words (property defaults table) minus 6 / 14 bytes (object tree starts with object number 1)
 		objectsOffset = propDefaultTableLoc + (version < 4 ? 53 : 112);

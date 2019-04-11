@@ -1,18 +1,20 @@
 package net.haspamelodica.javaz.core;
 
-import static net.haspamelodica.javaz.core.HeaderParser.FileChecksumLoc;
-import static net.haspamelodica.javaz.core.HeaderParser.FileLengthLoc;
-import static net.haspamelodica.javaz.core.HeaderParser.GlobalVarTableLocLoc;
-import static net.haspamelodica.javaz.core.HeaderParser.InitialPCLoc;
-import static net.haspamelodica.javaz.core.HeaderParser.MainLocLoc;
-import static net.haspamelodica.javaz.core.HeaderParser.RoutinesOffLoc;
-import static net.haspamelodica.javaz.core.HeaderParser.StringsOffLoc;
-import static net.haspamelodica.javaz.core.HeaderParser.VersionLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.FileChecksum;
+import static net.haspamelodica.javaz.core.header.HeaderField.FileLength;
+import static net.haspamelodica.javaz.core.header.HeaderField.GlobalVarTableLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.InitialPC15;
+import static net.haspamelodica.javaz.core.header.HeaderField.InitialPC78;
+import static net.haspamelodica.javaz.core.header.HeaderField.MainLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.RoutinesOff;
+import static net.haspamelodica.javaz.core.header.HeaderField.StringsOff;
+import static net.haspamelodica.javaz.core.header.HeaderField.Version;
 
 import java.util.Arrays;
 import java.util.Random;
 
 import net.haspamelodica.javaz.GlobalConfig;
+import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.core.instructions.InstructionDecoder;
 import net.haspamelodica.javaz.core.io.IOCard;
@@ -79,7 +81,7 @@ public class ZInterpreter
 		this.storyfileROM = storyfileROM;
 		this.memUncheckedWrite = new CopyOnWriteMemory(storyfileROM);
 		this.headerParser = new HeaderParser(memUncheckedWrite);
-		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(VersionLoc);
+		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(Version);
 		this.memCheckedWrite = new CheckedWriteMemory(config, headerParser, memUncheckedWrite);
 
 		this.logInstructions = config.getBool("interpreter.debug.logs.instructions");
@@ -115,10 +117,10 @@ public class ZInterpreter
 		memCheckedWrite.reset();
 		if(version == 6 || version == 7)
 		{
-			r_o_8 = 8 * headerParser.getField(RoutinesOffLoc);
-			s_o_8 = 8 * headerParser.getField(StringsOffLoc);
+			r_o_8 = 8 * headerParser.getField(RoutinesOff);
+			s_o_8 = 8 * headerParser.getField(StringsOff);
 		}
-		globalVariablesOffset = headerParser.getField(GlobalVarTableLocLoc) - 0x20;
+		globalVariablesOffset = headerParser.getField(GlobalVarTableLoc) - 0x20;
 		stack.reset();
 		objectTree.reset();
 		alphabet.reset();
@@ -128,11 +130,14 @@ public class ZInterpreter
 		tokeniser.reset();
 		//TODO set header fields
 		if(version == 6)
-			doCallTo(headerParser.getField(MainLocLoc), 0, null, 0, true, 0, false);
+			doCallTo(headerParser.getField(MainLoc), 0, null, 0, true, 0, false);
 		else
 		{
 			stack.pushCallFrame(-1, 0, variablesInitialValuesBuf, 0, true, 0);
-			memAtPC.setAddress(headerParser.getField(InitialPCLoc));//TODO also versions 7-8?
+			if(version < 6)
+				memAtPC.setAddress(headerParser.getField(InitialPC15));
+			else
+				memAtPC.setAddress(headerParser.getField(InitialPC78));
 		}
 		callDepth = 0;
 		if(logInstructions)
@@ -460,7 +465,7 @@ public class ZInterpreter
 			case quit:
 				return false;
 			case verify:
-				int expectedChecksum = headerParser.getField(FileChecksumLoc);
+				int expectedChecksum = headerParser.getField(FileChecksum);
 				branchCondition = calculateChecksum() == expectedChecksum;
 				break;
 			case piracy:
@@ -493,7 +498,7 @@ public class ZInterpreter
 	}
 	private int calculateChecksum()
 	{
-		int fileLengthField = headerParser.getField(FileLengthLoc);
+		int fileLengthField = headerParser.getField(FileLength);
 		//Actually, version 1-2 can't occur, since verify exists since V3
 		int fileLengthScaleFactor = version > 5 ? 8 : (version > 3 ? 4 : (version > 2 ? 2 : 1));
 		int checksum = 0;

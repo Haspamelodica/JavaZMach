@@ -1,7 +1,7 @@
 package net.haspamelodica.javaz.io.console;
 
 import net.haspamelodica.javaz.GlobalConfig;
-import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.io.CharacterDescription;
 import net.haspamelodica.javaz.core.io.VideoCard;
 import net.haspamelodica.javaz.core.io.Window;

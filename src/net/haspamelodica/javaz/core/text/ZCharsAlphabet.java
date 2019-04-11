@@ -1,9 +1,9 @@
 package net.haspamelodica.javaz.core.text;
 
-import static net.haspamelodica.javaz.core.HeaderParser.AlphabetTableLocLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.AlphabetTableLoc;
 
 import net.haspamelodica.javaz.GlobalConfig;
-import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 
 public class ZCharsAlphabet
@@ -38,7 +38,7 @@ public class ZCharsAlphabet
 	public void reset()
 	{
 		if(version > 4)
-			alphabetTableLoc = headerParser.getField(AlphabetTableLocLoc);
+			alphabetTableLoc = headerParser.getField(AlphabetTableLoc);
 	}
 
 	public int translateZCharToZSCII(byte zChar, int alphabet)

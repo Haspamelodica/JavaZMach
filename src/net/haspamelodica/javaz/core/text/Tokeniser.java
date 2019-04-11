@@ -1,9 +1,9 @@
 package net.haspamelodica.javaz.core.text;
 
-import static net.haspamelodica.javaz.core.HeaderParser.DictionaryLocLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.DictionaryLoc;
 
 import net.haspamelodica.javaz.GlobalConfig;
-import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.memory.LengthStartedReadOnlyByteSet;
 import net.haspamelodica.javaz.core.memory.ReadOnlyBuffer;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
@@ -27,7 +27,7 @@ public class Tokeniser
 	}
 	public void reset()
 	{
-		this.defaultDictionary = headerParser.getField(DictionaryLocLoc);
+		this.defaultDictionary = headerParser.getField(DictionaryLoc);
 	}
 
 	public void tokenise(ReadOnlyBuffer textBuf, WritableBuffer targetBuf)

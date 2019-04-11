@@ -1,9 +1,9 @@
 package net.haspamelodica.javaz.core.text;
 
-import static net.haspamelodica.javaz.core.HeaderParser.AbbrevTableLocLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.AbbrevTableLoc;
 
 import net.haspamelodica.javaz.GlobalConfig;
-import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
 
@@ -42,7 +42,7 @@ public class ZCharsToZSCIIConverter implements ZSCIICharStream
 	public void reset()
 	{
 		if(version > 1)
-			abbreviationsTableLoc = headerParser.getField(AbbrevTableLocLoc);
+			abbreviationsTableLoc = headerParser.getField(AbbrevTableLoc);
 	}
 
 	@Override

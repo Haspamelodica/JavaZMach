@@ -1,9 +1,9 @@
 package net.haspamelodica.javaz.core.memory;
 
-import static net.haspamelodica.javaz.core.HeaderParser.StaticMemBaseLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.StaticMemBase;
 
 import net.haspamelodica.javaz.GlobalConfig;
-import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.header.HeaderParser;
 
 public class CheckedWriteMemory implements WritableMemory
 {
@@ -25,7 +25,7 @@ public class CheckedWriteMemory implements WritableMemory
 	}
 	public void reset()
 	{
-		lastDynamicMemByte = headerParser.getField(StaticMemBaseLoc) - 1;
+		lastDynamicMemByte = headerParser.getField(StaticMemBase) - 1;
 	}
 
 	@Override

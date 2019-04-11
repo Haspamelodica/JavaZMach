@@ -84,8 +84,8 @@ Rst means the interpreter must set this byte / bit correctly after loading / res
        |   | 6+  |   | * | * | Font height in units
  27    |   | 5   |   | * | * | Font height in units
        |   | 6+  |   | * | * | Font width in units (=width of a '0')
- 28-29 |   | 6+  |   |   |   | Routines offset (r_o)
- 2A-2B |   | 6+  |   |   |   | Static strings offset (s_o)
+ 28-29 |   | 6-7 |   |   |   | Routines offset (r_o)
+ 2A-2B |   | 6-7 |   |   |   | Static strings offset (s_o)
  2C    |   | 5+  |   | * | * | Default background color
  2D    |   | 5+  |   | * | * | Default foreground color
  2E-2F |   | 5+  |   |   |   | Terminating characters table location (byte address)

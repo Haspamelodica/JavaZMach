@@ -1,7 +1,7 @@
 package net.haspamelodica.javaz.core.io;
 
-import net.haspamelodica.javaz.core.memory.WritableBuffer;
 import net.haspamelodica.javaz.core.memory.ReadOnlyByteSet;
+import net.haspamelodica.javaz.core.memory.WritableBuffer;
 
 public interface Window
 {

@@ -1,12 +1,12 @@
 package net.haspamelodica.javaz;
 
-import static net.haspamelodica.javaz.core.HeaderParser.VersionLoc;
+import static net.haspamelodica.javaz.core.header.HeaderField.Version;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import net.haspamelodica.javaz.core.HeaderParser;
+import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
@@ -23,7 +23,7 @@ public class DumpObjectTree
 		CopyOnWriteMemory mem = new CopyOnWriteMemory(new StaticArrayBackedMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3"))));
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess textConvSeqMem = new SequentialMemoryAccess(mem);
-		int version = header.getField(VersionLoc);
+		int version = header.getField(Version);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);
 		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
 		ZCharsToZSCIIConverter textConv = new ZCharsToZSCIIConverter(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(textConvSeqMem));
