@@ -130,6 +130,17 @@ public class HeaderParser
 	public static final int	CompilerVerFirstByte	= 0x3C;
 	public static final int	CompilerVerLength		= 4;
 
+	private static final int[] fieldLocations = {VersionLoc, Flags1Loc, ColorsAvailLoc, StatLineTypeLoc,
+			PicDisplayingAvailLoc, StoryfileSplitLoc, BoldfaceAvailLoc, TandyLoc, ItalicAvailLoc, StatLineNotAvailLoc,
+			FixedSpaceAvailLoc, ScrSplitAvailLoc, SoundFXAvailLoc, VarPitchFontDefaultLoc, TimedKeyInputAvailLoc,
+			ReleaseNumberLoc, HighMemoryBaseLoc, InitialPCLoc, MainLocLoc, DictionaryLocLoc, ObjTableLocLoc,
+			GlobalVarTableLocLoc, StaticMemBaseLoc, Flags2Loc, TransciptingLoc, ForceFixedPitchPrintLoc,
+			ScrRedrawControlLoc, PicsReqLoc, UndoReqLoc, MouseReqLoc, ColorsReqLoc, SoundFXReqLoc, MenusReqLoc,
+			AbbrevTableLocLoc, FileLengthLoc, FileChecksumLoc, InterpreterNumLoc, InterpreterVerLoc, ScrHeightLinesLoc,
+			ScrWidthCharsLoc, ScrWidthUnitsLoc, ScrHeightUnitsLoc, FontWidthV5Loc, FontHeightV6Loc, FontHeightV5Loc,
+			FontWidthV6Loc, RoutinesOffLoc, StringsOffLoc, DefaultBGColLoc, DefaultFGColLoc, TermCharsTableLocLoc,
+			OutSt3WidthPixelsLoc, StandardRevLoc, AlphabetTableLocLoc, HeaderExtTableLocLoc};
+
 	private final WritableMemory mem;
 
 	public HeaderParser(WritableMemory memory)
@@ -199,4 +210,9 @@ public class HeaderParser
 			mem.writeWord(addr, byteOrWord);
 	}
 	//TODO multi-byte fields? (Compiler version...)
+	public boolean isDynamic(int byteAddr)
+	{
+		//TODO don't just disallow all header writes!
+		return byteAddr > 0x3F;
+	}
 }

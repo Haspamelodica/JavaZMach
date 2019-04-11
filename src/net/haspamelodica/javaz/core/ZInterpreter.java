@@ -17,6 +17,7 @@ import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.core.instructions.InstructionDecoder;
 import net.haspamelodica.javaz.core.io.IOCard;
 import net.haspamelodica.javaz.core.io.VideoCardDefinition;
+import net.haspamelodica.javaz.core.memory.CheckedWriteMemory;
 import net.haspamelodica.javaz.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javaz.core.memory.ReadOnlyBuffer;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
@@ -41,7 +42,8 @@ public class ZInterpreter
 
 	private final HeaderParser				headerParser;
 	private final ReadOnlyMemory			storyfileROM;
-	private final CopyOnWriteMemory			mem;
+	private final CopyOnWriteMemory			memUncheckedWrite;
+	private final CheckedWriteMemory		memCheckedWrite;
 	private final CallStack					stack;
 	private final SequentialMemoryAccess	memAtPC;
 	private final InstructionDecoder		instrDecoder;
@@ -75,9 +77,10 @@ public class ZInterpreter
 	public ZInterpreter(GlobalConfig config, int versionOverride, ReadOnlyMemory storyfileROM, VideoCardDefinition vCardDef)
 	{
 		this.storyfileROM = storyfileROM;
-		this.mem = new CopyOnWriteMemory(storyfileROM);
-		this.headerParser = new HeaderParser(mem);
+		this.memUncheckedWrite = new CopyOnWriteMemory(storyfileROM);
+		this.headerParser = new HeaderParser(memUncheckedWrite);
 		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(VersionLoc);
+		this.memCheckedWrite = new CheckedWriteMemory(config, headerParser, memUncheckedWrite);
 
 		this.logInstructions = config.getBool("interpreter.debug.logs.instructions");
 		this.dontIgnoreIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.dont_ignore");
@@ -85,18 +88,18 @@ public class ZInterpreter
 		this.dontIgnoreDiv0 = config.getBool("interpreter.dont_ignore_div0");
 
 		this.stack = new CallStack();
-		this.memAtPC = new SequentialMemoryAccess(mem);
+		this.memAtPC = new SequentialMemoryAccess(memCheckedWrite);
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
-		this.objectTree = new ObjectTree(config, version, headerParser, mem);
-		this.rBuf = new ReadOnlyBuffer(mem);
-		this.wBuf = new WritableBuffer(mem);
-		this.seqMemROBuf = new SequentialMemoryAccess(mem);
-		this.alphabet = new ZCharsAlphabet(config, version, headerParser, mem);
-		this.textConvFromSeqMemROBuf = new ZCharsToZSCIIConverter(config, version, headerParser, mem, alphabet, new ZCharsSeqMemUnpacker(seqMemROBuf));
-		this.textConvFromPC = new ZCharsToZSCIIConverter(config, version, headerParser, mem, alphabet, new ZCharsSeqMemUnpacker(memAtPC));
-		this.ioCard = new IOCard(config, version, headerParser, mem, vCardDef);
+		this.objectTree = new ObjectTree(config, version, headerParser, memCheckedWrite);
+		this.rBuf = new ReadOnlyBuffer(memCheckedWrite);
+		this.wBuf = new WritableBuffer(memCheckedWrite);
+		this.seqMemROBuf = new SequentialMemoryAccess(memCheckedWrite);
+		this.alphabet = new ZCharsAlphabet(config, version, headerParser, memCheckedWrite);
+		this.textConvFromSeqMemROBuf = new ZCharsToZSCIIConverter(config, version, headerParser, memCheckedWrite, alphabet, new ZCharsSeqMemUnpacker(seqMemROBuf));
+		this.textConvFromPC = new ZCharsToZSCIIConverter(config, version, headerParser, memCheckedWrite, alphabet, new ZCharsSeqMemUnpacker(memAtPC));
+		this.ioCard = new IOCard(config, version, headerParser, memCheckedWrite, vCardDef);
 		this.printZSCIITarget = ioCard::printZSCII;
-		this.tokeniser = new Tokeniser(config, version, headerParser, mem, alphabet);
+		this.tokeniser = new Tokeniser(config, version, headerParser, memCheckedWrite, alphabet);
 		this.trueRandom = new Random();
 		this.rand = new Random();
 
@@ -108,7 +111,8 @@ public class ZInterpreter
 
 	public void reset()
 	{
-		mem.reset();
+		memUncheckedWrite.reset();
+		memCheckedWrite.reset();
 		if(version == 6 || version == 7)
 		{
 			r_o_8 = 8 * headerParser.getField(RoutinesOffLoc);
@@ -186,18 +190,18 @@ public class ZInterpreter
 				writeVariable(o0, o1, true);
 				break;
 			case loadw:
-				storeVal = mem.readWord(o0 + (o1 << 1));
+				storeVal = memCheckedWrite.readWord(o0 + (o1 << 1));
 				break;
 			case storew:
 				//TODO enforce header access rules
-				mem.writeWord(o0 + (o1 << 1), o2);
+				memCheckedWrite.writeWord(o0 + (o1 << 1), o2);
 				break;
 			case loadb:
-				storeVal = mem.readByte(o0 + o1);
+				storeVal = memCheckedWrite.readByte(o0 + o1);
 				break;
 			case storeb:
 				//TODO enforce header access rules
-				mem.writeByte(o0 + o1, o2);
+				memCheckedWrite.writeByte(o0 + o1, o2);
 				break;
 			case push:
 				stack.push(o0);
@@ -211,9 +215,9 @@ public class ZInterpreter
 					storeVal = stack.pop();
 				else
 				{
-					int sp = mem.readWord(o0) + 1;
-					storeVal = mem.readWord(o0 + (sp << 1));
-					mem.writeWord(o0, sp);
+					int sp = memCheckedWrite.readWord(o0) + 1;
+					storeVal = memCheckedWrite.readWord(o0 + (sp << 1));
+					memCheckedWrite.writeWord(o0, sp);
 				}
 				break;
 			//8.3 Arithmetic
@@ -263,11 +267,9 @@ public class ZInterpreter
 				storeVal = ~o0;
 				break;
 			case art_shift:
-				//TODO signed or unsigned?
 				storeVal = o1E < 0 ? o0E >> -o1E : o0 << o1E;
 				break;
 			case log_shift:
-				//TODO signed or unsigned?
 				storeVal = o1E < 0 ? o0 >>> -o1E : o0 << o1E;
 				break;
 			//8.4 Comparison and jumps
@@ -384,8 +386,9 @@ public class ZInterpreter
 			//8.9 Input
 			case aread://read in zmach06e.pdf
 			case sread://read in zmach06e.pdf
-				//TODO show status bar
 				//TODO timeouts
+				seqMemROBuf.setAddress(readVariable(0x10));//1st global
+				ioCard.showStatusBar(textConvFromSeqMemROBuf, readVariable(0x11), readVariable(0x12));//2nd & 3rd global
 				wBuf.reset(o0, version < 5, 1);
 				storeVal = ioCard.inputToTextBuffer(wBuf);
 				if(o1 != 0)
@@ -531,7 +534,7 @@ public class ZInterpreter
 		else if(var > 0 && var < 0x10)
 			return stack.readLocalVariable(var);
 		else
-			return mem.readWord(globalVariablesOffset + (var << 1));
+			return memCheckedWrite.readWord(globalVariablesOffset + (var << 1));
 	}
 	private void writeVariable(int var, int val, boolean var0DoesntPush)
 	{
@@ -546,7 +549,7 @@ public class ZInterpreter
 		else if(var > 0 && var < 0x10)
 			stack.writeLocalVariable(var, val);
 		else
-			mem.writeWord(globalVariablesOffset + (var << 1), val);
+			memCheckedWrite.writeWord(globalVariablesOffset + (var << 1), val);
 	}
 
 	public void doCallTo(int packedRoutineAddress, int suppliedArgumentCount, int[] arguments, int argsOff, boolean discardReturnValue, int storeTarget, boolean callTo0Allowed)
