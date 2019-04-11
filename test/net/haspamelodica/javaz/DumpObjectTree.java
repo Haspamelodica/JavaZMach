@@ -1,5 +1,7 @@
 package net.haspamelodica.javaz;
 
+import static net.haspamelodica.javaz.core.HeaderParser.VersionLoc;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -17,11 +19,11 @@ public class DumpObjectTree
 {
 	public static void main(String[] args) throws IOException
 	{
-		int version = 3;
 		GlobalConfig config = new GlobalConfig();
 		CopyOnWriteMemory mem = new CopyOnWriteMemory(new StaticArrayBackedMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3"))));
 		HeaderParser header = new HeaderParser(mem);
 		SequentialMemoryAccess textConvSeqMem = new SequentialMemoryAccess(mem);
+		int version = header.getField(VersionLoc);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);
 		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
 		ZCharsToZSCIIConverter textConv = new ZCharsToZSCIIConverter(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(textConvSeqMem));
