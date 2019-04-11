@@ -52,7 +52,7 @@ public class CheckedWriteMemory implements WritableMemory
 	@Override
 	public void writeWord(int byteAddr, int val)
 	{
-		writeByte(byteAddr, val >> 8);
+		writeByte(byteAddr, val >>> 8);
 		writeByte(byteAddr + 1, val & 0xFF);
 	}
 	private void checkWrite(int byteAddr, int val)

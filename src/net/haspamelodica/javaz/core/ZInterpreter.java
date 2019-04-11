@@ -394,6 +394,10 @@ public class ZInterpreter
 				ioCard.showStatusBar(textConvFromSeqMemROBuf, readVariable(0x11), readVariable(0x12));//2nd & 3rd global
 				wBuf.reset(o0, version < 5, 1);
 				storeVal = ioCard.inputToTextBuffer(wBuf);
+				if(storeVal == -1)
+					storeVal = 0;
+				else if(storeVal == -2)
+					storeVal = 0;
 				if(o1 != 0)
 				{
 					rBuf.reset(o0, version < 5, 1);

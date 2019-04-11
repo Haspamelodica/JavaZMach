@@ -30,7 +30,7 @@ public class WindowPropsAttrs
 
 	public WindowPropsAttrs()
 	{
-		properties = new short[17];
+		properties = new short[18];
 	}
 
 	public int getProperty(int property)
