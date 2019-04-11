@@ -34,15 +34,4 @@ public class StaticArrayBackedMemory implements ReadOnlyMemory
 	{
 		return bytes[byteAddr] & 0xFF;
 	}
-//	@Override
-//	public void writeByte(int byteAddr, int val)
-//	{
-//		bytes[byteAddr] = (byte) val;
-//	}
-//	@Override
-//	public void writeWord(int byteAddr, int val)
-//	{
-//		bytes[byteAddr] = (byte) (val >>> 8);
-//		bytes[byteAddr + 1] = (byte) val;
-//	}
 }

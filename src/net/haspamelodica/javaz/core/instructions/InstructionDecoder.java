@@ -12,7 +12,7 @@ public class InstructionDecoder
 	private final boolean	checkOperandsAreInBlock;
 	private final boolean	checkOperandsCount;
 
-	private final SequentialMemoryAccess	mem;
+	private final SequentialMemoryAccess mem;
 
 
 	public InstructionDecoder(GlobalConfig config, int version, SequentialMemoryAccess mem)
