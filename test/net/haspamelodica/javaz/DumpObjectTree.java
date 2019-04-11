@@ -21,7 +21,7 @@ public class DumpObjectTree
 	{
 		GlobalConfig config = new GlobalConfig();
 		CopyOnWriteMemory mem = new CopyOnWriteMemory(new StaticArrayBackedMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3"))));
-		HeaderParser header = new HeaderParser(mem);
+		HeaderParser header = new HeaderParser(config, HeaderParser.getFieldUnchecked(mem, Version), mem);
 		SequentialMemoryAccess textConvSeqMem = new SequentialMemoryAccess(mem);
 		int version = header.getField(Version);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);

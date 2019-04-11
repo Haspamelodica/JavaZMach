@@ -1,18 +1,39 @@
 package net.haspamelodica.javaz.core.header;
 
+import net.haspamelodica.javaz.GlobalConfig;
+import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.core.memory.WritableMemory;
 
 public class HeaderParser
 {
+	private final int version;
+
+	private final boolean undefinedHeaderFieldDynamic;
+
 	private final WritableMemory mem;
 
-	public HeaderParser(WritableMemory memory)
+	public HeaderParser(GlobalConfig config, int version, WritableMemory mem)
 	{
-		this.mem = memory;
+		this.version = version;
+
+		this.undefinedHeaderFieldDynamic = config.getBool("header.dont_allow_undefined_field_write");
+
+		this.mem = mem;
 	}
 
-	//TODO check version?
+	//TODO check version
 	public int getField(HeaderField field)
+	{
+		return getFieldUnchecked(this.mem, field);
+	}
+	//TODO enforce header write rules
+	public void setField(HeaderField field, int val)
+	{
+		setFieldUnchecked(this.mem, field, val);
+	}
+	//Maybe support multi-byte fields? (Compiler version...)
+
+	public static int getFieldUnchecked(ReadOnlyMemory mem, HeaderField field)
 	{
 		boolean isSingleBit = field.len == 0;
 		int addr = isSingleBit ? field.bitfield.addr : field.addr;
@@ -31,7 +52,7 @@ public class HeaderParser
 		else
 			return byteOrWord;
 	}
-	public void setField(HeaderField field, int val)
+	public static void setFieldUnchecked(WritableMemory mem, HeaderField field, int val)
 	{
 		boolean isSingleBit = field.len == 0;
 		int addr = isSingleBit ? field.bitfield.addr : field.addr;
@@ -56,10 +77,16 @@ public class HeaderParser
 		else
 			mem.writeWord(addr, byteOrWord);
 	}
-	//Maybe support multi-byte fields? (Compiler version...)
-	public boolean isDynamic(int byteAddr)
+	public boolean isAllowedAsDynamicWrite(int byteAddr, int val)
 	{
-		//TODO don't just disallow all header writes!
-		return byteAddr > 0x3F;
+		if(byteAddr > 0x3F)
+			return true;
+		for(HeaderField f : HeaderField.values())
+			if(f.addr <= byteAddr && f.addr + f.len > byteAddr)
+				if(f.isBitfield)
+					;
+				else
+					return f.isDyn;
+		return undefinedHeaderFieldDynamic;
 	}
 }

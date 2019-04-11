@@ -79,9 +79,9 @@ public class ZInterpreter
 	public ZInterpreter(GlobalConfig config, int versionOverride, ReadOnlyMemory storyfileROM, VideoCardDefinition vCardDef)
 	{
 		this.storyfileROM = storyfileROM;
+		this.version = versionOverride > 0 ? versionOverride : HeaderParser.getFieldUnchecked(storyfileROM, Version);
 		this.memUncheckedWrite = new CopyOnWriteMemory(storyfileROM);
-		this.headerParser = new HeaderParser(memUncheckedWrite);
-		this.version = versionOverride > 0 ? versionOverride : headerParser.getField(Version);
+		this.headerParser = new HeaderParser(config, version, memUncheckedWrite);
 		this.memCheckedWrite = new CheckedWriteMemory(config, headerParser, memUncheckedWrite);
 
 		this.logInstructions = config.getBool("interpreter.debug.logs.instructions");
@@ -198,14 +198,12 @@ public class ZInterpreter
 				storeVal = memCheckedWrite.readWord(o0 + (o1 << 1));
 				break;
 			case storew:
-				//TODO enforce header access rules
 				memCheckedWrite.writeWord(o0 + (o1 << 1), o2);
 				break;
 			case loadb:
 				storeVal = memCheckedWrite.readByte(o0 + o1);
 				break;
 			case storeb:
-				//TODO enforce header access rules
 				memCheckedWrite.writeByte(o0 + o1, o2);
 				break;
 			case push:

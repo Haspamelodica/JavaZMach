@@ -46,20 +46,20 @@ public class CheckedWriteMemory implements WritableMemory
 	@Override
 	public void writeByte(int byteAddr, int val)
 	{
-		checkWrite(byteAddr);
+		checkWrite(byteAddr, val);
 		mem.writeByte(byteAddr, val);
 	}
 	@Override
 	public void writeWord(int byteAddr, int val)
 	{
-		checkWrite(byteAddr);
-		mem.writeWord(byteAddr, val);
+		writeByte(byteAddr, val >> 8);
+		writeByte(byteAddr + 1, val & 0xFF);
 	}
-	private void checkWrite(int byteAddr)
+	private void checkWrite(int byteAddr, int val)
 	{
 		if(dontIgnoreStaticMemWrite && byteAddr > lastDynamicMemByte)
 			throw new MemoryException("Write to static / high memory");
-		if(checkHeaderWrite && !headerParser.isDynamic(byteAddr))
+		if(checkHeaderWrite && !headerParser.isAllowedAsDynamicWrite(byteAddr, val))
 			throw new MemoryException("Write to non-dynamic header field");
 	}
 }

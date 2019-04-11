@@ -65,13 +65,14 @@ import net.haspamelodica.javaz.core.header.HeaderField;
 import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
+import net.haspamelodica.javaz.core.memory.WritableMemory;
 
-public class TestHeaderParser
+public class DumpHeader
 {
-	private static HeaderParser p;
+	private static WritableMemory mem;
 	public static void main(String[] args) throws IOException
 	{
-		p = new HeaderParser(new CopyOnWriteMemory(new StaticArrayBackedMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3")))));
+		mem = new CopyOnWriteMemory(new StaticArrayBackedMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3"))));
 		print("Version", Version);
 		print("Flags1", Flags1);
 		print("ColorsAvail", ColorsAvail);
@@ -133,7 +134,7 @@ public class TestHeaderParser
 	}
 	private static void print(String descr, HeaderField field)
 	{
-		System.out.printf("%4x", p.getField(field));
+		System.out.printf("%4x", HeaderParser.getFieldUnchecked(mem, field));
 		System.out.print(": ");
 		System.out.println(descr);
 	}

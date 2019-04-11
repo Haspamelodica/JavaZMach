@@ -25,7 +25,7 @@ public class DecompileBasic
 	{
 		GlobalConfig config = new GlobalConfig();
 		CopyOnWriteMemory mem = new CopyOnWriteMemory(new StaticArrayBackedMemory(Files.readAllBytes(Paths.get("storyfiles/zork1.z3"))));
-		HeaderParser header = new HeaderParser(mem);
+		HeaderParser header = new HeaderParser(config, HeaderParser.getFieldUnchecked(mem, Version), mem);
 		SequentialMemoryAccess memSeq = new SequentialMemoryAccess(mem);
 		int version = header.getField(Version);
 		InstructionDecoder decoder = new InstructionDecoder(config, version, memSeq);
