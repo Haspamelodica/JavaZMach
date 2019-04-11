@@ -390,7 +390,7 @@ public class ZInterpreter
 			case aread://read in zmach06e.pdf
 			case sread://read in zmach06e.pdf
 				//TODO timeouts
-				seqMemROBuf.setAddress(readVariable(0x10));//1st global
+				seqMemROBuf.setAddress(objectTree.getObjectNameLoc(readVariable(0x10)));//1st global
 				ioCard.showStatusBar(textConvFromSeqMemROBuf, readVariable(0x11), readVariable(0x12));//2nd & 3rd global
 				wBuf.reset(o0, version < 5, 1);
 				storeVal = ioCard.inputToTextBuffer(wBuf);
