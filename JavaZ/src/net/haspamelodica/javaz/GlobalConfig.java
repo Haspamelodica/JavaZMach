@@ -13,7 +13,7 @@ public class GlobalConfig
 	private static final Set<String>	boolTrue	= Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
 			"yes", "y", "true", "t", "1")));
 	private static final Set<String>	boolFalse	= Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-			"no", "n", "false", "n", "0")));
+			"no", "n", "false", "f", "0")));
 
 	private static final String		stringDefault	= "";
 	private static final boolean	boolDefault		= true;

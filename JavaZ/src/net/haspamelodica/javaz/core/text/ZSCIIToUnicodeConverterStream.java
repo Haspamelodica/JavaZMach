@@ -2,7 +2,7 @@ package net.haspamelodica.javaz.core.text;
 
 public class ZSCIIToUnicodeConverterStream implements UnicodeCharStream
 {
-	private final ZSCIICharStreamReceiver	zsciiTarget;
+	private final ZSCIICharStreamReceiver zsciiTarget;
 
 	private ZSCIICharStream				source;
 	private UnicodeCharStreamReceiver	target;

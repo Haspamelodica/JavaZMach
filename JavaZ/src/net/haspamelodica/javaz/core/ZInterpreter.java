@@ -76,9 +76,9 @@ public class ZInterpreter
 	private final StringBuilder			stringBuf;
 	private int							callDepth;
 
-	public ZInterpreter(GlobalConfig config, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
+	public ZInterpreter(GlobalConfig config, ReadOnlyMemory storyfileROM, VideoCardDefinition vCardDef)
 	{
-		this(config, -1, mem, vCardDef);
+		this(config, -1, storyfileROM, vCardDef);
 	}
 	public ZInterpreter(GlobalConfig config, int versionOverride, ReadOnlyMemory storyfileROM, VideoCardDefinition vCardDef)
 	{
