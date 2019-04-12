@@ -1,6 +1,6 @@
 package net.haspamelodica.javaz.core.io;
 
-import net.haspamelodica.javaz.core.text.ZSCIICharStream;
+import net.haspamelodica.javaz.core.text.UnicodeCharStream;
 
 public interface VideoCard
 {
@@ -13,10 +13,10 @@ public interface VideoCard
 	public int getFontHeight(int font);
 	public void eraseArea(int x, int y, int w, int h, int trueBG);
 	public void scroll(int y);
-	public void showStatusBar(ZSCIICharStream locationConv, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame);
+	public void showStatusBar(UnicodeCharStream location, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame);
 	public void showChar(char unicodeChar, int font, int style, int trueFB, int trueBG, int x, int y);
 	public void showPicture(int picture, int x, int y);
 	public void erasePicture(int picture, int x, int y, int trueBG);
 	public void flushScreen();
-	public int inputSingleChar();//TODO move to another class
+	public char inputSingleChar();//TODO move to another class
 }

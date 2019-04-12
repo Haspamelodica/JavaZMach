@@ -43,6 +43,7 @@ import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.core.memory.WritableBuffer;
 import net.haspamelodica.javaz.core.memory.ZeroTerminatedReadOnlyByteSet;
 import net.haspamelodica.javaz.core.text.UnicodeZSCIIConverter;
+import net.haspamelodica.javaz.core.text.UnicodeZSCIIConverterStream;
 import net.haspamelodica.javaz.core.text.ZSCIICharStream;
 
 public class IOCard
@@ -53,10 +54,11 @@ public class IOCard
 
 	private final boolean replaceAllSpacesWithExtraNL;
 
-	private final HeaderParser			headerParser;
-	private final UnicodeZSCIIConverter	unicodeConv;
-	private final VideoCard				videoCard;
-	private final WindowPropsAttrs[]	windowProperties;
+	private final HeaderParser					headerParser;
+	private final UnicodeZSCIIConverter			unicodeConv;
+	private final UnicodeZSCIIConverterStream	unicodeStream;
+	private final VideoCard						videoCard;
+	private final WindowPropsAttrs[]			windowProperties;
 
 	private boolean isTimeGame;
 
@@ -85,7 +87,8 @@ public class IOCard
 
 		this.headerParser = headerParser;
 		this.unicodeConv = new UnicodeZSCIIConverter(config);
-		this.videoCard = vCardDef.create(config, version, headerParser, unicodeConv);
+		this.unicodeStream = new UnicodeZSCIIConverterStream(unicodeConv);
+		this.videoCard = vCardDef.create(config, version, headerParser);
 		int windowCount = version < 3 ? 1 : version == 6 ? 8 : 2;
 		this.windowProperties = new WindowPropsAttrs[windowCount];
 		for(int w = 0; w < windowCount; w ++)
@@ -279,7 +282,8 @@ public class IOCard
 	}
 	public void showStatusBar(ZSCIICharStream zsciiChars, int scoreOrHours, int turnsOrMinutes)
 	{
-		videoCard.showStatusBar(zsciiChars, scoreOrHours, turnsOrMinutes, isTimeGame);
+		unicodeStream.reset(zsciiChars);
+		videoCard.showStatusBar(unicodeStream, scoreOrHours, turnsOrMinutes, isTimeGame);
 	}
 	/**
 	 * Stores ZSCII chars as bytes in <code>targetTextBuffer</code> from the current input stream.

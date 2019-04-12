@@ -7,23 +7,17 @@ import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.io.IOException;
 import net.haspamelodica.javaz.core.io.VideoCard;
-import net.haspamelodica.javaz.core.text.UnicodeZSCIIConverter;
-import net.haspamelodica.javaz.core.text.ZSCIICharStream;
-import net.haspamelodica.javaz.core.text.ZSCIICharStreamReceiver;
+import net.haspamelodica.javaz.core.text.UnicodeCharStream;
 
 public class ConsoleVideoCard implements VideoCard
 {
-	private final UnicodeZSCIIConverter		unicodeConv;
-	private final Reader					in;
-	private final ZSCIICharStreamReceiver	printToSysoutZCharsReceiver;
+	private final Reader in;
 
 	private int lastY = -1;
 
-	public ConsoleVideoCard(GlobalConfig config, int version, HeaderParser headerParser, UnicodeZSCIIConverter unicodeConv)
+	public ConsoleVideoCard(GlobalConfig config, int version, HeaderParser headerParser)
 	{
-		this.unicodeConv = unicodeConv;
 		this.in = new InputStreamReader(System.in);
-		this.printToSysoutZCharsReceiver = z -> unicodeConv.zsciiToUnicode(z, System.out::print);
 	}
 
 	@Override
@@ -62,11 +56,11 @@ public class ConsoleVideoCard implements VideoCard
 		return 10;
 	}
 	@Override
-	public void showStatusBar(ZSCIICharStream locationConv, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame)
+	public void showStatusBar(UnicodeCharStream location, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame)
 	{
 		System.out.println();
 		System.out.print("Status line: ");
-		locationConv.decode(printToSysoutZCharsReceiver);
+		location.decode(System.out::print);
 		System.out.print(" | ");
 		System.out.print(scoreOrHours);
 		System.out.print(isTimeGame ? ":" : " | ");
@@ -79,19 +73,11 @@ public class ConsoleVideoCard implements VideoCard
 		return 0;
 	}
 	@Override
-	public int inputSingleChar()
+	public char inputSingleChar()
 	{
 		try
 		{
-			int unicodeToZSCII;
-			do
-			{
-				int read = in.read();
-				if(read == -1)
-					return -1;
-				unicodeToZSCII = unicodeConv.unicodeToZSCII((char) read);
-			} while(unicodeToZSCII == -1);
-			return unicodeToZSCII;
+			return (char) in.read();
 		} catch(java.io.IOException e)
 		{
 			throw new IOException(e);
