@@ -46,12 +46,13 @@ public class ZCharsToZSCIIConverter implements ZSCIICharStream
 	}
 
 	@Override
-	public void decode(ZSCIICharStreamReceiver target)
+	public int decode(ZSCIICharStreamReceiver target)
 	{
-		decode(target, source, false);
+		return decode(target, source, false);
 	}
-	private void decode(ZSCIICharStreamReceiver target, ZCharStreamSource source, boolean isAbbreviation)
+	private int decode(ZSCIICharStreamReceiver target, ZCharStreamSource source, boolean isAbbreviation)
 	{
+		int chars = 0;
 		/**
 		 * 0: abbreviation with z-char 1 follows
 		 * 1: abbreviation with z-char 2 follows
@@ -79,7 +80,7 @@ public class ZCharsToZSCIIConverter implements ZSCIICharStream
 					//abbreviation string starts at word address at word 32(z-1)+x in the abbrevations table,
 					//where z is the first and x the second z-char.
 					abbrevSeqMem.setAddress(mem.readWord(abbreviationsTableLoc + (zChar << 1) + (state << 6)) << 1);
-					decode(target, abbrevSource, true);
+					chars += decode(target, abbrevSource, true);
 					abbrevSeqMem.setAddress(oldAbbrevSourceAddress);
 					state = 5;
 					break;
@@ -89,6 +90,7 @@ public class ZCharsToZSCIIConverter implements ZSCIICharStream
 					break;
 				case 4:
 					target.accept(zsciiCharTopHalf + zChar);
+					chars ++;
 					state = 5;
 					break;
 				case 5:
@@ -96,11 +98,14 @@ public class ZCharsToZSCIIConverter implements ZSCIICharStream
 					{
 						case 0:
 							target.accept(32);//space
+							chars ++;
 							break;
 						case 1:
 							if(version < 2)
+							{
 								target.accept(13);//newline
-							else if(isAbbreviation && dontAllowNestedAbbreviations)
+								chars ++;
+							} else if(isAbbreviation && dontAllowNestedAbbreviations)
 								throw new TextException("Nested abbreviation");
 							else
 								state = 0;
@@ -131,12 +136,14 @@ public class ZCharsToZSCIIConverter implements ZSCIICharStream
 								} else if(version > 1)
 								{
 									target.accept(13);
+									chars ++;
 									break;
 								}
 							}
 							//intentional fall-through
 						default:
 							target.accept(alphabet.translateZCharToZSCII(zChar, alphabetCurrent));
+							chars ++;
 							break;
 					}
 					break;
@@ -144,5 +151,6 @@ public class ZCharsToZSCIIConverter implements ZSCIICharStream
 		} while(source.hasNext());
 		if(isAbbreviation && checkAbbreviationsDontStopIncomplete && state != 5)
 			throw new TextException("Abbreviation ended with an incomplete multi-Z-char construction");
+		return chars;
 	}
 }
