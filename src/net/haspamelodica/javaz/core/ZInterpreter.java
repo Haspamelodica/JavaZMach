@@ -33,7 +33,7 @@ import net.haspamelodica.javaz.core.stack.CallStack;
 import net.haspamelodica.javaz.core.text.Tokeniser;
 import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
-import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
+import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverterStream;
 import net.haspamelodica.javaz.core.text.ZSCIICharStreamReceiver;
 
 public class ZInterpreter
@@ -45,25 +45,26 @@ public class ZInterpreter
 	private final boolean	readMoreThan15VarsForIllegalVariableCount;
 	private final boolean	dontIgnoreDiv0;
 
-	private final HeaderParser				headerParser;
-	private final ReadOnlyMemory			storyfileROM;
-	private final CopyOnWriteMemory			memUncheckedWrite;
-	private final CheckedWriteMemory		memCheckedWrite;
-	private final CallStack					stack;
-	private final SequentialMemoryAccess	memAtPC;
-	private final InstructionDecoder		instrDecoder;
-	private final ObjectTree				objectTree;
-	private final IOCard					ioCard;
-	private final ReadOnlyBuffer			rBuf;
-	private final WritableBuffer			wBuf;
-	private final SequentialMemoryAccess	seqMemROBuf;
-	private final ZCharsAlphabet			alphabet;
-	private final ZCharsToZSCIIConverter	textConvFromSeqMemROBuf;
-	private final ZCharsToZSCIIConverter	textConvFromPC;
-	private final ZSCIICharStreamReceiver	printZSCIITarget;
-	private final Tokeniser					tokeniser;
-	private final Random					trueRandom;
-	private final Random					rand;
+	private final HeaderParser					headerParser;
+	private final ReadOnlyMemory				storyfileROM;
+	private final CopyOnWriteMemory				memUncheckedWrite;
+	private final CheckedWriteMemory			memCheckedWrite;
+	private final CallStack						stack;
+	private final SequentialMemoryAccess		memAtPC;
+	private final InstructionDecoder			instrDecoder;
+	private final ObjectTree					objectTree;
+	private final IOCard						ioCard;
+	private final ReadOnlyBuffer				rBuf;
+	private final WritableBuffer				wBuf;
+	private final SequentialMemoryAccess		seqMemROBuf;
+	private final ZCharsAlphabet				alphabet;
+	private final ZCharsSeqMemUnpacker			zCharsUnpackerFromSeqMemRO;
+	private final ZCharsSeqMemUnpacker			zCharsUnpackerFromPC;
+	private final ZCharsToZSCIIConverterStream	textConv;
+	private final ZSCIICharStreamReceiver		printZSCIITarget;
+	private final Tokeniser						tokeniser;
+	private final Random						trueRandom;
+	private final Random						rand;
 
 	private int	r_o_8;
 	private int	s_o_8;
@@ -100,8 +101,9 @@ public class ZInterpreter
 		this.wBuf = new WritableBuffer(memCheckedWrite);
 		this.seqMemROBuf = new SequentialMemoryAccess(memCheckedWrite);
 		this.alphabet = new ZCharsAlphabet(config, version, headerParser, memCheckedWrite);
-		this.textConvFromSeqMemROBuf = new ZCharsToZSCIIConverter(config, version, headerParser, memCheckedWrite, alphabet, new ZCharsSeqMemUnpacker(seqMemROBuf));
-		this.textConvFromPC = new ZCharsToZSCIIConverter(config, version, headerParser, memCheckedWrite, alphabet, new ZCharsSeqMemUnpacker(memAtPC));
+		this.zCharsUnpackerFromSeqMemRO = new ZCharsSeqMemUnpacker(seqMemROBuf);
+		this.zCharsUnpackerFromPC = new ZCharsSeqMemUnpacker(memAtPC);
+		this.textConv = new ZCharsToZSCIIConverterStream(config, version, headerParser, memCheckedWrite, alphabet);
 		this.ioCard = new IOCard(config, version, headerParser, memCheckedWrite, vCardDef);
 		this.printZSCIITarget = ioCard::printZSCII;
 		this.tokeniser = new Tokeniser(config, version, headerParser, memCheckedWrite, alphabet);
@@ -127,8 +129,6 @@ public class ZInterpreter
 		stack.reset();
 		objectTree.reset();
 		alphabet.reset();
-		textConvFromSeqMemROBuf.reset();
-		textConvFromPC.reset();
 		ioCard.reset();
 		tokeniser.reset();
 		//TODO set header fields
@@ -447,7 +447,8 @@ public class ZInterpreter
 			case sread://read in zmach06e.pdf
 				//TODO timeouts
 				seqMemROBuf.setAddress(objectTree.getObjectNameLoc(readVariable(0x10)));//1st global
-				ioCard.showStatusBar(textConvFromSeqMemROBuf, readVariable(0x11), readVariable(0x12));//2nd & 3rd global
+				textConv.reset(zCharsUnpackerFromSeqMemRO);
+				ioCard.showStatusBar(textConv, readVariable(0x11), readVariable(0x12));//2nd & 3rd global
 				wBuf.reset(o0, version < 5, 1);
 				storeVal = ioCard.inputToTextBuffer(wBuf);
 				if(storeVal == -1)
@@ -472,20 +473,24 @@ public class ZInterpreter
 				ioCard.printZSCII(13);
 				break;
 			case print:
-				textConvFromPC.decode(printZSCIITarget);
+				textConv.reset(zCharsUnpackerFromPC);
+				textConv.decode(printZSCIITarget);
 				break;
 			case print_ret://print_rtrue in zmach06e.pdf
-				textConvFromPC.decode(printZSCIITarget);
+				textConv.reset(zCharsUnpackerFromPC);
+				textConv.decode(printZSCIITarget);
 				ioCard.printZSCII(13);
 				doReturn(1);
 				break;
 			case print_addr:
 				seqMemROBuf.setAddress(o0);
-				textConvFromSeqMemROBuf.decode(printZSCIITarget);
+				textConv.reset(zCharsUnpackerFromSeqMemRO);
+				textConv.decode(printZSCIITarget);
 				break;
 			case print_paddr:
 				seqMemROBuf.setAddress(packedToByteAddr(o0, false));
-				textConvFromSeqMemROBuf.decode(printZSCIITarget);
+				textConv.reset(zCharsUnpackerFromSeqMemRO);
+				textConv.decode(printZSCIITarget);
 				break;
 			case print_num:
 				//Sign-extend 16 to 32 bit
@@ -496,7 +501,8 @@ public class ZInterpreter
 				break;
 			case print_obj:
 				seqMemROBuf.setAddress(objectTree.getObjectNameLoc(o0));
-				textConvFromSeqMemROBuf.decode(printZSCIITarget);
+				textConv.reset(zCharsUnpackerFromSeqMemRO);
+				textConv.decode(printZSCIITarget);
 				break;
 			//8.11 Miscellaneous screen output
 			case erase_window:

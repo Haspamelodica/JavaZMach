@@ -13,7 +13,7 @@ import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
 import net.haspamelodica.javaz.core.objects.ObjectTree;
 import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
-import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
+import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverterStream;
 
 public class DumpObjectTree
 {
@@ -26,7 +26,7 @@ public class DumpObjectTree
 		int version = header.getField(Version);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);
 		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
-		ZCharsToZSCIIConverter textConv = new ZCharsToZSCIIConverter(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(textConvSeqMem));
+		ZCharsToZSCIIConverterStream textConv = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(textConvSeqMem));
 		alphabet.reset();
 		textConv.reset();
 		tree.reset();
@@ -34,7 +34,7 @@ public class DumpObjectTree
 			if(tree.getParent(objNumber) == 0)
 				printObjTree(version, tree, objNumber, textConvSeqMem, textConv);
 	}
-	private static void printObjTree(int version, ObjectTree tree, int topLevelObjNumber, SequentialMemoryAccess seqMem, ZCharsToZSCIIConverter textConv)
+	private static void printObjTree(int version, ObjectTree tree, int topLevelObjNumber, SequentialMemoryAccess seqMem, ZCharsToZSCIIConverterStream textConv)
 	{
 		boolean[] hasSiblingsStack = new boolean[255];
 		for(int objNumber = topLevelObjNumber, depth = 0; objNumber != 0;)

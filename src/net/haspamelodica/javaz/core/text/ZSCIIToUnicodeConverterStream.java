@@ -1,13 +1,13 @@
 package net.haspamelodica.javaz.core.text;
 
-public class UnicodeZSCIIConverterStream implements UnicodeCharStream
+public class ZSCIIToUnicodeConverterStream implements UnicodeCharStream
 {
 	private final ZSCIICharStreamReceiver	zsciiTarget;
 
 	private ZSCIICharStream				source;
 	private UnicodeCharStreamReceiver	target;
 
-	public UnicodeZSCIIConverterStream(UnicodeZSCIIConverter unicodeConv)
+	public ZSCIIToUnicodeConverterStream(UnicodeZSCIIConverter unicodeConv)
 	{
 		this.zsciiTarget = z -> unicodeConv.zsciiToUnicode(z, target);
 	}

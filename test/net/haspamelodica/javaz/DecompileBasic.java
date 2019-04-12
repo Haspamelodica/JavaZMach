@@ -17,7 +17,7 @@ import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
 import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
-import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverter;
+import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverterStream;
 
 public class DecompileBasic
 {
@@ -30,7 +30,7 @@ public class DecompileBasic
 		int version = header.getField(Version);
 		InstructionDecoder decoder = new InstructionDecoder(config, version, memSeq);
 		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
-		ZCharsToZSCIIConverter textConverter = new ZCharsToZSCIIConverter(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(memSeq));
+		ZCharsToZSCIIConverterStream textConverter = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(memSeq));
 		alphabet.reset();
 		textConverter.reset();
 		memSeq.setAddress(header.getField(InitialPC15));//TODO V6+
