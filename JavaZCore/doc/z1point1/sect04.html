@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>The Z-Machine Standards Document</title>
+<link rel="stylesheet" type="text/css" href="zspec.css">
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+</head>
+
+<body>
+
+<img class="icon" src="icon04.gif" alt="">
+
+<h1>4. How instructions are encoded</h1>
+
+<blockquote>
+  <p>We do but teach bloody instructions</p>
+  <p>Which, being taught, return to plague th' inventor</p>
+  <p>Shakespeare, <strong>Macbeth</strong></p>
+</blockquote>
+
+<hr>
+
+<p>4.1 <a href="#one">Instructions</a> / 
+   4.2 <a href="#two">Operand types</a> / 
+   4.3 <a href="#three">Form and operand count</a> /
+   4.4 <a href="#four">Specifying operand types</a> / 
+   4.5 <a href="#five">Operands</a> / 
+   4.6 <a href="#six">Stores</a> / 
+   4.7 <a href="#seven">Branches</a> / 
+   4.8 <a href="#eight">Text opcodes</a>
+</p>
+
+<hr>
+
+<h2 id="one">4.1</h2>
+<p>A single Z-machine instruction consists of the following
+   sections (and in the order shown):
+</p>
+
+<pre>
+  Opcode               1 or 2 bytes
+  (Types of operands)  1 or 2 bytes: 4 or 8 2-bit fields
+  Operands             Between 0 and 8 of these: each 1 or 2 bytes
+  (Store variable)     1 byte
+  (Branch offset)      1 or 2 bytes
+  (Text to print)      An encoded string (of unlimited length)
+</pre>
+
+<p>Bracketed sections are not present in all opcodes.  (A few opcodes
+   take both "store" and "branch".)
+</p>
+<h2 id="two">4.2</h2>
+<p>There are four 'types' of operand.  These are often specified
+   by a number stored in 2 binary digits:
+</p>
+
+<pre>
+  $$00    Large constant (0 to 65535)    2 bytes
+  $$01    Small constant (0 to 255)      1 byte
+  $$10    Variable                       1 byte
+  $$11    Omitted altogether             0 bytes
+</pre>
+
+<h2>4.2.1</h2>
+<p>Large constants, like all 2-byte words of data in the Z-machine,
+   are stored with most significant byte first (e.g. <strong>$2478</strong> is stored as
+   <strong>$24</strong> followed by <strong>$78</strong>).  A 'large constant' may in fact be a small
+   number.
+</p>
+
+<h2>4.2.2</h2>
+<p>Variable number <strong>$00</strong> refers to the top of the stack,
+   <strong>$01</strong> to <strong>$0f</strong> mean the local variables of the current routine
+   and <strong>$10</strong> to <strong>$ff</strong> mean the global variables.  It is illegal to
+   refer to local variables which do not exist for the current routine
+   (there may even be none).
+</p>
+
+<h2>4.2.3</h2>
+<p>The type 'Variable' really means "variable by value".  Some
+   instructions take as an operand a "variable by reference": for instance,
+   <strong>inc</strong> has one operand, the reference number of a variable to increment.
+   This operand usually has type 'Small constant' (and Inform automatically
+   assembles a line like <strong>@inc turns</strong> by writing the operand <strong>turns</strong> as
+   a small constant with value the reference number of the variable <strong>turns</strong>).
+</p>
+
+<h2 id="three">4.3</h2>
+<p>Each instruction has a form (long, short, extended or variable)
+   and an operand count (0OP, 1OP, 2OP or VAR).
+   If the top two bits of the opcode are <strong>$$11</strong> the form is variable;
+   if <strong>$$10</strong>, the form is short.  If the opcode is 190 (<strong>$BE</strong> in hexadecimal)
+   and the version is 5 or later, the form is "extended".  Otherwise, the
+   form is "long".
+</p>
+
+<h2>4.3.1</h2>
+<p>In short form, bits 4 and 5 of the opcode byte give an operand
+   type as above.  If this is <strong>$11</strong> then the operand count is
+   0OP; otherwise, 1OP.  In either case the opcode number is
+   given in the bottom 4 bits.
+</p>
+
+<h2>4.3.2</h2>
+<p>In long form the operand count is always 2OP.  The opcode number
+   is given in the bottom 5 bits.
+</p>
+
+<h2>4.3.3</h2>
+<p>In variable form, if bit 5 is 0 then the count is 2OP;
+   if it is 1, then the count is VAR.  The opcode number is given
+   in the bottom 5 bits.
+</p>
+
+<h2>4.3.4</h2>
+<p>In extended form, the operand count is VAR.  The opcode number
+   is given in a second opcode byte.
+</p>
+
+<h2 id="four">4.4</h2>
+<p>Next, the types of the operands are specified.</p>
+
+<h2>4.4.1</h2>
+<p> In short form, bits 4 and 5 of the opcode give the type.</p>
+
+<h2>4.4.2</h2>
+<p>In long form, bit 6 of the opcode gives the type of
+   the first operand, bit 5 of the second.  A value of 0 means a small
+   constant and 1 means a variable.  (If a 2OP instruction needs a
+   large constant as operand, then it should be assembled in variable
+   rather than long form.)
+</p>
+
+<h2>4.4.3</h2>
+<p>In variable or extended forms, a byte of 4 operand types is
+   given next.  This contains 4 2-bit fields: bits 6 and 7 are the first
+   field, bits 0 and 1 the fourth.  The values are operand types as above.
+   Once one type has been given as 'omitted', all subsequent ones must
+   be.  Example: <strong>$$00101111</strong> means large constant followed by variable
+   (and no third or fourth opcode).
+</p>
+
+<h2>4.4.3.1</h2>
+<p>In the special case of the "double variable" VAR opcodes
+   <strong>call_vs2</strong> and <strong>call_vn2</strong> (opcode numbers 12 and 26), a second byte
+   of types is given, containing the types for the next four operands.
+</p>
+
+
+<h2 id="five">4.5</h2>
+<p>The operands are given next.  Operand counts of 0OP, 1OP or 2OP
+   require 0, 1 or 2 operands to be given, respectively.  If the count is VAR,
+   there must be as many operands as there were types other than 'omitted'.
+</p>
+
+<h2>4.5.1</h2>
+<p>Note that only <strong>call_vs2</strong> and <strong>call_vn2</strong> can have more than 4
+   operands, and no instruction can have more than 8.
+</p>
+
+<h2>4.5.2</h2>
+   <p>Opcode operands are always evaluated from first to last - this order is
+   important when the stack pointer appears as an argument. Thus</p>
+<pre>@sub sp sp -> i;</pre>
+<p>subtracts the second-from-top stack item from the topmost
+   stack item.
+</p>
+
+
+<h2 id="six">4.6</h2>
+<p>"Store" instructions return a value: e.g., <strong>mul</strong> multiplies
+   its two operands together.  Such instructions must be followed by a
+   single byte giving the variable number of where to put the result.
+</p>
+
+<h2 id="seven">4.7</h2>
+<p>Instructions which test a condition are called "branch"
+   instructions.  The branch information is stored in one or two bytes,
+   indicating what to do with the result of the test.  If bit 7 of
+   the first byte is 0, a branch occurs when the condition was false;
+   if 1, then branch is on true.  If bit 6 is set, then the branch
+   occupies 1 byte only, and the "offset" is in the range 0 to 63,
+   given in the bottom 6 bits.  If bit 6 is clear, then the offset is
+   a signed 14-bit number given in bits 0 to 5 of the first byte
+   followed by all 8 of the second.
+</p>
+
+<h2>4.7.1</h2>
+<p>An offset of 0 means "return false from the current
+   routine", and 1 means "return true from the current routine".
+</p>
+
+<h2>4.7.2</h2>
+<p>Otherwise, a branch moves execution to the instruction at
+   address
+</p>
+<pre>
+  Address after branch data + Offset - 2.
+</pre>
+
+
+<h2 id="eight">4.8</h2>
+<p>Two opcodes, <strong>print</strong> and <strong>print_ret</strong>, are followed by a text
+   string.  This is stored according to the usual rules: in particular
+   execution continues after the last 2-byte word of text (the one with
+   top bit set).
+</p>
+
+<hr>
+
+<h2>Remarks</h2>
+<p>Some opcodes have type VAR only because the available codes for
+   the other types had run out; <strong>print_char</strong>, for instance.  Others, especially
+   <strong>call</strong>, need the flexibility to have between 1 and 4 operands.
+</p>
+
+<p>The Inform assembler can assemble branches in either form, though
+   the programmer should always use long form unless there's a good
+   reason.  Inform automatically optimises branch statements so as to
+   force as many of them as possible into short form.  (This optimisation
+   will happen to branches written by hand in assembler as well as
+   to branches compiled by Inform.)
+</p>
+
+<p>The disassembler <strong>Txd</strong> numbers locals from 0 to 14 and globals from
+   0 to 239 in its output (corresponding to variable numbers 1 to 15, and
+   16 to 255, respectively).
+</p>
+
+<p>The branch formula is sensible because in the natural implementation,
+   the program counter is at the address after the branch data when the branch
+   takes place: thus it can be regarded as
+</p>
+
+<pre>
+  PC = PC + Offset - 2.
+</pre>
+
+<p>If the rule were simply "add the offset" then, since the offset couldn't
+   be 0 or 1 (because of the return-false and return-true values), we would
+   never be able to skip past a 1-byte instruction (say, a 0OP like <strong>quit</strong>),
+   or specify the branch "don't branch at all" (sometimes useful to ignore
+   the result of the test altogether).  Subtracting 2 means that the only
+   effects we can't achieve are
+</p>
+
+<pre>
+  PC = PC - 1     and     PC = PC - 2
+</pre>
+
+<p>and we would never want these anyway, since they would put the program
+   counter somewhere back inside the same instruction, with horrid
+   consequences.
+</p>
+
+<hr>
+
+<h2>On disassembly</h2>
+
+<p>Briefly, the first byte of an instruction can be decoded
+   using the following table:
+</p>
+
+<pre>
+  $00 -- $1f  long      2OP     small constant, small constant
+  $20 -- $3f  long      2OP     small constant, variable
+  $40 -- $5f  long      2OP     variable, small constant
+  $60 -- $7f  long      2OP     variable, variable
+  $80 -- $8f  short     1OP     large constant
+  $90 -- $9f  short     1OP     small constant
+  $a0 -- $af  short     1OP     variable
+  $b0 -- $bf  short     0OP
+  except $be  extended opcode given in next byte
+  $c0 -- $df  variable  2OP     (operand types in next byte)
+  $e0 -- $ff  variable  VAR     (operand types in next byte(s))
+</pre>
+
+<p>Here is an example disassembly:</p>
+
+<pre>
+  @inc_chk c 0 label;    05 02 00 d4
+      long form; count 2OP; opcode number 5; operands:
+          02     small constant (referring to variable c)
+          00     small constant 0
+      branch if true: 1-byte offset, 20 (since label is
+      18 bytes forward from here).
+  @print "Hello.^";      b2 11 aa 46 34 16 45 9c a5 
+      short form; count 0OP.
+      literal string, Z-chars: 4 13 10  17 17 20  5 18 5  7 5 5.
+  @mul 1000 c -> sp;     d6 2f 03 e8 02 00
+      variable form; count 2OP; opcode number 22; operands:
+          03 e8  long constant (1000 decimal)
+          02     variable c
+      store result to stack pointer (var number 00).
+  @call_1n Message;      8f 01 56
+      short form; count 1OP; opcode number 15; operand:
+          01 56  long constant (packed address of routine)
+  .label;
+</pre>
+
+<hr>
+
+<p>
+  <a href="index.html">Contents</a> / 
+  <a href="preface.html">Preface</a> /
+  <a href="overview.html">Overview</a>
+</p>
+
+<p>Section
+  <a href="sect01.html">1</a> / <a href="sect02.html">2</a> /
+  <a href="sect03.html">3</a> / <a href="sect04.html">4</a> /
+  <a href="sect05.html">5</a> / <a href="sect06.html">6</a> /
+  <a href="sect07.html">7</a> / <a href="sect08.html">8</a> /
+  <a href="sect09.html">9</a> / <a href="sect10.html">10</a> /
+  <a href="sect11.html">11</a> / <a href="sect12.html">12</a> /
+  <a href="sect13.html">13</a> / <a href="sect14.html">14</a> /
+  <a href="sect15.html">15</a> / <a href="sect16.html">16</a>
+</p>
+
+<p>Appendix
+  <a href="appa.html">A</a> / <a href="appb.html">B</a> /
+  <a href="appc.html">C</a> / <a href="appd.html">D</a> /
+  <a href="appe.html">E</a> / <a href="appf.html">F</a>
+</p>
+
+<hr>
+
+</body>
+</html>

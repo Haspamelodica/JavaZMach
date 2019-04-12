@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<title>The Z-Machine Standards Document</title>
+<link rel="stylesheet" type="text/css" href="zspec.css">
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+</head>
+
+<body>
+
+<img class="icon" src="icon09.gif" alt="">
+
+<h1>9. Sound effects</h1>
+
+<hr>
+
+<p>9.1 <a href="#one">Sound effects</a> /
+   9.2 <a href="#two">Numbering of</a> /
+   9.3 <a href="#three">Volume</a> /
+   9.4 <a href="#four">Sound playing autonymously</a>
+</p>
+
+<hr>
+
+<h2 id="one">9.1</h2>
+<p>Some games, from Version 3 onward, have sound effects attached.
+   These are not stored in the story files (or the Z-machine) itself,
+   and the interpreter is simply expected to know where to find them.
+   Other games have only one sound effect, usable in a much more restricted
+   way: a beep or bell sound, which we shall call a "bleep".
+</p>
+
+<h2>9.1.1</h2>
+<p>In Version 6, the interpreter should set bit 5 of 'Flags 1'
+   if it can provide sound effects beyond a bleep.
+</p>
+
+<h2>9.1.2</h2>
+<p>In Version 5 and later, a game should have bit 7 of 'Flags 2'
+   set in its story file if it wants to use sound effects beyond a bleep.
+   The interpreter should then clear this bit if it cannot oblige.
+</p>
+
+
+<h2 id="two">9.2</h2>
+<p>Sound effects are numbered upwards from 1.  Number 1 is a
+   high-pitched bleep, number 2 a low-pitched one and effects from 3 upward
+   are supplied by the interpreter somehow for the particular game in
+   question.
+</p>
+
+<h2>9.2.1</h2>
+<p><strong>***[1.1]</strong> Aside from bleeps, there are two types of sound effect, samples and music. 
+   The game has no way of telling the type of a given sound effect.
+</p>
+  
+
+<h2 id="three">9.3</h2>
+<p>Sound effects (other than bleeps) can be played at any volume
+   level from 1 to 8 (8 being loudest of these).  The volume level -1
+   should be implemented as "loudest possible".
+</p>
+
+
+<h2 id="four">9.4</h2>
+<p>Bleeps are immediate and brief.  Other sound effects take place
+   in the background, while normal operation of the Z-machine is going on.
+   Control is via the <strong>sound_effect</strong> opcode, allowing the game to prepare,
+   start, stop or finish with an effect.
+</p>
+
+<h2>9.4.1</h2>
+<p>The game may (but need not) "prepare" a sound effect before
+   use.  This would indicate to the interpreter that the game intends
+   to use the effect soon: an interpreter might act on this information by
+   loading the sampled sound off disc and into a memory cache.
+</p>
+
+<h2>9.4.2</h2>
+<p><strong>***[1.1]</strong> A sound effect (other than a bleep) can then be "stopped" or
+   "started".  Only one sound effect of each type can play at any given time,
+   so that starting a new music sound effect stops any current music playing, and starting any
+   new sample sound effect stops any current sample sound playing. Samples and music do not interrupt
+   each other.
+</p>
+
+<h2>9.4.3</h2>
+<p>In Versions 5 and later, a sound effect may repeat any specified
+   number of times, or repeat forever (until stopped).
+</p>
+
+<h2>9.4.4</h2>
+<p>Eventually, though, if it has not been stopped, it may end by itself.
+   A routine (specified at start time) can then be called.  The intention is that
+   this routine may implement effects such as fading in and out, by replaying
+   the sound effect at a different volume.  (A game should not place any important
+   code in such a routine.) The routine is only called when the sound has played the requested
+   number of times. If manually stopped or interrupted by another sound, the
+   routine is not called.
+</p>
+
+<h2>9.4.5</h2>
+<p>The game may, but need not, explicitly "finish with"
+   any sound effect which is not likely to occur again for a while:
+   the interpreter can then throw it out of memory.
+</p>
+
+<hr>
+
+<h2>Remarks</h2>
+<p>The safest way an Inform program can try to produce a bleep is by
+   executing <strong>@sound_effect 1</strong>.  Some ports of <strong>Zip</strong> believe that the
+   first operand of this is the number of bleeps to make (so that
+   <strong>@sound_effect 2</strong> bleeps twice), but this is incorrect.
+</p>
+
+<p>Several Infocom games bleep (using <strong>sound_effect</strong> with only one
+   operand, always equal to 1 or 2).  Two provided sampled sound effects
+   but did not bleep: 'The Lurking Horror' and 'Sherlock'.
+   Their story files contain the following usages of <strong>sound_effect</strong>:
+</p>
+
+<pre>
+  sound_effect number 2 volume                   (in TLH)
+  sound_effect number 2 volume/repeats function  (in Sherlock)
+  sound_effect 0 3
+  sound_effect number 3
+  sound_effect 0 4
+</pre>
+
+<p>except that, probably due to a bug in its own code, 'TLH' can also
+   generate
+</p>
+
+<pre>
+  sound_effect 4 8
+  sound_effect 4095 2 15
+</pre>
+
+<p>A further difficulty with 'TLH' is that it assumes the interpreter is
+   as slow as Infocom's Amiga interpreter was: it fires off several sound
+   effects in one game round, assuming there will be time for it to play
+   most of each one.  To simulate this, <strong>sound_effect</strong> must be rewritten
+   to pause sometimes:
+</p>
+
+<p>if a new sample sound effect is begun while there is still one
+   playing which was started since the last keyboard input,
+   then wait until that earlier one finishes one cycle before
+   replacing it with the new sound effect. Music sound effects are not 
+   affected by this. New music should interrupt  old music immediately at 
+   all times.
+</p>
+
+<p>Infocom's MS-DOS interpreters for V4 to V6 set bit 5 of 'Flags 1' in
+   all circumstances (i.e., whether or not sound effects are available).
+   This would be incorrect behaviour for a standard interpreter.
+</p>
+
+<p>Infocom implemented sound effects differently on different machines.
+   The format of Infocom's shipped sound effects files has been
+   documented by Stefan Jokisch and his notes are available from
+   <strong>www.ifarchive.org</strong>. 
+</p>
+
+<p>However, modern interpreters are strong encouraged to support Andrew Plotkin's
+   <strong>Blorb</strong> format, which is a more modern way to make sound effects 
+   available to newer games. Blorb files have been made available for the Infocom 
+   sound effects, so that modern interpreters need no longer support the Infocom format.
+</p>
+
+<hr> 
+
+<p>When using Blorb resources, the default interpreter behaviour (unless over-
+   ridden by the player) should be for samples played at maximum volume (64), in
+   one channel of a SONG or MOD played at volume 8, to be of equal volume to
+   samples played at maximum volume (8) as an effect. This will be the natural
+   behaviour if effects use one physical channel and MODs/SONGs use four
+   physical channels.
+</p>
+
+<p>Ideally, a sound played at volume <em>n</em> in a SONG played at volume <em>m</em> should
+   sound the same as when played as an effect at volume <em>n*m/64</em>. This mandates
+   that the volume scale for effects be equivalent to the scale defined for
+   samples in the MOD specification.
+</p>
+
+<p>If multi-channel effects are used, the overall volume should be independent
+   of the number of channels used in the sound. Thus a stereo AIFF containing
+   the same samples for left and right should sound as loud as a mono AIFF
+   containing the same data. This will need adjustment of volume if stereo AIFFs
+   use two physical channels and mono AIFFs use one. No adjustment would be
+   required if an interpreter reduced all AIFFs to mono.
+</p>
+
+
+<hr>
+
+<p>
+  <a href="index.html">Contents</a> / 
+  <a href="preface.html">Preface</a> /
+  <a href="overview.html">Overview</a>
+</p>
+
+<p>Section
+  <a href="sect01.html">1</a> / <a href="sect02.html">2</a> /
+  <a href="sect03.html">3</a> / <a href="sect04.html">4</a> /
+  <a href="sect05.html">5</a> / <a href="sect06.html">6</a> /
+  <a href="sect07.html">7</a> / <a href="sect08.html">8</a> /
+  <a href="sect09.html">9</a> / <a href="sect10.html">10</a> /
+  <a href="sect11.html">11</a> / <a href="sect12.html">12</a> /
+  <a href="sect13.html">13</a> / <a href="sect14.html">14</a> /
+  <a href="sect15.html">15</a> / <a href="sect16.html">16</a>
+</p>
+
+<p>Appendix
+  <a href="appa.html">A</a> / <a href="appb.html">B</a> /
+  <a href="appc.html">C</a> / <a href="appd.html">D</a> /
+  <a href="appe.html">E</a> / <a href="appf.html">F</a>
+</p>
+
+<hr>
+
+</body>
+</html>
