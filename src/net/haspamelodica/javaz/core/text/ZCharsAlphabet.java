@@ -86,8 +86,9 @@ public class ZCharsAlphabet
 					target.accept(zChar);
 					return;
 				}
+		target.accept((byte) (version < 3 ? 3 : 5));
 		target.accept((byte) 6);
 		target.accept((byte) (zsciiChar >>> 5));
-		target.accept((byte) (zsciiChar & 32));
+		target.accept((byte) (zsciiChar & 31));
 	}
 }
