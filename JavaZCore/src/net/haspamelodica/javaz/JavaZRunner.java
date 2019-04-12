@@ -7,14 +7,9 @@ import java.nio.file.Paths;
 import net.haspamelodica.javaz.core.ZInterpreter;
 import net.haspamelodica.javaz.core.io.VideoCardDefinition;
 import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
-import net.haspamelodica.javaz.io.console.ConsoleVideoCard;
 
-public class JavaZ
+public class JavaZRunner
 {
-	public static void main(String[] args) throws IOException
-	{
-		run(args, ConsoleVideoCard::new);
-	}
 	public static void run(String[] args, VideoCardDefinition vCardDef) throws IOException
 	{
 		run(readConfigFromArgs(args), vCardDef);

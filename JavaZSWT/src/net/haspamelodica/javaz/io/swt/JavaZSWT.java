@@ -1,7 +1,7 @@
 package net.haspamelodica.javaz.io.swt;
 
-import static net.haspamelodica.javaz.JavaZ.createInterpreter;
-import static net.haspamelodica.javaz.JavaZ.readConfigFromArgs;
+import static net.haspamelodica.javaz.JavaZRunner.createInterpreter;
+import static net.haspamelodica.javaz.JavaZRunner.readConfigFromArgs;
 
 import java.io.IOException;
 
