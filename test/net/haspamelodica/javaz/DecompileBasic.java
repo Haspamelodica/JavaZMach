@@ -15,6 +15,7 @@ import net.haspamelodica.javaz.core.instructions.OperandType;
 import net.haspamelodica.javaz.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javaz.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
+import net.haspamelodica.javaz.core.text.ZCharStream;
 import net.haspamelodica.javaz.core.text.ZCharsAlphabet;
 import net.haspamelodica.javaz.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javaz.core.text.ZCharsToZSCIIConverterStream;
@@ -30,9 +31,10 @@ public class DecompileBasic
 		int version = header.getField(Version);
 		InstructionDecoder decoder = new InstructionDecoder(config, version, memSeq);
 		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
-		ZCharsToZSCIIConverterStream textConverter = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(memSeq));
+		ZCharStream zCharStream = new ZCharsSeqMemUnpacker(memSeq);
+		ZCharsToZSCIIConverterStream textConverter = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet);
 		alphabet.reset();
-		textConverter.reset();
+		textConverter.reset(zCharStream);
 		memSeq.setAddress(header.getField(InitialPC15));//TODO V6+
 		memSeq.setAddress(0x535E);//address of Overview example
 		DecodedInstruction instr = new DecodedInstruction();

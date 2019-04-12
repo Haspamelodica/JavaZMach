@@ -26,9 +26,10 @@ public class DumpObjectTree
 		int version = header.getField(Version);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);
 		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
-		ZCharsToZSCIIConverterStream textConv = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet, new ZCharsSeqMemUnpacker(textConvSeqMem));
+		ZCharsSeqMemUnpacker zCharStream = new ZCharsSeqMemUnpacker(textConvSeqMem);
+		ZCharsToZSCIIConverterStream textConv = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet);
 		alphabet.reset();
-		textConv.reset();
+		textConv.reset(zCharStream);
 		tree.reset();
 		for(int objNumber = 1; objNumber < 255; objNumber ++)
 			if(tree.getParent(objNumber) == 0)
