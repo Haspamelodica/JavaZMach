@@ -5,14 +5,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import net.haspamelodica.javaz.core.ZInterpreter;
-import net.haspamelodica.javaz.core.io.VideoCardDefinition;
+import net.haspamelodica.javaz.core.io.VideoCard;
 import net.haspamelodica.javaz.core.memory.StaticArrayBackedMemory;
 
 public class JavaZRunner
 {
-	public static void run(String[] args, VideoCardDefinition vCardDef) throws IOException
+	public static void run(String[] args, VideoCard videoCard) throws IOException
 	{
-		run(readConfigFromArgs(args), vCardDef);
+		run(readConfigFromArgs(args), videoCard);
 	}
 	public static GlobalConfig readConfigFromArgs(String[] args)
 	{
@@ -27,15 +27,15 @@ public class JavaZRunner
 		config.setString("storyfile_path", storyfilePath);
 		return config;
 	}
-	public static void run(GlobalConfig config, VideoCardDefinition vCardDef) throws IOException
+	public static void run(GlobalConfig config, VideoCard videoCard) throws IOException
 	{
-		ZInterpreter zInterpreter = createInterpreter(config, vCardDef);
+		ZInterpreter zInterpreter = createInterpreter(config, videoCard);
 		zInterpreter.reset();
 		while(zInterpreter.step());
 	}
-	public static ZInterpreter createInterpreter(GlobalConfig config, VideoCardDefinition vCardDef) throws IOException
+	public static ZInterpreter createInterpreter(GlobalConfig config, VideoCard videoCard) throws IOException
 	{
-		ZInterpreter zInterpreter = new ZInterpreter(config, readStoryfileROM(config), vCardDef);
+		ZInterpreter zInterpreter = new ZInterpreter(config, readStoryfileROM(config), videoCard);
 		return zInterpreter;
 	}
 	public static StaticArrayBackedMemory readStoryfileROM(GlobalConfig config) throws IOException

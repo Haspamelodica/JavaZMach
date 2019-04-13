@@ -8,6 +8,6 @@ public class JavaZConsole
 {
 	public static void main(String[] args) throws IOException
 	{
-		run(args, ConsoleVideoCard::new);
+		run(args, new ConsoleVideoCard());
 	}
 }

@@ -3,7 +3,6 @@ package net.haspamelodica.javaz.io.console;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.io.IOException;
 import net.haspamelodica.javaz.core.io.VideoCard;
 import net.haspamelodica.javaz.core.text.UnicodeCharStream;
@@ -14,7 +13,7 @@ public class ConsoleVideoCard implements VideoCard
 
 	private int lastY = -1;
 
-	public ConsoleVideoCard(GlobalConfig config)
+	public ConsoleVideoCard()
 	{
 		this.in = new InputStreamReader(System.in);
 	}

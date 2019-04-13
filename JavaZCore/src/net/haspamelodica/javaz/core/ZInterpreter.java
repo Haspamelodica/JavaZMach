@@ -21,7 +21,7 @@ import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.instructions.DecodedInstruction;
 import net.haspamelodica.javaz.core.instructions.InstructionDecoder;
 import net.haspamelodica.javaz.core.io.IOCard;
-import net.haspamelodica.javaz.core.io.VideoCardDefinition;
+import net.haspamelodica.javaz.core.io.VideoCard;
 import net.haspamelodica.javaz.core.memory.CheckedWriteMemory;
 import net.haspamelodica.javaz.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javaz.core.memory.ReadOnlyBuffer;
@@ -76,11 +76,11 @@ public class ZInterpreter
 	private final StringBuilder			stringBuf;
 	private int							callDepth;
 
-	public ZInterpreter(GlobalConfig config, ReadOnlyMemory storyfileROM, VideoCardDefinition vCardDef)
+	public ZInterpreter(GlobalConfig config, ReadOnlyMemory storyfileROM, VideoCard videoCard)
 	{
-		this(config, -1, storyfileROM, vCardDef);
+		this(config, -1, storyfileROM, videoCard);
 	}
-	public ZInterpreter(GlobalConfig config, int versionOverride, ReadOnlyMemory storyfileROM, VideoCardDefinition vCardDef)
+	public ZInterpreter(GlobalConfig config, int versionOverride, ReadOnlyMemory storyfileROM, VideoCard videoCard)
 	{
 		this.storyfileROM = storyfileROM;
 		this.version = versionOverride > 0 ? versionOverride : HeaderParser.getFieldUnchecked(storyfileROM, Version);
@@ -104,7 +104,7 @@ public class ZInterpreter
 		this.zCharsUnpackerFromSeqMemRO = new ZCharsSeqMemUnpacker(seqMemROBuf);
 		this.zCharsUnpackerFromPC = new ZCharsSeqMemUnpacker(memAtPC);
 		this.textConv = new ZCharsToZSCIIConverterStream(config, version, headerParser, memCheckedWrite, alphabet);
-		this.ioCard = new IOCard(config, version, headerParser, memCheckedWrite, vCardDef);
+		this.ioCard = new IOCard(config, version, headerParser, memCheckedWrite, videoCard);
 		this.printZSCIITarget = ioCard::printZSCII;
 		this.tokeniser = new Tokeniser(config, version, headerParser, memCheckedWrite, alphabet);
 		this.trueRandom = new Random();

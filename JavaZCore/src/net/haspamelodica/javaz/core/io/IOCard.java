@@ -79,7 +79,7 @@ public class IOCard
 
 	private final ZeroTerminatedReadOnlyByteSet terminatingZSCIIChars;
 
-	public IOCard(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem, VideoCardDefinition vCardDef)
+	public IOCard(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem, VideoCard videoCard)
 	{
 		this.version = version;
 
@@ -88,7 +88,7 @@ public class IOCard
 		this.headerParser = headerParser;
 		this.unicodeConv = new UnicodeZSCIIConverter(config);
 		this.unicodeStream = new ZSCIIToUnicodeConverterStream(unicodeConv);
-		this.videoCard = vCardDef.create(config);
+		this.videoCard = videoCard;
 		int windowCount = version < 3 ? 1 : version == 6 ? 8 : 2;
 		this.windowProperties = new WindowPropsAttrs[windowCount];
 		for(int w = 0; w < windowCount; w ++)
