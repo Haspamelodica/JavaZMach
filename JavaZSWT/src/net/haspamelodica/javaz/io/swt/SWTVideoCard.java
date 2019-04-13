@@ -2,7 +2,7 @@ package net.haspamelodica.javaz.io.swt;
 
 import net.haspamelodica.javaz.GlobalConfig;
 import net.haspamelodica.javaz.core.io.VideoCard;
-import net.haspamelodica.javaz.core.text.UnicodeCharStream;
+import net.haspamelodica.javaz.core.text.ZSCIICharStream;
 
 public class SWTVideoCard implements VideoCard
 {
@@ -41,7 +41,7 @@ public class SWTVideoCard implements VideoCard
 		return 0;
 	}
 	@Override
-	public int getCharWidth(char unicodeChar, int font, int style)
+	public int getCharWidth(int zsciiChar, int font, int style)
 	{
 		// TODO Auto-generated method stub
 		return 0;
@@ -65,13 +65,13 @@ public class SWTVideoCard implements VideoCard
 
 	}
 	@Override
-	public void showStatusBar(UnicodeCharStream location, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame)
+	public void showStatusBar(ZSCIICharStream location, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame)
 	{
 		// TODO Auto-generated method stub
 
 	}
 	@Override
-	public void showChar(char unicodeChar, int font, int style, int trueFB, int trueBG, int x, int y)
+	public void showChar(int zsciiChar, int font, int style, int trueFB, int trueBG, int x, int y)
 	{
 		// TODO Auto-generated method stub
 
@@ -95,7 +95,7 @@ public class SWTVideoCard implements VideoCard
 
 	}
 	@Override
-	public char inputSingleChar()
+	public int inputSingleChar()
 	{
 		// TODO Auto-generated method stub
 		return 0;

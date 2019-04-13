@@ -42,8 +42,6 @@ import net.haspamelodica.javaz.core.header.HeaderParser;
 import net.haspamelodica.javaz.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javaz.core.memory.WritableBuffer;
 import net.haspamelodica.javaz.core.memory.ZeroTerminatedReadOnlyByteSet;
-import net.haspamelodica.javaz.core.text.UnicodeZSCIIConverter;
-import net.haspamelodica.javaz.core.text.ZSCIIToUnicodeConverterStream;
 import net.haspamelodica.javaz.core.text.ZSCIICharStream;
 
 public class IOCard
@@ -54,18 +52,16 @@ public class IOCard
 
 	private final boolean replaceAllSpacesWithExtraNL;
 
-	private final HeaderParser					headerParser;
-	private final UnicodeZSCIIConverter			unicodeConv;
-	private final ZSCIIToUnicodeConverterStream	unicodeStream;
-	private final VideoCard						videoCard;
-	private final WindowPropsAttrs[]			windowProperties;
+	private final HeaderParser			headerParser;
+	private final VideoCard				videoCard;
+	private final WindowPropsAttrs[]	windowProperties;
 
 	private boolean isTimeGame;
 
 	private boolean	extraNL;
 	private int		firstNonSpaceIndex;
 
-	private char[]	outputBufferChars;
+	private int[]	outputBufferChars;
 	private int[]	outputBufferFonts;
 	private int[]	outputBufferStyles;
 	private int[]	outputBufferFGs;
@@ -86,15 +82,13 @@ public class IOCard
 		this.replaceAllSpacesWithExtraNL = config.getBool("io.wrapping.replace_all_spaces");
 
 		this.headerParser = headerParser;
-		this.unicodeConv = new UnicodeZSCIIConverter(config);
-		this.unicodeStream = new ZSCIIToUnicodeConverterStream(unicodeConv);
 		this.videoCard = videoCard;
 		int windowCount = version < 3 ? 1 : version == 6 ? 8 : 2;
 		this.windowProperties = new WindowPropsAttrs[windowCount];
 		for(int w = 0; w < windowCount; w ++)
 			windowProperties[w] = new WindowPropsAttrs();
 
-		this.outputBufferChars = new char[OUTPUT_BUFFER_OVERHEAD];
+		this.outputBufferChars = new int[OUTPUT_BUFFER_OVERHEAD];
 		this.outputBufferFonts = new int[OUTPUT_BUFFER_OVERHEAD];
 		this.outputBufferStyles = new int[OUTPUT_BUFFER_OVERHEAD];
 		this.outputBufferFGs = new int[OUTPUT_BUFFER_OVERHEAD];
@@ -213,7 +207,7 @@ public class IOCard
 			if(firstNonSpaceIndex >= 0 && isSpace)
 				flushBuffer();
 			if(zsciiChar != 0)//ZSCII 0 is "no char"
-				appendToBuffer(unicodeConv.zsciiToUnicodeNoNL(zsciiChar), isSpace);
+				appendToBuffer(zsciiChar, isSpace);
 			if(properties.getAttribute(BufferedAttr) == 0)
 				flushBuffer();
 		}
@@ -282,8 +276,7 @@ public class IOCard
 	}
 	public void showStatusBar(ZSCIICharStream zsciiChars, int scoreOrHours, int turnsOrMinutes)
 	{
-		unicodeStream.reset(zsciiChars);
-		videoCard.showStatusBar(unicodeStream, scoreOrHours, turnsOrMinutes, isTimeGame);
+		videoCard.showStatusBar(zsciiChars, scoreOrHours, turnsOrMinutes, isTimeGame);
 	}
 	/**
 	 * Stores ZSCII chars as bytes in <code>targetTextBuffer</code> from the current input stream.
@@ -300,10 +293,9 @@ public class IOCard
 		int maxZSCIIChars = targetTextBuffer.getCapacity();
 		for(int read = 0; read < maxZSCIIChars; read ++)
 		{
-			int nextChar = videoCard.inputSingleChar();
-			if(nextChar == -1)
+			int zsciiChar = videoCard.inputSingleChar();
+			if(zsciiChar == -1)
 				return -2;
-			int zsciiChar = unicodeConv.unicodeToZSCII((char) nextChar);
 			//Range 'A'-'Z'
 			if(zsciiChar > 0x40 && zsciiChar < 0x5B)
 				//convert to lower case
@@ -323,7 +315,7 @@ public class IOCard
 		flushBuffer();
 		return videoCard.inputSingleChar();
 	}
-	private void appendToBuffer(char unicodeChar, boolean isSpace)
+	private void appendToBuffer(int zsciiChar, boolean isSpace)
 	{
 		int bufferI = outputBufferLength ++;
 		if(bufferI == outputBufferChars.length)
@@ -344,10 +336,10 @@ public class IOCard
 		int trueFG = videoCard.getTrueColor(col & 0xFF);
 		int trueBG = videoCard.getTrueColor(col >>> 8);
 
-		int width = videoCard.getCharWidth(unicodeChar, font, style);
+		int width = videoCard.getCharWidth(zsciiChar, font, style);
 		outputBufferWidth += width;
 
-		outputBufferChars[bufferI] = unicodeChar;
+		outputBufferChars[bufferI] = zsciiChar;
 		outputBufferFonts[bufferI] = font;
 		outputBufferStyles[bufferI] = style;
 		outputBufferFGs[bufferI] = trueFG;
@@ -384,12 +376,12 @@ public class IOCard
 					//We don't need to set extraNL / we shouldn't, because immediately after this NL a character is showed.
 					newlineMoveCursor();
 
-				char unicodeChar = outputBufferChars[bufferPrintIndex];
+				int zsciiChar = outputBufferChars[bufferPrintIndex];
 				int font = outputBufferFonts[bufferPrintIndex];
 				int style = outputBufferStyles[bufferPrintIndex];
 				int trueFG = outputBufferFGs[bufferPrintIndex];
 				int trueBG = outputBufferBGs[bufferPrintIndex];
-				showCharMoveCursor(unicodeChar, font, style, trueFG, trueBG, width);
+				showCharMoveCursor(zsciiChar, font, style, trueFG, trueBG, width);
 				bufferPrintIndex ++;
 			} while(bufferPrintIndex < outputBufferLength);
 		}
@@ -398,11 +390,11 @@ public class IOCard
 		outputBufferWidth = 0;
 		firstNonSpaceIndex = -1;
 	}
-	private void showCharMoveCursor(char unicodeChar, int font, int style, int trueFG, int trueBG, int width)
+	private void showCharMoveCursor(int zsciiChar, int font, int style, int trueFG, int trueBG, int width)
 	{
 		int oldCursorX = currentWindowProperties.getProperty(CursorXProp);
 		int oldCursorY = currentWindowProperties.getProperty(CursorYProp);
-		videoCard.showChar(unicodeChar, font, style, trueFG, trueBG, oldCursorX - 1, oldCursorY - 1);
+		videoCard.showChar(zsciiChar, font, style, trueFG, trueBG, oldCursorX - 1, oldCursorY - 1);
 		setPropertyCurrentWindow(CursorXProp, oldCursorX + width);
 	}
 	private void newlineMoveCursor()
