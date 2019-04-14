@@ -11,5 +11,4 @@ Sources for contents of storyfiles/ and doc/:
  * [IFDB - Zork I](https://ifdb.tads.org/viewgame?id=0dbnusxunq7fw5ro)
  * [The Interactive Fiction Archive - Infocom - Interpreters - Tools](http://ifarchive.org/indexes/if-archive/infocom/interpreters/tools/) (Most test story files come from this site: CZECH, TerpEtude, strictz)
  * [EBLONG - Zarfhome - praxix.z5](http://eblong.com/zarf/ftp/praxix.z5)
-
-Unfortunately, I can't find the sources for trinity.z4 and sanddancer.z8 anymore...
+ * Unfortunately, I can't find the sources for trinity.z4 and sanddancer.z8 anymore...
