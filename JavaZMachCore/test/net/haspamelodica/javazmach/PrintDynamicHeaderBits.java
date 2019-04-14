@@ -1,6 +1,5 @@
 package net.haspamelodica.javazmach;
 
-import net.haspamelodica.javazmach.GlobalConfig;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javazmach.core.memory.StaticArrayBackedMemory;

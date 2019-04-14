@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import net.haspamelodica.javazmach.GlobalConfig;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.DecodedInstruction;
 import net.haspamelodica.javazmach.core.instructions.InstructionDecoder;

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import net.haspamelodica.javazmach.GlobalConfig;
 import net.haspamelodica.javazmach.core.instructions.DecodedInstruction;
 import net.haspamelodica.javazmach.core.instructions.InstructionDecoder;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryAccess;
