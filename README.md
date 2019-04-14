@@ -4,8 +4,7 @@ A Z-Machine interpreter in Java
 Work in progress. Currently this interpreter is able to run ZORK1 (version Z3).<br>
 When importing this project in Eclipse, tick "Check for nested projects" in the import dialog.<br>
 There is currently one UI backend; located in JavaZMachConsoleUI. (JavaZMachSWTUI is only a stub)
-
-Resources:
+Sources for contents of storyfiles/ and doc/:
  * [The Z-Machine Standards Document (version 1.1)](http://inform-fiction.org/zmachine/standards/z1point1) (Great Z-Machine documentation written by Graham Nelson)
  * [The Z-Machine, and How to Emulate It (version 0.6e)](https://www.ifarchive.org/if-archive/infocom/interpreters/specification/zspec02/zmach06e.pdf) (Another Z-Machine documentation. Covers more implementation details)
  * [IFDB - Zork I](https://ifdb.tads.org/viewgame?id=0dbnusxunq7fw5ro)
