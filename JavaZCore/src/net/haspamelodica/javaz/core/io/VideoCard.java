@@ -18,5 +18,7 @@ public interface VideoCard
 	public void showPicture(int picture, int x, int y);
 	public void erasePicture(int picture, int x, int y, int trueBG);
 	public void flushScreen();
-	public int inputSingleChar();//TODO move to another class
+	public default void hintInputCharUsage(InputUsageHint hint)
+	{}
+	public int nextInputChar();//TODO move to another class
 }

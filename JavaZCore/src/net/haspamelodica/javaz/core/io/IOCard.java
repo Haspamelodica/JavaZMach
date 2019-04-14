@@ -290,12 +290,17 @@ public class IOCard
 	public int inputToTextBuffer(WritableBuffer targetTextBuffer)
 	{
 		flushBuffer();
+		videoCard.hintInputCharUsage(InputUsageHint.COMMAND_START);
 		int maxZSCIIChars = targetTextBuffer.getCapacity();
+		int terminatingZSCIIChar = -1;
 		for(int read = 0; read < maxZSCIIChars; read ++)
 		{
-			int zsciiChar = videoCard.inputSingleChar();
+			int zsciiChar = videoCard.nextInputChar();
 			if(zsciiChar == -1)
-				return -2;
+			{
+				terminatingZSCIIChar = -2;
+				break;
+			}
 			//Range 'A'-'Z'
 			if(zsciiChar > 0x40 && zsciiChar < 0x5B)
 				//convert to lower case
@@ -303,17 +308,22 @@ public class IOCard
 			if(zsciiChar != -1)
 			{
 				if(zsciiChar == 13 || terminatingZSCIIChars.contains(zsciiChar))
-					return zsciiChar;
+				{
+					terminatingZSCIIChar = zsciiChar;
+					break;
+				}
 				targetTextBuffer.writeNextEntryByte(0, zsciiChar);
 				targetTextBuffer.finishEntry();
 			}
 		}
-		return -1;
+		videoCard.hintInputCharUsage(InputUsageHint.COMMAND_END);
+		return terminatingZSCIIChar;
 	}
 	public int inputSingleChar()
 	{
 		flushBuffer();
-		return videoCard.inputSingleChar();
+		videoCard.hintInputCharUsage(InputUsageHint.SINGLE_CHAR);
+		return videoCard.nextInputChar();
 	}
 	private void appendToBuffer(int zsciiChar, boolean isSpace)
 	{

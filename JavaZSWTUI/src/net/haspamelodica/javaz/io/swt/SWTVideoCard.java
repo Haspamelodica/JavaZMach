@@ -95,7 +95,7 @@ public class SWTVideoCard implements VideoCard
 
 	}
 	@Override
-	public int inputSingleChar()
+	public int nextInputChar()
 	{
 		// TODO Auto-generated method stub
 		return 0;

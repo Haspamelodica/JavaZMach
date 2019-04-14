@@ -81,7 +81,7 @@ public class ConsoleVideoCard implements VideoCard
 		return 0;
 	}
 	@Override
-	public int inputSingleChar()
+	public int nextInputChar()
 	{
 		try
 		{
