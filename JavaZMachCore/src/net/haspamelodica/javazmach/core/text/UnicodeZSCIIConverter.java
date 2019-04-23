@@ -56,10 +56,14 @@ public class UnicodeZSCIIConverter
 		{
 			afterCR = true;
 			return 13;
-		} else if(afterCR && unicodeChar == '\n')
+		} else if(unicodeChar == '\n')
 		{
-			afterCR = false;
-			return -1;
+			if(afterCR)
+			{
+				afterCR = false;
+				return -1;
+			} else
+				return 13;
 		} else
 		{
 			afterCR = false;
