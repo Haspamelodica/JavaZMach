@@ -50,13 +50,10 @@ public class DictionaryLookupZCharStreamReceiver implements ZCharStreamReceiver
 		{
 			if(currentWordAddress != -1)
 			{
-				int off = (receivedZCharsSoFar / 3) << 1;
-				int mask = zCharsPerWordMasks[receivedZCharsSoFar % 3];
-				int shift = zCharsPerWordShifts[receivedZCharsSoFar % 3];
 				//TODO make this faster
 				for(;;)
 				{
-					int dictZChar = (mem.readWord(currentWordAddress + off) & mask) >>> shift;
+					int dictZChar = readNthZChar(currentWordAddress, receivedZCharsSoFar);
 					if(dictZChar > zChar)
 					{
 						currentWordAddress = -1;
@@ -64,7 +61,7 @@ public class DictionaryLookupZCharStreamReceiver implements ZCharStreamReceiver
 					} else if(dictZChar == zChar)
 						break;
 					entryIndex ++;
-					if(entryIndex >= entryNumber)
+					if(entryIndex >= entryNumber || !checkNextWordStartsSameAsCurrentWord(receivedZCharsSoFar - 1))
 					{
 						currentWordAddress = -1;
 						break;
@@ -74,6 +71,20 @@ public class DictionaryLookupZCharStreamReceiver implements ZCharStreamReceiver
 			}
 			receivedZCharsSoFar ++;
 		}
+	}
+	private int readNthZChar(int wordAddress, int zCharI)
+	{
+		int off = (zCharI / 3) << 1;
+		int mask = zCharsPerWordMasks[zCharI % 3];
+		int shift = zCharsPerWordShifts[zCharI % 3];
+		return (mem.readWord(wordAddress + off) & mask) >>> shift;
+	}
+	private boolean checkNextWordStartsSameAsCurrentWord(int lastComparedZCharI)
+	{
+		for(int zCharI = lastComparedZCharI; zCharI >= 0; zCharI --)
+			if(readNthZChar(currentWordAddress, zCharI) != readNthZChar(currentWordAddress + entryLength, zCharI))
+				return false;
+		return true;
 	}
 	public int getWordLengthSoFar()
 	{
