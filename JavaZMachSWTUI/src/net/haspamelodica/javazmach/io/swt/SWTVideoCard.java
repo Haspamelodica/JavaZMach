@@ -91,12 +91,12 @@ public class SWTVideoCard extends Canvas implements VideoCard
 	@Override
 	public int getScreenWidth()
 	{
-		return execSWTSafe(() -> getSize().x);
+		return isDisposed() ? -1 : execSWTSafe(() -> getSize().x);
 	}
 	@Override
 	public int getScreenHeight()
 	{
-		return execSWTSafe(() -> getSize().y);
+		return isDisposed() ? -1 : execSWTSafe(() -> getSize().y);
 	}
 	@Override
 	public int getDefaultTrueFG()
@@ -119,7 +119,7 @@ public class SWTVideoCard extends Canvas implements VideoCard
 	@Override
 	public int getCharWidth(int zsciiChar, int font, int style)
 	{
-		return execSWTSafe(() -> screenBufferGC.textExtent(String.valueOf(unicodeConv.zsciiToUnicodeNoNL(zsciiChar))).x);
+		return isDisposed() ? -1 : execSWTSafe(() -> screenBufferGC.textExtent(String.valueOf(unicodeConv.zsciiToUnicodeNoNL(zsciiChar))).x);
 
 		//TODO somehow this doesn't work?
 		//return screenBufferGC.getCharWidth(unicodeConv.zsciiToUnicodeNoNL(zsciiChar));
@@ -127,7 +127,7 @@ public class SWTVideoCard extends Canvas implements VideoCard
 	@Override
 	public int getFontHeight(int font)
 	{
-		return screenBufferGC.textExtent("0").y;
+		return isDisposed() ? -1 : screenBufferGC.textExtent("0").y;
 
 		//TODO somehow this doesn't work?
 		//return screenBufferGC.getFont().getFontData()[0].getHeight();
@@ -141,14 +141,15 @@ public class SWTVideoCard extends Canvas implements VideoCard
 	@Override
 	public void scroll(int y)
 	{
-		execSWTSafe(() ->
-		{
-			Rectangle bounds = screenBuffer.getBounds();
-			int w = bounds.width;
-			int h = bounds.height;
-			screenBuffer2GC.drawImage(screenBuffer, 0, y, w, h - y, 0, 0, w, h - y);
-			screenBufferGC.drawImage(screenBuffer2, 0, 0);
-		}, true);
+		if(!isDisposed())
+			execSWTSafe(() ->
+			{
+				Rectangle bounds = screenBuffer.getBounds();
+				int w = bounds.width;
+				int h = bounds.height;
+				screenBuffer2GC.drawImage(screenBuffer, 0, y, w, h - y, 0, 0, w, h - y);
+				screenBufferGC.drawImage(screenBuffer2, 0, 0);
+			}, true);
 	}
 	@Override
 	public void showStatusBar(ZSCIICharStream location, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame)
@@ -159,11 +160,12 @@ public class SWTVideoCard extends Canvas implements VideoCard
 	@Override
 	public void showChar(int zsciiChar, int font, int style, int trueFB, int trueBG, int x, int y)
 	{
-		execSWTSafe(() ->
-		{
-			//TODO FG and BG
-			screenBufferGC.drawText(String.valueOf(unicodeConv.zsciiToUnicodeNoNL(zsciiChar)), x, y);
-		}, true);
+		if(!isDisposed())
+			execSWTSafe(() ->
+			{
+				//TODO FG and BG
+				screenBufferGC.drawText(String.valueOf(unicodeConv.zsciiToUnicodeNoNL(zsciiChar)), x, y);
+			}, true);
 	}
 	@Override
 	public void showPicture(int picture, int x, int y)
@@ -180,14 +182,17 @@ public class SWTVideoCard extends Canvas implements VideoCard
 	@Override
 	public void flushScreen()
 	{
-		execSWTSafe(this::redraw, true);
+		if(!isDisposed())
+			execSWTSafe(this::redraw, true);
 	}
 	@Override
 	public int nextInputChar()
 	{
+		if(isDisposed())
+			return -1;
 		if(inputBuffer.isEmpty())
 		{
-			while(inputBuffer.isEmpty() && !execSWTSafe(this::isDisposed));
+			while(inputBuffer.isEmpty() && !isDisposed());
 			if(isDisposed())
 				return -1;
 		}
@@ -196,6 +201,8 @@ public class SWTVideoCard extends Canvas implements VideoCard
 
 	private <T> T execSWTSafe(Supplier<T> exec)
 	{
+		if(isDisposed())
+			return null;
 		AtomicReference<T> result = new AtomicReference<>();
 		execSWTSafe(() -> result.set(exec.get()), true);
 		return result.get();
