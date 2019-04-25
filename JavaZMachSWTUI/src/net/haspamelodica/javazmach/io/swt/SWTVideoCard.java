@@ -1,26 +1,97 @@
 package net.haspamelodica.javazmach.io.swt;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.widgets.Canvas;
+import org.eclipse.swt.widgets.Composite;
+
 import net.haspamelodica.javazmach.GlobalConfig;
 import net.haspamelodica.javazmach.core.io.VideoCard;
+import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverter;
 import net.haspamelodica.javazmach.core.text.ZSCIICharStream;
 
-public class SWTVideoCard implements VideoCard
+public class SWTVideoCard extends Canvas implements VideoCard
 {
-	public SWTVideoCard(GlobalConfig config)
+	private final UnicodeZSCIIConverter unicodeConv;
+
+	private final Queue<Integer>	inputBuffer;
+	private Image					screenBuffer;
+	private GC						screenBufferGC;
+	private Image					screenBuffer2;
+	private GC						screenBuffer2GC;
+
+	boolean debug = true;
+
+	public SWTVideoCard(Composite parent, int style, GlobalConfig config)
 	{
-		// TODO Auto-generated constructor stub
+		super(parent, style | SWT.NO_BACKGROUND);
+
+		this.unicodeConv = new UnicodeZSCIIConverter(config);
+		this.inputBuffer = new ConcurrentLinkedQueue<>();
+		this.screenBuffer = new Image(getDisplay(), 1, 1);
+		this.screenBufferGC = new GC(screenBuffer);
+		this.screenBuffer2 = new Image(getDisplay(), 1, 1);
+		this.screenBuffer2GC = new GC(screenBuffer2);
+
+		addListener(SWT.Resize, e ->
+		{
+			Point newSize = getSize();
+			Rectangle oldBounds = screenBuffer.getBounds();
+			if(newSize.x > oldBounds.width || newSize.y > oldBounds.height)
+			{
+				int newX;
+				if(newSize.x > oldBounds.width)
+					newX = newSize.x;
+				else
+					newX = oldBounds.width;
+				int newY;
+				if(newSize.y > oldBounds.height)
+					newY = newSize.y;
+				else
+					newY = oldBounds.height;
+				screenBufferGC.dispose();
+				Image screenBufferOld = screenBuffer;
+				screenBuffer = new Image(getDisplay(), newX, newY);
+				screenBufferGC = new GC(screenBuffer);
+				screenBufferGC.drawImage(screenBufferOld, 0, 0);
+				screenBufferOld.dispose();
+				this.screenBuffer2 = new Image(getDisplay(), newX, newY);
+				this.screenBuffer2GC = new GC(screenBuffer2);
+			}
+		});
+		addListener(SWT.KeyDown, e ->
+		{
+			int zscii = unicodeConv.unicodeToZSCII(e.character);
+			if(zscii != -1)
+				inputBuffer.offer(zscii);
+		});
+		addPaintListener(e -> e.gc.drawImage(screenBuffer, 0, 0));
 	}
+	@Override
+	public void dispose()
+	{
+		screenBufferGC.dispose();
+		screenBuffer.dispose();
+	}
+
+	//VideoCard methods
 	@Override
 	public int getScreenWidth()
 	{
-		// TODO Auto-generated method stub
-		return 0;
+		return execSWTSafe(() -> getSize().x);
 	}
 	@Override
 	public int getScreenHeight()
 	{
-		// TODO Auto-generated method stub
-		return 0;
+		return execSWTSafe(() -> getSize().y);
 	}
 	@Override
 	public int getDefaultTrueFG()
@@ -43,14 +114,18 @@ public class SWTVideoCard implements VideoCard
 	@Override
 	public int getCharWidth(int zsciiChar, int font, int style)
 	{
-		// TODO Auto-generated method stub
-		return 0;
+		return execSWTSafe(() -> screenBufferGC.textExtent(String.valueOf(unicodeConv.zsciiToUnicodeNoNL(zsciiChar))).x);
+
+		//TODO somehow this doesn't work?
+		//return screenBufferGC.getCharWidth(unicodeConv.zsciiToUnicodeNoNL(zsciiChar));
 	}
 	@Override
 	public int getFontHeight(int font)
 	{
-		// TODO Auto-generated method stub
-		return 0;
+		return screenBufferGC.textExtent("0").y;
+
+		//TODO somehow this doesn't work?
+		//return screenBufferGC.getFont().getFontData()[0].getHeight();
 	}
 	@Override
 	public void eraseArea(int x, int y, int w, int h, int trueBG)
@@ -61,8 +136,14 @@ public class SWTVideoCard implements VideoCard
 	@Override
 	public void scroll(int y)
 	{
-		// TODO Auto-generated method stub
-
+		execSWTSafe(() ->
+		{
+			Rectangle bounds = screenBuffer.getBounds();
+			int w = bounds.width;
+			int h = bounds.height;
+			screenBuffer2GC.drawImage(screenBuffer, 0, y, w, h - y, 0, 0, w, h - y);
+			screenBufferGC.drawImage(screenBuffer2, 0, 0);
+		}, true);
 	}
 	@Override
 	public void showStatusBar(ZSCIICharStream location, int scoreOrHours, int turnsOrMinutes, boolean isTimeGame)
@@ -73,8 +154,11 @@ public class SWTVideoCard implements VideoCard
 	@Override
 	public void showChar(int zsciiChar, int font, int style, int trueFB, int trueBG, int x, int y)
 	{
-		// TODO Auto-generated method stub
-
+		execSWTSafe(() ->
+		{
+			//TODO FG and BG
+			screenBufferGC.drawText(String.valueOf(unicodeConv.zsciiToUnicodeNoNL(zsciiChar)), x, y);
+		}, true);
 	}
 	@Override
 	public void showPicture(int picture, int x, int y)
@@ -91,13 +175,32 @@ public class SWTVideoCard implements VideoCard
 	@Override
 	public void flushScreen()
 	{
-		// TODO Auto-generated method stub
-
+		execSWTSafe(this::redraw, true);
 	}
 	@Override
 	public int nextInputChar()
 	{
-		// TODO Auto-generated method stub
-		return 0;
+		if(inputBuffer.isEmpty())
+		{
+			while(inputBuffer.isEmpty() && !execSWTSafe(this::isDisposed));
+			if(isDisposed())
+				return -1;
+		}
+		return inputBuffer.poll();
+	}
+
+	private <T> T execSWTSafe(Supplier<T> exec)
+	{
+		AtomicReference<T> result = new AtomicReference<>();
+		execSWTSafe(() -> result.set(exec.get()), true);
+		return result.get();
+	}
+	private void execSWTSafe(Runnable exec, boolean sync)
+	{
+		if(!isDisposed())
+			if(sync)
+				getDisplay().syncExec(exec);
+			else
+				getDisplay().asyncExec(exec);
 	}
 }
