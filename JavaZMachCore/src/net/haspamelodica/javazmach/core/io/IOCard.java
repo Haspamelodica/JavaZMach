@@ -289,7 +289,7 @@ public class IOCard
 	 */
 	public int inputToTextBuffer(WritableBuffer targetTextBuffer)
 	{
-		flushBuffer();
+		flushBufferAndScreen();
 		videoCard.hintInputCharUsage(InputUsageHint.COMMAND_START);
 		int maxZSCIIChars = targetTextBuffer.getCapacity();
 		int terminatingZSCIIChar = -1;
@@ -326,7 +326,7 @@ public class IOCard
 	}
 	public int inputSingleChar()
 	{
-		flushBuffer();
+		flushBufferAndScreen();
 		videoCard.hintInputCharUsage(InputUsageHint.SINGLE_CHAR);
 		return videoCard.nextInputChar();
 	}
@@ -360,6 +360,11 @@ public class IOCard
 		outputBufferFGs[bufferI] = trueFG;
 		outputBufferBGs[bufferI] = trueBG;
 		outputBufferWidths[bufferI] = width;
+	}
+	private void flushBufferAndScreen()
+	{
+		flushBuffer();
+		videoCard.flushScreen();
 	}
 	private void flushBuffer()
 	{
