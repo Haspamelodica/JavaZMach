@@ -69,9 +69,12 @@ public class SWTVideoCard extends Canvas implements VideoCard
 		});
 		addListener(SWT.KeyDown, e ->
 		{
-			int zscii = unicodeConv.unicodeToZSCII(e.character);
-			if(zscii != -1)
-				inputBuffer.offer(zscii);
+			if(e.character > 0)
+			{
+				int zscii = unicodeConv.unicodeToZSCII(e.character);
+				if(zscii != -1)
+					inputBuffer.offer(zscii);
+			}
 		});
 		addPaintListener(e -> e.gc.drawImage(screenBuffer, 0, 0));
 	}
