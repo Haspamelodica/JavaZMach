@@ -21,7 +21,7 @@ public class JavaZMachSWT
 	{
 		GlobalConfig config = readConfigFromArgs(args);
 		Display display = new Display();
-		Shell shell = new Shell();
+		Shell shell = new Shell(SWT.CLOSE | SWT.TITLE | SWT.MIN);
 		shell.setLayout(new FillLayout());
 		ZInterpreter zInterpreter = createInterpreter(config, new SWTVideoCard(shell, SWT.NONE, config));
 		shell.setSize(400, 400);
