@@ -121,7 +121,7 @@ public class IOCard
 			p.setProperty(LocXProp, 1);
 			p.setProperty(SizeYProp, w < 2 ? scrHeight : 0);
 			p.setProperty(SizeXProp, w < 1 ? scrWidth : 0);
-			p.setProperty(CursorYProp, 1);
+			p.setProperty(CursorYProp, scrHeight - fontHeight);
 			p.setProperty(CursorXProp, 1);
 			p.setProperty(MarginLProp, 0);
 			p.setProperty(MarginRProp, 0);
