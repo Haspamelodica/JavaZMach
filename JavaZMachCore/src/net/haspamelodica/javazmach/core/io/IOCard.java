@@ -410,12 +410,14 @@ public class IOCard
 	private void newlineMoveCursor()
 	{
 		int oldCursorY = currentWindowProperties.getProperty(CursorYProp);
-		int maxCursorY = currentWindowProperties.getProperty(SizeYProp);
 		int fontHeight = currentWindowProperties.getProperty(FontSizeProp) >>> 8;
+		int maxCursorY = currentWindowProperties.getProperty(SizeYProp) - fontHeight;
 		int newCursorY = oldCursorY + fontHeight;
 		if(newCursorY > maxCursorY)
+		{
 			videoCard.scroll(newCursorY - maxCursorY);
-		else
+			setPropertyCurrentWindow(CursorYProp, maxCursorY);
+		} else
 			setPropertyCurrentWindow(CursorYProp, newCursorY);
 		setPropertyCurrentWindow(CursorXProp, 1);
 	}
