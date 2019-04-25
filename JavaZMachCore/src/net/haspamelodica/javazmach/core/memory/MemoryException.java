@@ -1,6 +1,8 @@
 package net.haspamelodica.javazmach.core.memory;
 
-public class MemoryException extends RuntimeException
+import net.haspamelodica.javazmach.core.InterpreterException;
+
+public class MemoryException extends InterpreterException
 {
 	public MemoryException()
 	{

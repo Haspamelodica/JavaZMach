@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.core;
 
-public class ControlFlowException extends RuntimeException
+public class ControlFlowException extends InterpreterException
 {
 	public ControlFlowException()
 	{

@@ -1,6 +1,8 @@
 package net.haspamelodica.javazmach.core.text;
 
-public class TextException extends RuntimeException
+import net.haspamelodica.javazmach.core.InterpreterException;
+
+public class TextException extends InterpreterException
 {
 	public TextException()
 	{

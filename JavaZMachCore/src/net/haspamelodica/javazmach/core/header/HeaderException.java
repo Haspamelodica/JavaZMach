@@ -1,6 +1,8 @@
 package net.haspamelodica.javazmach.core.header;
 
-public class HeaderException extends RuntimeException
+import net.haspamelodica.javazmach.core.InterpreterException;
+
+public class HeaderException extends InterpreterException
 {
 	public HeaderException()
 	{

@@ -1,6 +1,8 @@
 package net.haspamelodica.javazmach.core.instructions;
 
-public class InstructionFormatException extends RuntimeException
+import net.haspamelodica.javazmach.core.InterpreterException;
+
+public class InstructionFormatException extends InterpreterException
 {
 	public InstructionFormatException()
 	{

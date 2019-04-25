@@ -1,6 +1,8 @@
 package net.haspamelodica.javazmach.core.io;
 
-public class IOException extends RuntimeException
+import net.haspamelodica.javazmach.core.InterpreterException;
+
+public class IOException extends InterpreterException
 {
 	public IOException()
 	{

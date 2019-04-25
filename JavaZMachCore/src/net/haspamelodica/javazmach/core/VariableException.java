@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.core;
 
-public class VariableException extends RuntimeException
+public class VariableException extends InterpreterException
 {
 	public VariableException()
 	{

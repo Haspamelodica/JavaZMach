@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.core;
 
-public class VersionException extends RuntimeException
+public class VersionException extends InterpreterException
 {
 	public VersionException()
 	{

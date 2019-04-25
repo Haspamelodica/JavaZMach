@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.core;
 
-public class ArithmeticException extends RuntimeException
+public class ArithmeticException extends InterpreterException
 {
 	public ArithmeticException()
 	{

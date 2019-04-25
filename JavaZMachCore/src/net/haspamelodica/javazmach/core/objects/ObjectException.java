@@ -1,6 +1,8 @@
 package net.haspamelodica.javazmach.core.objects;
 
-public class ObjectException extends RuntimeException
+import net.haspamelodica.javazmach.core.InterpreterException;
+
+public class ObjectException extends InterpreterException
 {
 	public ObjectException()
 	{
