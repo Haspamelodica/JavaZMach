@@ -16,6 +16,7 @@ Sources for contents of storyfiles/ and doc/:
  * [The Interactive Fiction Archive - Infocom - Interpreters - Tools](http://ifarchive.org/indexes/if-archive/infocom/interpreters/tools/)
  (Most test story files come from this site: CZECH, TerpEtude, strictz)
  * [EBLONG - Zarfhome - praxix.z5](http://eblong.com/zarf/ftp/praxix.z5)
- * Unfortunately, I can't find the sources for trinity.z4 and sanddancer.z8 anymore...
- Although it is not my original source, you can download Trinity (and many other Infocom games) from
- [historicalsource](https://github.com/historicalsource): [tr.z4](https://github.com/historicalsource/trinity/blob/master/COMPILED/tr.z4?raw=true)
+ * Unfortunately, I can't find the sources for trinity.z4 and sanddancer.z8 anymore...<br>
+ Although it is not my original source the, you can download Trinity (and many other Infocom games) from
+ [historicalsource](https://github.com/historicalsource): [tr.z4](https://github.com/historicalsource/trinity/blob/master/COMPILED/tr.z4?raw=true)<br>
+ Note that historicalsource's tr.z4 file differs from the trinity.z4 you can find in this repository.
