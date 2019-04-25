@@ -81,6 +81,8 @@ public class SWTVideoCard extends Canvas implements VideoCard
 	@Override
 	public void dispose()
 	{
+		screenBuffer2GC.dispose();
+		screenBuffer2.dispose();
 		screenBufferGC.dispose();
 		screenBuffer.dispose();
 	}
