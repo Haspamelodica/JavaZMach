@@ -296,6 +296,11 @@ public class IOCard
 		for(int read = 0; read < maxZSCIIChars; read ++)
 		{
 			int zsciiChar = videoCard.nextInputChar();
+
+			//TODO
+			printZSCII(zsciiChar);
+			flushBufferAndScreen();
+
 			if(zsciiChar == -1)
 			{
 				terminatingZSCIIChar = -2;
