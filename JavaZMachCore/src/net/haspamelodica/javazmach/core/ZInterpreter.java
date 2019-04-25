@@ -515,7 +515,7 @@ public class ZInterpreter
 				break;
 			case random:
 				if(o0E > 0)
-					storeVal = rand.nextInt(o0);
+					storeVal = rand.nextInt(o0) + 1;
 				else
 				{
 					storeVal = 0;
