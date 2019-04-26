@@ -41,4 +41,8 @@ public class BaseBuffer
 	{
 		addr += entryByteSize;
 	}
+	protected void advanceToLastEntryUnchecked()
+	{
+		addr -= entryByteSize;
+	}
 }

@@ -27,7 +27,7 @@ import net.haspamelodica.javazmach.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javazmach.core.memory.ReadOnlyBuffer;
 import net.haspamelodica.javazmach.core.memory.ReadOnlyMemory;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryAccess;
-import net.haspamelodica.javazmach.core.memory.WritableBuffer;
+import net.haspamelodica.javazmach.core.memory.WritableUndoableBuffer;
 import net.haspamelodica.javazmach.core.objects.ObjectTree;
 import net.haspamelodica.javazmach.core.stack.CallStack;
 import net.haspamelodica.javazmach.core.text.Tokeniser;
@@ -55,7 +55,7 @@ public class ZInterpreter
 	private final ObjectTree					objectTree;
 	private final IOCard						ioCard;
 	private final ReadOnlyBuffer				rBuf;
-	private final WritableBuffer				wBuf;
+	private final WritableUndoableBuffer		wBuf;
 	private final SequentialMemoryAccess		seqMemROBuf;
 	private final ZCharsAlphabet				alphabet;
 	private final ZCharsSeqMemUnpacker			zCharsUnpackerFromSeqMemRO;
@@ -98,7 +98,7 @@ public class ZInterpreter
 		this.instrDecoder = new InstructionDecoder(config, version, memAtPC);
 		this.objectTree = new ObjectTree(config, version, headerParser, memCheckedWrite);
 		this.rBuf = new ReadOnlyBuffer(memCheckedWrite);
-		this.wBuf = new WritableBuffer(memCheckedWrite);
+		this.wBuf = new WritableUndoableBuffer(memCheckedWrite);
 		this.seqMemROBuf = new SequentialMemoryAccess(memCheckedWrite);
 		this.alphabet = new ZCharsAlphabet(config, version, headerParser, memCheckedWrite);
 		this.zCharsUnpackerFromSeqMemRO = new ZCharsSeqMemUnpacker(seqMemROBuf);

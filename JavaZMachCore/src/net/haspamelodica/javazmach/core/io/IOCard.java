@@ -40,7 +40,7 @@ import java.util.Arrays;
 import net.haspamelodica.javazmach.GlobalConfig;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.memory.ReadOnlyMemory;
-import net.haspamelodica.javazmach.core.memory.WritableBuffer;
+import net.haspamelodica.javazmach.core.memory.WritableUndoableBuffer;
 import net.haspamelodica.javazmach.core.memory.ZeroTerminatedReadOnlyByteSet;
 import net.haspamelodica.javazmach.core.text.ZSCIICharStream;
 
@@ -287,7 +287,7 @@ public class IOCard
 	 * or -1 if <code>maxZSCIIChars</code> have been read,
 	 * or -2 if the end of input has been reached.
 	 */
-	public int inputToTextBuffer(WritableBuffer targetTextBuffer)
+	public int inputToTextBuffer(WritableUndoableBuffer targetTextBuffer)
 	{
 		flushBufferAndScreen();
 		videoCard.hintInputCharUsage(InputUsageHint.COMMAND_START);
@@ -297,21 +297,41 @@ public class IOCard
 		{
 			int zsciiChar = videoCard.nextInputChar();
 
-			//TODO
-			printZSCII(zsciiChar);
-			flushBufferAndScreen();
+			if(zsciiChar == 8)
+			{
+				if(!targetTextBuffer.isEmpty())
+				{
+					zsciiChar = targetTextBuffer.readLastEntryByte(0);
+					targetTextBuffer.undoLastEntry();
+					int font = currentWindowProperties.getProperty(FontNumProp);
+					int style = currentWindowProperties.getProperty(TextStyleProp);
+					int width = videoCard.getCharWidth(zsciiChar, font, style);
+					int newCursorX = currentWindowProperties.getProperty(CursorXProp) - width;
+					if(newCursorX > 0)
+					{
+						currentWindowProperties.setProperty(CursorXProp, newCursorX);
+						int cursorY = currentWindowProperties.getProperty(CursorYProp);
+						int col = currentWindowProperties.getProperty(ColorDataProp);
+						int trueBG = videoCard.getTrueColor(col >>> 8);
+						videoCard.eraseArea(newCursorX - 1, cursorY - 1, width, videoCard.getFontHeight(font), trueBG);
+						videoCard.flushScreen();
+					}
+				}
+			} else if(zsciiChar != 0)
+			{
+				//TODO
+				printZSCII(zsciiChar);
+				flushBufferAndScreen();
 
-			if(zsciiChar == -1)
-			{
-				terminatingZSCIIChar = -2;
-				break;
-			}
-			//Range 'A'-'Z'
-			if(zsciiChar > 0x40 && zsciiChar < 0x5B)
-				//convert to lower case
-				zsciiChar += 0x20;
-			if(zsciiChar != -1)
-			{
+				if(zsciiChar == -1)
+				{
+					terminatingZSCIIChar = -2;
+					break;
+				}
+				//Range 'A'-'Z'
+				if(zsciiChar > 0x40 && zsciiChar < 0x5B)
+					//convert to lower case
+					zsciiChar += 0x20;
 				if(zsciiChar == 13 || terminatingZSCIIChars.contains(zsciiChar))
 				{
 					terminatingZSCIIChar = zsciiChar;
@@ -413,8 +433,8 @@ public class IOCard
 	private void showCharMoveCursor(int zsciiChar, int font, int style, int trueFG, int trueBG, int width)
 	{
 		int oldCursorX = currentWindowProperties.getProperty(CursorXProp);
-		int oldCursorY = currentWindowProperties.getProperty(CursorYProp);
-		videoCard.showChar(zsciiChar, font, style, trueFG, trueBG, oldCursorX - 1, oldCursorY - 1);
+		int cursorY = currentWindowProperties.getProperty(CursorYProp);
+		videoCard.showChar(zsciiChar, font, style, trueFG, trueBG, oldCursorX - 1, cursorY - 1);
 		setPropertyCurrentWindow(CursorXProp, oldCursorX + width);
 	}
 	private void newlineMoveCursor()
