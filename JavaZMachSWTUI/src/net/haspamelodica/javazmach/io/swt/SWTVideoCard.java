@@ -69,7 +69,9 @@ public class SWTVideoCard extends Canvas implements VideoCard
 		});
 		addListener(SWT.KeyDown, e ->
 		{
-			if(e.character > 0)
+			if(e.keyCode == 8)
+				inputBuffer.offer(8);//delete
+			else if(e.character > 0)
 			{
 				int zscii = unicodeConv.unicodeToZSCII(e.character);
 				if(zscii != -1)
@@ -135,8 +137,9 @@ public class SWTVideoCard extends Canvas implements VideoCard
 	@Override
 	public void eraseArea(int x, int y, int w, int h, int trueBG)
 	{
-		// TODO Auto-generated method stub
-
+		if(!isDisposed())
+			//TODO color
+			execSWTSafe(() -> screenBufferGC.fillRectangle(x, y, w, h), true);
 	}
 	@Override
 	public void scroll(int y)
