@@ -291,24 +291,22 @@ public class IOCard
 	{
 		flushBufferAndScreen();
 		videoCard.hintInputCharUsage(InputUsageHint.COMMAND_START);
-		int maxZSCIIChars = targetTextBuffer.getCapacity();
 		int terminatingZSCIIChar = -1;
-		for(int read = 0; read < maxZSCIIChars; read ++)
+		while(!targetTextBuffer.isFull())
 		{
 			int zsciiChar = videoCard.nextInputChar();
-
 			if(zsciiChar == 8)
 			{
 				if(!targetTextBuffer.isEmpty())
 				{
 					zsciiChar = targetTextBuffer.readLastEntryByte(0);
-					targetTextBuffer.undoLastEntry();
 					int font = currentWindowProperties.getProperty(FontNumProp);
 					int style = currentWindowProperties.getProperty(TextStyleProp);
 					int width = videoCard.getCharWidth(zsciiChar, font, style);
 					int newCursorX = currentWindowProperties.getProperty(CursorXProp) - width;
 					if(newCursorX > 0)
 					{
+						targetTextBuffer.undoLastEntry();
 						currentWindowProperties.setProperty(CursorXProp, newCursorX);
 						int cursorY = currentWindowProperties.getProperty(CursorYProp);
 						int col = currentWindowProperties.getProperty(ColorDataProp);
@@ -317,17 +315,14 @@ public class IOCard
 						videoCard.flushScreen();
 					}
 				}
-			} else if(zsciiChar != 0)
+			} else if(zsciiChar == -1)
+				terminatingZSCIIChar = -2;
+			else if(zsciiChar != 0)
 			{
 				//TODO
 				printZSCII(zsciiChar);
 				flushBufferAndScreen();
 
-				if(zsciiChar == -1)
-				{
-					terminatingZSCIIChar = -2;
-					break;
-				}
 				//Range 'A'-'Z'
 				if(zsciiChar > 0x40 && zsciiChar < 0x5B)
 					//convert to lower case
