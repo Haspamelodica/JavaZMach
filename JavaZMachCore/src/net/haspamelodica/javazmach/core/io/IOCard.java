@@ -316,8 +316,10 @@ public class IOCard
 					}
 				}
 			} else if(zsciiChar == -1)
+			{
 				terminatingZSCIIChar = -2;
-			else if(zsciiChar != 0)
+				break;
+			} else if(zsciiChar != 0)
 			{
 				//TODO
 				printZSCII(zsciiChar);

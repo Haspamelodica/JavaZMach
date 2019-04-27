@@ -87,8 +87,12 @@ public class ConsoleVideoCard implements VideoCard
 		{
 			int unicodeChar;
 			do
-				unicodeChar = unicodeConv.unicodeToZSCII((char) in.read());
-			while(unicodeChar == -1);
+			{
+				char read = (char) in.read();
+				if(read == -1)
+					return -1;
+				unicodeChar = unicodeConv.unicodeToZSCII(read);
+			} while(unicodeChar == -1);
 			return unicodeChar;
 		} catch(java.io.IOException e)
 		{
