@@ -1,7 +1,7 @@
 package net.haspamelodica.javazmach.io.swt;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -22,11 +22,12 @@ public class SWTVideoCard extends Canvas implements VideoCard
 {
 	private final UnicodeZSCIIConverter unicodeConv;
 
-	private final Queue<Integer>	inputBuffer;
-	private Image					screenBuffer;
-	private GC						screenBufferGC;
-	private Image					screenBuffer2;
-	private GC						screenBuffer2GC;
+	private final BlockingQueue<Integer> inputBuffer;
+
+	private Image	screenBuffer;
+	private GC		screenBufferGC;
+	private Image	screenBuffer2;
+	private GC		screenBuffer2GC;
 
 	boolean debug = true;
 
@@ -35,7 +36,7 @@ public class SWTVideoCard extends Canvas implements VideoCard
 		super(parent, style | SWT.NO_BACKGROUND);
 
 		this.unicodeConv = new UnicodeZSCIIConverter(config);
-		this.inputBuffer = new ConcurrentLinkedQueue<>();
+		this.inputBuffer = new LinkedBlockingQueue<>();
 		this.screenBuffer = new Image(getDisplay(), 1, 1);
 		this.screenBufferGC = new GC(screenBuffer);
 		this.screenBuffer2 = new Image(getDisplay(), 1, 1);
@@ -79,6 +80,7 @@ public class SWTVideoCard extends Canvas implements VideoCard
 			}
 		});
 		addPaintListener(e -> e.gc.drawImage(screenBuffer, 0, 0));
+		parent.addListener(SWT.Dispose, e -> inputBuffer.offer(-1));//in case someone is still waiting for input
 	}
 	@Override
 	public void dispose()
@@ -193,13 +195,16 @@ public class SWTVideoCard extends Canvas implements VideoCard
 	{
 		if(isDisposed())
 			return -1;
-		if(inputBuffer.isEmpty())
+		try
 		{
-			while(inputBuffer.isEmpty() && !isDisposed());
-			if(isDisposed())
-				return -1;
+			int nextInputChar = inputBuffer.take();
+			if(nextInputChar == -1)
+				inputBuffer.offer(-1);//in case someone else is still waiting for input
+			return nextInputChar;
+		} catch(InterruptedException e)
+		{
+			return -1;
 		}
-		return inputBuffer.poll();
 	}
 
 	private <T> T execSWTSafe(Supplier<T> exec)
