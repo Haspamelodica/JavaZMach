@@ -18,10 +18,10 @@ public class ConsoleVideoCard implements VideoCard
 
 	private int lastY = -1;
 
-	public ConsoleVideoCard(GlobalConfig config)
+	public ConsoleVideoCard(GlobalConfig config, UnicodeZSCIIConverter unicodeConv)
 	{
 		this.in = new InputStreamReader(System.in);
-		this.unicodeConv = new UnicodeZSCIIConverter(config);
+		this.unicodeConv = unicodeConv;
 		this.unicodeConvStream = new ZSCIIToUnicodeConverterStream(unicodeConv);
 	}
 

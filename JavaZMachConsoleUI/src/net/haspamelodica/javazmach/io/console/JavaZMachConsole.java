@@ -7,12 +7,14 @@ import java.io.IOException;
 
 import net.haspamelodica.javazmach.GlobalConfig;
 import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverter;
+import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverterNoSpecialChars;
 
 public class JavaZMachConsole
 {
 	public static void main(String[] args) throws IOException
 	{
 		GlobalConfig config = readConfigFromArgs(args);
-		run(config, new ConsoleVideoCard(config), new UnicodeZSCIIConverter(config));
+		UnicodeZSCIIConverter unicodeZSCIIConverter = new UnicodeZSCIIConverterNoSpecialChars(config);
+		run(config, new ConsoleVideoCard(config, unicodeZSCIIConverter), unicodeZSCIIConverter);
 	}
 }

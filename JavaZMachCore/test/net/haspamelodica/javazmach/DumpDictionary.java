@@ -12,6 +12,7 @@ import net.haspamelodica.javazmach.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javazmach.core.memory.StaticArrayBackedMemory;
 import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverter;
+import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverterNoSpecialChars;
 import net.haspamelodica.javazmach.core.text.ZCharStream;
 import net.haspamelodica.javazmach.core.text.ZCharsAlphabet;
 import net.haspamelodica.javazmach.core.text.ZCharsSeqMemUnpacker;
@@ -29,7 +30,7 @@ public class DumpDictionary
 		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
 		ZCharStream zCharsUnpacker = new ZCharsSeqMemUnpacker(seqMem);
 		ZCharsToZSCIIConverterStream textConverter = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet);
-		UnicodeZSCIIConverter unicodeConv = new UnicodeZSCIIConverter(config);
+		UnicodeZSCIIConverter unicodeConv = new UnicodeZSCIIConverterNoSpecialChars(config);
 		mem.reset();
 		alphabet.reset();
 		textConverter.reset(zCharsUnpacker);

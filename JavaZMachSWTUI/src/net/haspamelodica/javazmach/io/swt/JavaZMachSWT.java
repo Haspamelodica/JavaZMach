@@ -15,13 +15,14 @@ import org.eclipse.swt.widgets.Shell;
 import net.haspamelodica.javazmach.GlobalConfig;
 import net.haspamelodica.javazmach.core.ZInterpreter;
 import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverter;
+import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverterNoSpecialChars;
 
 public class JavaZMachSWT
 {
 	public static void main(String[] args) throws IOException
 	{
 		GlobalConfig config = readConfigFromArgs(args);
-		UnicodeZSCIIConverter unicodeConv = new UnicodeZSCIIConverter(config);
+		UnicodeZSCIIConverter unicodeConv = new UnicodeZSCIIConverterNoSpecialChars(config);
 		Display display = new Display();
 		Shell shell = new Shell(SWT.CLOSE | SWT.TITLE | SWT.MIN);
 		shell.setLayout(new FillLayout());
