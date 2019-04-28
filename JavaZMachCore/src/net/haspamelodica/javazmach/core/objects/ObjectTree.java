@@ -309,8 +309,12 @@ public class ObjectTree
 	}
 	private int getObjAddress(int objNumber)
 	{
-		if(objNumber < 1 || objNumber > (version < 4 ? 255 : 65535))
+		if(!isValidObjNumber(objNumber))
 			throw new ObjectException("Illegal object number: " + objNumber);
 		return objNumber * (version < 4 ? 9 : 14) + objectsOffset;
+	}
+	public boolean isValidObjNumber(int objNumber)
+	{
+		return objNumber > 0 && objNumber < (version < 4 ? 256 : 65536);
 	}
 }

@@ -30,10 +30,13 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javazmach.core.memory.WritableUndoableBuffer;
 import net.haspamelodica.javazmach.core.objects.ObjectTree;
 import net.haspamelodica.javazmach.core.stack.CallStack;
+import net.haspamelodica.javazmach.core.text.FixedZSCIICharStream;
 import net.haspamelodica.javazmach.core.text.Tokeniser;
+import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverter;
 import net.haspamelodica.javazmach.core.text.ZCharsAlphabet;
 import net.haspamelodica.javazmach.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javazmach.core.text.ZCharsToZSCIIConverterStream;
+import net.haspamelodica.javazmach.core.text.ZSCIICharStream;
 import net.haspamelodica.javazmach.core.text.ZSCIICharStreamReceiver;
 
 public class ZInterpreter
@@ -61,6 +64,7 @@ public class ZInterpreter
 	private final ZCharsSeqMemUnpacker			zCharsUnpackerFromSeqMemRO;
 	private final ZCharsSeqMemUnpacker			zCharsUnpackerFromPC;
 	private final ZCharsToZSCIIConverterStream	textConv;
+	private final ZSCIICharStream				illegalObjectZSCIIStream;
 	private final ZSCIICharStreamReceiver		printZSCIITarget;
 	private final Tokeniser						tokeniser;
 	private final Random						trueRandom;
@@ -76,11 +80,11 @@ public class ZInterpreter
 	private final StringBuilder			stringBuf;
 	private int							callDepth;
 
-	public ZInterpreter(GlobalConfig config, ReadOnlyMemory storyfileROM, VideoCard videoCard)
+	public ZInterpreter(GlobalConfig config, ReadOnlyMemory storyfileROM, VideoCard videoCard, UnicodeZSCIIConverter unicodeZSCIIConverter)
 	{
-		this(config, -1, storyfileROM, videoCard);
+		this(config, -1, storyfileROM, videoCard, unicodeZSCIIConverter);
 	}
-	public ZInterpreter(GlobalConfig config, int versionOverride, ReadOnlyMemory storyfileROM, VideoCard videoCard)
+	public ZInterpreter(GlobalConfig config, int versionOverride, ReadOnlyMemory storyfileROM, VideoCard videoCard, UnicodeZSCIIConverter unicodeZSCIIConverter)
 	{
 		this.storyfileROM = storyfileROM;
 		this.version = versionOverride > 0 ? versionOverride : HeaderParser.getFieldUnchecked(storyfileROM, Version);
@@ -104,6 +108,7 @@ public class ZInterpreter
 		this.zCharsUnpackerFromSeqMemRO = new ZCharsSeqMemUnpacker(seqMemROBuf);
 		this.zCharsUnpackerFromPC = new ZCharsSeqMemUnpacker(memAtPC);
 		this.textConv = new ZCharsToZSCIIConverterStream(config, version, headerParser, memCheckedWrite, alphabet);
+		this.illegalObjectZSCIIStream=new FixedZSCIICharStream(unicodeZSCIIConverter, "<illegal object>");
 		this.ioCard = new IOCard(config, version, headerParser, memCheckedWrite, videoCard);
 		this.printZSCIITarget = ioCard::printZSCII;
 		this.tokeniser = new Tokeniser(config, version, headerParser, memCheckedWrite, alphabet);
@@ -446,9 +451,16 @@ public class ZInterpreter
 			case aread://read in zmach06e.pdf
 			case sread://read in zmach06e.pdf
 				//TODO timeouts
-				seqMemROBuf.setAddress(objectTree.getObjectNameLoc(readVariable(0x10)));//1st global
-				textConv.reset(zCharsUnpackerFromSeqMemRO);
-				ioCard.showStatusBar(textConv, readVariable(0x11), readVariable(0x12));//2nd & 3rd global
+				int locationObj = readVariable(0x10);
+				ZSCIICharStream location;
+				if(objectTree.isValidObjNumber(locationObj))
+				{
+					seqMemROBuf.setAddress(objectTree.getObjectNameLoc(locationObj));//1st global
+					textConv.reset(zCharsUnpackerFromSeqMemRO);
+					location = textConv;
+				} else
+					location = illegalObjectZSCIIStream;
+				ioCard.showStatusBar(location, readVariable(0x11), readVariable(0x12));//2nd & 3rd global
 				wBuf.reset(o0, version < 5, 1);
 				storeVal = ioCard.inputToTextBuffer(wBuf);
 				if(storeVal == -1)

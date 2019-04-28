@@ -31,11 +31,11 @@ public class SWTVideoCard extends Canvas implements VideoCard
 
 	boolean debug = true;
 
-	public SWTVideoCard(Composite parent, int style, GlobalConfig config)
+	public SWTVideoCard(Composite parent, int style, GlobalConfig config, UnicodeZSCIIConverter unicodeZSCIIConverter)
 	{
 		super(parent, style | SWT.NO_BACKGROUND);
 
-		this.unicodeConv = new UnicodeZSCIIConverter(config);
+		this.unicodeConv = unicodeZSCIIConverter;
 		this.inputBuffer = new LinkedBlockingQueue<>();
 		this.screenBuffer = new Image(getDisplay(), 1, 1);
 		this.screenBufferGC = new GC(screenBuffer);

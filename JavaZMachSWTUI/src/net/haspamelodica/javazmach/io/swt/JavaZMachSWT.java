@@ -14,16 +14,18 @@ import org.eclipse.swt.widgets.Shell;
 
 import net.haspamelodica.javazmach.GlobalConfig;
 import net.haspamelodica.javazmach.core.ZInterpreter;
+import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverter;
 
 public class JavaZMachSWT
 {
 	public static void main(String[] args) throws IOException
 	{
 		GlobalConfig config = readConfigFromArgs(args);
+		UnicodeZSCIIConverter unicodeConv = new UnicodeZSCIIConverter(config);
 		Display display = new Display();
 		Shell shell = new Shell(SWT.CLOSE | SWT.TITLE | SWT.MIN);
 		shell.setLayout(new FillLayout());
-		ZInterpreter zInterpreter = createInterpreter(config, new SWTVideoCard(shell, SWT.NONE, config));
+		ZInterpreter zInterpreter = createInterpreter(config, new SWTVideoCard(shell, SWT.NONE, config, unicodeConv), unicodeConv);
 		shell.setSize(400, 400);
 		shell.layout();
 		shell.open();
