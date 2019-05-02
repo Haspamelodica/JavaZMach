@@ -56,8 +56,11 @@ public class IOCard
 	private final VideoCard				videoCard;
 	private final WindowPropsAttrs[]	windowProperties;
 
-	private boolean isTimeGame;
+	private boolean								isTimeGame;
+	private int									defaultTrueBG;
+	private final ZeroTerminatedReadOnlyByteSet	terminatingZSCIIChars;
 
+	private int		unitsYRemainingToNextMORE;
 	private boolean	extraNL;
 	private int		firstNonSpaceIndex;
 
@@ -70,10 +73,7 @@ public class IOCard
 	private int		outputBufferLength;
 	private int		outputBufferWidth;
 
-	private WindowPropsAttrs	currentWindowProperties;
-	private int					defaultTrueBG;
-
-	private final ZeroTerminatedReadOnlyByteSet terminatingZSCIIChars;
+	private WindowPropsAttrs currentWindowProperties;
 
 	public IOCard(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem, VideoCard videoCard)
 	{
@@ -106,6 +106,7 @@ public class IOCard
 		firstNonSpaceIndex = -1;
 		int scrWidth = videoCard.getScreenWidth();
 		int scrHeight = videoCard.getScreenHeight();
+		unitsYRemainingToNextMORE = scrHeight - 1;//MORE takes one line
 		int defaultTrueFG = videoCard.getDefaultTrueFG();
 		defaultTrueBG = videoCard.getDefaultTrueBG();
 		int defaultFG = trueColToCol(defaultTrueFG);
@@ -447,5 +448,10 @@ public class IOCard
 		} else
 			setPropertyCurrentWindow(CursorYProp, newCursorY);
 		setPropertyCurrentWindow(CursorXProp, 1);
+		unitsYRemainingToNextMORE --;
+		if(unitsYRemainingToNextMORE < 1)
+		{
+			//TODO print "[MORE]", wait for any key press, delete "[MORE]", reset linesRemainingToNextMORE
+		}
 	}
 }
