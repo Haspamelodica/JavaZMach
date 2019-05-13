@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: JavaZMachSWTUI
+Bundle-SymbolicName: JavaZMachSWTUI
+Bundle-Version: 1.0.0.qualifier
+Export-Package: net.haspamelodica.javazmach.io.swt
+Require-Bundle: org.eclipse.swt;bundle-version="3.110.0"
+Automatic-Module-Name: JavaZMachSWTUI
