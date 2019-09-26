@@ -80,15 +80,14 @@ public class SWTVideoCard extends Canvas implements VideoCard
 			}
 		});
 		addPaintListener(e -> e.gc.drawImage(screenBuffer, 0, 0));
-		parent.addListener(SWT.Dispose, e -> inputBuffer.offer(-1));//in case someone is still waiting for input
-	}
-	@Override
-	public void dispose()
-	{
-		screenBuffer2GC.dispose();
-		screenBuffer2.dispose();
-		screenBufferGC.dispose();
-		screenBuffer.dispose();
+		parent.addListener(SWT.Dispose, e ->
+		{
+			screenBuffer2GC.dispose();
+			screenBuffer2.dispose();
+			screenBufferGC.dispose();
+			screenBuffer.dispose();
+			inputBuffer.offer(-1);//in case someone is still waiting for input
+		});
 	}
 
 	//VideoCard methods
