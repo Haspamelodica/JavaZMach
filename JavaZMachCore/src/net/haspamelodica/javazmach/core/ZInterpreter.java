@@ -108,7 +108,7 @@ public class ZInterpreter
 		this.zCharsUnpackerFromSeqMemRO = new ZCharsSeqMemUnpacker(seqMemROBuf);
 		this.zCharsUnpackerFromPC = new ZCharsSeqMemUnpacker(memAtPC);
 		this.textConv = new ZCharsToZSCIIConverterStream(config, version, headerParser, memCheckedWrite, alphabet);
-		this.illegalObjectZSCIIStream=new FixedZSCIICharStream(unicodeZSCIIConverter, "<illegal object>");
+		this.illegalObjectZSCIIStream = new FixedZSCIICharStream(unicodeZSCIIConverter, "<illegal object>");
 		this.ioCard = new IOCard(config, version, headerParser, memCheckedWrite, videoCard);
 		this.printZSCIITarget = ioCard::printZSCII;
 		this.tokeniser = new Tokeniser(config, version, headerParser, memCheckedWrite, alphabet);
