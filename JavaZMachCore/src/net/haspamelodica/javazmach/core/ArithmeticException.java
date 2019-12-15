@@ -2,6 +2,8 @@ package net.haspamelodica.javazmach.core;
 
 public class ArithmeticException extends InterpreterException
 {
+	private static final long serialVersionUID = -4693970375043059175L;
+
 	public ArithmeticException()
 	{
 		super();

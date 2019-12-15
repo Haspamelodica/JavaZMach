@@ -4,6 +4,8 @@ import net.haspamelodica.javazmach.core.InterpreterException;
 
 public class TextException extends InterpreterException
 {
+	private static final long serialVersionUID = -1262018213776924123L;
+
 	public TextException()
 	{
 		super();

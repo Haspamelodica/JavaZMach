@@ -2,6 +2,8 @@ package net.haspamelodica.javazmach.core;
 
 public class VariableException extends InterpreterException
 {
+	private static final long serialVersionUID = 8435606980275562238L;
+
 	public VariableException()
 	{
 		super();

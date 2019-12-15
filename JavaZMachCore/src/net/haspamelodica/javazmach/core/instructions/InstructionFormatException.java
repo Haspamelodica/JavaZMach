@@ -4,6 +4,8 @@ import net.haspamelodica.javazmach.core.InterpreterException;
 
 public class InstructionFormatException extends InterpreterException
 {
+	private static final long serialVersionUID = 5747746791406362758L;
+
 	public InstructionFormatException()
 	{
 		super();

@@ -2,6 +2,8 @@ package net.haspamelodica.javazmach.core;
 
 public class ControlFlowException extends InterpreterException
 {
+	private static final long serialVersionUID = -1144596256865959693L;
+
 	public ControlFlowException()
 	{
 		super();

@@ -2,6 +2,8 @@ package net.haspamelodica.javazmach.core;
 
 public class InterpreterException extends RuntimeException
 {
+	private static final long serialVersionUID = -2815347401547281595L;
+
 	public InterpreterException()
 	{
 		super();

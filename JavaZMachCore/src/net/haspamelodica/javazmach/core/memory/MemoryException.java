@@ -4,6 +4,8 @@ import net.haspamelodica.javazmach.core.InterpreterException;
 
 public class MemoryException extends InterpreterException
 {
+	private static final long serialVersionUID = -4648977780414789406L;
+
 	public MemoryException()
 	{
 		super();
