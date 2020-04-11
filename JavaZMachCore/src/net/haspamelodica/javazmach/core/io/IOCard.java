@@ -106,7 +106,7 @@ public class IOCard
 		firstNonSpaceIndex = -1;
 		int scrWidth = videoCard.getScreenWidth();
 		int scrHeight = videoCard.getScreenHeight();
-		unitsYRemainingToNextMORE = scrHeight - 1;//MORE takes one line
+		unitsYRemainingToNextMORE = scrHeight - videoCard.getFontHeight(1);//MORE takes one line
 		int defaultTrueFG = videoCard.getDefaultTrueFG();
 		defaultTrueBG = videoCard.getDefaultTrueBG();
 		int defaultFG = trueColToCol(defaultTrueFG);
