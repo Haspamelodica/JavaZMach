@@ -162,6 +162,7 @@ Extended and variable form: 0 to 4 (8 for some opcodes) operands;
   type of first operand encoded in bits 7-6 of the (first) operand type byte, second in 5-4 etc.
   After the first "omitted" operand, all operands must be "omitted".
   For opcodes in variable form with opcode count 2OP, exactly two operands must be "omitted".
+    TODO This is defined in z1point1 4.5. je is 2OP. So why does z1point1 15 define je for up to four operands?
 
 All operands follow. Large constants are 2 bytes long, small constants and variables 1 byte.
 
