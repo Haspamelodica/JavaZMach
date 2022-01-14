@@ -1,7 +1,8 @@
 # JavaZMach
 A Z-Machine interpreter in Java
 
-Work in progress. Currently this interpreter is able to run ZORK1 (version Z3).<br>
+Many instructions aren't supported, but the interpreter is able to run ZORK1 (version Z3).
+
 When importing this project in Eclipse, tick "Check for nested projects" in the import dialog.
 
 There are currently two UI backends; located in JavaZMachConsoleUI and JavaZMachSWTUI.<br>
@@ -22,5 +23,3 @@ Sources for contents of storyfiles/ and doc/:
  *  Unfortunately, I can't find the source for sanddancer.z8 anymore. The ["official" website of Sanddancer](http://sand-dancer.textories.com/) doesn't seem to have a .z8 version of this game.
 
 You can find many other games at [Historicalsource](https://github.com/historicalsource/).
-
-This project is not forgotten (as of September 2019). If I find the time, I will continue working on it.
