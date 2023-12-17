@@ -1,0 +1,114 @@
+File
+ -> MaybeVersionHeader HeaderEntries FileEntries { file[-1] = ZAssemblerFile(version[0], headers[1], fileEntries[2]); };
+
+MaybeVersionHeader
+ ->                               { version[-1] = optIntEmpty(); }
+  | '.' 'zversion' PositiveNumber { version[-1] = optIntOf(int[2]); } ;
+
+HeaderEntries
+ ->                                 { headers[-1] = emptyHEList(); }
+  | HeaderEntries HeaderEntry       { headers[-1] = appendHEList(headers[0], header[1]); } ;
+
+HeaderEntry
+ -> '.' 'zheader' 'ident' HeaderValue { header[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
+
+HeaderValue
+ -> Constant { headerValue[-1] = constant[0]; }
+  | Label    { headerValue[-1] = label[0]; } ;
+
+FileEntries
+ ->                          { fileEntries[-1] = emptyAEList(); }
+  | FileEntries FileEntry { fileEntries[-1] = appendAEList(fileEntries[0], fileEntry[1]); } ;
+
+FileEntry
+ -> LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
+  | Instruction { fileEntry[-1] = instruction[0]; } ;
+
+LabelDeclaration
+ -> 'ident' ':' { labelDeclaration[-1] = LabelDeclaration(str([0])); } ;
+
+Instruction -> Opcode MaybeForm Operands MaybeStoreTarget MaybeBranchInfo MaybeText
+  { instruction[-1] = AssemblerZMachInstruction(
+      str(str[0]), form[1], operands[2], storeTarget[3], branchInfo[4], text[5]); } ;
+
+Opcode
+ -> 'opcode_orig'  { str[-1] = [0]; }
+  | 'opcode_lower' { str[-1] = [0]; }
+  | 'opcode_upper' { str[-1] = [0]; }
+  | 'rfalse'       { str[-1] = [0]; }
+  | 'rtrue'        { str[-1] = [0]; } ;
+
+MaybeForm
+ ->          { form[-1] = optFormEmpty(); }
+  | '.' Form { form[-1] = optFormOf(formRaw[1]); } ;
+
+Form
+ -> 'lng' { formRaw[-1] = LONG(); }
+  | 'srt' { formRaw[-1] = SHORT(); }
+  | 'ext' { formRaw[-1] = EXTENDED(); }
+  | 'var' { formRaw[-1] = VARIABLE(); } ;
+
+Operands
+ ->                  { operands[-1] = emptyOperandList(); }
+  | Operands Operand { operands[-1] = appendOperandList(operands[0], operand[1]); } ;
+
+Operand
+ -> Constant { operand[-1] = constant[0]; }
+  | Variable { operand[-1] = variable[0]; }
+  | Label    { operand[-1] = label[0]; } ;
+
+MaybeStoreTarget
+ ->               { storeTarget[-1] = optVariableEmpty(); }
+  | '->' Variable { storeTarget[-1] = optVariableOf(variable[1]); } ;
+
+MaybeBranchInfo
+ ->            { branchInfo[-1] = optBranchInfoEmpty(); }
+  | '?' MaybeBranchInfoBranchOnConditionFalse BranchTarget
+    { branchInfo[-1] = optBranchInfoOf(BranchInfo(branchOnConditionFalse[1], branchTarget[2])); } ;
+
+MaybeBranchInfoBranchOnConditionFalse
+ ->     { branchOnConditionFalse[-1] = false(); }
+  | '~' { branchOnConditionFalse[-1] = true(); } ;
+
+BranchTarget
+ -> 'rfalse' { branchTarget[-1] = RFalse(); }
+  | 'rtrue'  { branchTarget[-1] = RTrue(); }
+  | Constant { branchTarget[-1] = constant[0]; }
+  | Label    { branchTarget[-1] = label[0]; } ;
+
+MaybeText
+ ->        { text[-1] = optStringEmpty(); }
+  | 'text' { text[-1] = optStringOf(text([0])); } ;
+
+Label -> 'ident'           { label[-1] = Label(str([0])); } ;
+
+// For better error handling, each terminal allows all digits,
+// and errors are catched in the function int().
+Variable
+ -> 'sp'          { variable[-1] = StackPointer(); }
+  | 'lvar_dec'    { variable[-1] = LocalVariable(int(_1(), _10(), [0])); }
+  | 'lvar_hex_0x' { variable[-1] = LocalVariable(int(_3(), _16(), [0])); }
+  | 'lvar_hex_#'  { variable[-1] = LocalVariable(int(_2(), _16(), [0])); }
+  | 'lvar_bin_0b' { variable[-1] = LocalVariable(int(_3(),  _2(), [0])); }
+  | 'lvar_bin_$$' { variable[-1] = LocalVariable(int(_3(),  _2(), [0])); }
+  | 'gvar_dec'    { variable[-1] = GlobalVariable(int(_1(), _10(), [0])); }
+  | 'gvar_hex_0x' { variable[-1] = GlobalVariable(int(_3(), _16(), [0])); }
+  | 'gvar_hex_#'  { variable[-1] = GlobalVariable(int(_2(), _16(), [0])); }
+  | 'gvar_bin_0b' { variable[-1] = GlobalVariable(int(_3(),  _2(), [0])); }
+  | 'gvar_bin_$$' { variable[-1] = GlobalVariable(int(_3(),  _2(), [0])); } ;
+
+Constant -> SignedNumber { constant[-1] = Constant(int[0]); } ;
+
+SignedNumber
+ -> PositiveNumber     { int[-1] = int[0]; }
+  | '+' PositiveNumber { int[-1] = int[1]; }
+  | '-' PositiveNumber { int[-1] = neg(int[1]); } ;
+
+// For better error handling, each terminal allows all digits,
+// and errors are catched in the function int().
+PositiveNumber
+ -> 'pos_number_dec'    { int[-1] = int(_0(), _10(), [0]); }
+  | 'pos_number_hex_0x' { int[-1] = int(_2(), _16(), [0]); }
+  | 'pos_number_hex_#'  { int[-1] = int(_1(), _16(), [0]); }
+  | 'pos_number_bin_0b' { int[-1] = int(_2(),  _2(), [0]); }
+  | 'pos_number_bin_$$' { int[-1] = int(_2(),  _2(), [0]); } ;
