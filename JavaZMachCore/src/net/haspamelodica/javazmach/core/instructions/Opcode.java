@@ -63,7 +63,7 @@ public enum Opcode
 	save_V13/*       */(0x05, OP0, SBT._B_, 1, 3, "save"),
 	save_V4/*        */(0x05, OP0, SBT.S__, 4, 4, "save"),//TODO: Is this a store or a branch opcode? Documentation contradicts itself
 	restore_V13/*    */(0x06, OP0, SBT._B_, 1, 3, "restore"),
-	restore_V4/*     */(0x06, OP0, SBT.S__, 4, 5, "restore"),//TODO: Is this a store or a branch opcode? Documentation contradicts itself
+	restore_V4/*     */(0x06, OP0, SBT.S__, 4, 4, "restore"),//TODO: Is this a store or a branch opcode? Documentation contradicts itself
 	restart/*        */(0x07, OP0, SBT.___, 1, "restart"),
 	ret_popped/*     */(0x08, OP0, SBT.___, 1, "ret_popped"),
 	pop/*            */(0x09, OP0, SBT.___, 1, 4, "pop"),
