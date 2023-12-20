@@ -23,3 +23,5 @@ Sources for contents of storyfiles/ and doc/:
  *  Unfortunately, I can't find the source for sanddancer.z8 anymore. The ["official" website of Sanddancer](http://sand-dancer.textories.com/) doesn't seem to have a .z8 version of this game.
 
 You can find many other games at [Historicalsource](https://github.com/historicalsource/).
+
+Note that `JavaZMachAssembler` depends on [net.haspamelodica.parser](https://github.com/Haspamelodica/net.haspamelodica.parser).
