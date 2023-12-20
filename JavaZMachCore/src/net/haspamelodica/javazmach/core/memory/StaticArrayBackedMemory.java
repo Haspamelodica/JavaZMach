@@ -25,11 +25,6 @@ public class StaticArrayBackedMemory implements ReadOnlyMemory
 	{
 		return byteAt(byteAddr);
 	}
-	@Override
-	public int readWord(int byteAddr)
-	{
-		return (byteAt(byteAddr) << 8) | byteAt(byteAddr + 1);
-	}
 	private int byteAt(int byteAddr)
 	{
 		return bytes[byteAddr] & 0xFF;

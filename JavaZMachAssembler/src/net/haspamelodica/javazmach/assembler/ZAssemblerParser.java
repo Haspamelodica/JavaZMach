@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.ParameterizedType;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,10 +16,13 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import net.haspamelodica.javazmach.assembler.model.AssemblerZMachInstruction;
 import net.haspamelodica.javazmach.assembler.model.BranchInfo;
 import net.haspamelodica.javazmach.assembler.model.BranchTarget;
-import net.haspamelodica.javazmach.assembler.model.Constant;
+import net.haspamelodica.javazmach.assembler.model.ConstantByteSequence;
+import net.haspamelodica.javazmach.assembler.model.ConstantByteSequenceElement;
+import net.haspamelodica.javazmach.assembler.model.ConstantChar;
+import net.haspamelodica.javazmach.assembler.model.ConstantInteger;
+import net.haspamelodica.javazmach.assembler.model.ConstantString;
 import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.HeaderValue;
@@ -31,7 +35,8 @@ import net.haspamelodica.javazmach.assembler.model.RTrue;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
-import net.haspamelodica.javazmach.assembler.model.ZAssemblyFileEntry;
+import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
+import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
 import net.haspamelodica.parser.ast.InnerNode;
@@ -60,9 +65,9 @@ public class ZAssemblerParser
 
 	static
 	{
-		ParameterizedType T_ListHeaderEntry = new ParameterizedTypeImpl(null, List.class, HeaderEntry.class);
-		ParameterizedType T_ListZAssemblyFileEntry = new ParameterizedTypeImpl(null, List.class, ZAssemblyFileEntry.class);
+		ParameterizedType T_ListZAssemblyFileEntry = new ParameterizedTypeImpl(null, List.class, ZAssemblerFileEntry.class);
 		ParameterizedType T_ListOperand = new ParameterizedTypeImpl(null, List.class, Operand.class);
+		ParameterizedType T_ListByteSequenceElement = new ParameterizedTypeImpl(null, List.class, ConstantByteSequenceElement.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptBranchInfo = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
@@ -70,14 +75,13 @@ public class ZAssemblerParser
 
 		Map<String, TypedFunction> functionsByName = new HashMap<>();
 
-		functionsByName.put("ZAssemblerFile", TypedFunction.buildT(ZAssemblerFile::new,
-				ZAssemblerFile.class, OptionalInt.class, T_ListHeaderEntry, T_ListZAssemblyFileEntry));
-
 		// "constructors"
+		functionsByName.put("ZAssemblerFile", TypedFunction.buildT(ZAssemblerFile::new,
+				ZAssemblerFile.class, OptionalInt.class, T_ListZAssemblyFileEntry));
 		functionsByName.put("HeaderEntry", TypedFunction.build(HeaderEntry::new, HeaderEntry.class, String.class, HeaderValue.class));
 		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, String.class));
-		functionsByName.put("AssemblerZMachInstruction", TypedFunction.buildT(AssemblerZMachInstruction::new,
-				AssemblerZMachInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptVariable, T_OptBranchInfo, T_OptString));
+		functionsByName.put("AssemblerZMachInstruction", TypedFunction.buildT(ZAssemblerInstruction::new,
+				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptVariable, T_OptBranchInfo, T_OptString));
 		functionsByName.put("BranchInfo", TypedFunction.build(BranchInfo::new, BranchInfo.class, Boolean.class, BranchTarget.class));
 		functionsByName.put("RFalse", TypedFunction.build(() -> RFalse.INSTANCE, RFalse.class));
 		functionsByName.put("RTrue", TypedFunction.build(() -> RTrue.INSTANCE, RTrue.class));
@@ -85,7 +89,11 @@ public class ZAssemblerParser
 		functionsByName.put("StackPointer", TypedFunction.build(() -> StackPointer.INSTANCE, StackPointer.class));
 		functionsByName.put("LocalVariable", TypedFunction.build(LocalVariable::new, LocalVariable.class, Integer.class));
 		functionsByName.put("GlobalVariable", TypedFunction.build(GlobalVariable::new, GlobalVariable.class, Integer.class));
-		functionsByName.put("Constant", TypedFunction.build(Constant::new, Constant.class, Integer.class));
+		functionsByName.put("ConstantByteSequence", TypedFunction.buildT(ConstantByteSequence::new,
+				ConstantByteSequence.class, T_ListByteSequenceElement));
+		functionsByName.put("ConstantInteger", TypedFunction.build(ConstantInteger::new, ConstantInteger.class, BigInteger.class));
+		functionsByName.put("ConstantChar", TypedFunction.build(ConstantChar::new, ConstantChar.class, Character.class));
+		functionsByName.put("ConstantString", TypedFunction.build(ConstantString::new, ConstantString.class, String.class));
 
 		// OpcodeForms
 		functionsByName.put("LONG", TypedFunction.build(() -> OpcodeForm.LONG, OpcodeForm.class));
@@ -94,17 +102,15 @@ public class ZAssemblerParser
 		functionsByName.put("VARIABLE", TypedFunction.build(() -> OpcodeForm.VARIABLE, OpcodeForm.class));
 
 		// lists
-		functionsByName.put("emptyHEList", TypedFunction.buildT(ArrayList::new, T_ListHeaderEntry));
-		functionsByName.put("appendHEList", TypedFunction.buildT(ZAssemblerParser::<HeaderEntry> appendList,
-				T_ListHeaderEntry, T_ListHeaderEntry, HeaderEntry.class));
-		functionsByName.put("prependHEList", TypedFunction.buildT(ZAssemblerParser::<HeaderEntry> prependList,
-				T_ListHeaderEntry, HeaderEntry.class, T_ListHeaderEntry));
+		functionsByName.put("emptyAEList", TypedFunction.buildT(ArrayList::new, T_ListZAssemblyFileEntry));
+		functionsByName.put("appendAEList", TypedFunction.buildT(ZAssemblerParser::<ZAssemblerFileEntry> appendList,
+				T_ListZAssemblyFileEntry, T_ListZAssemblyFileEntry, ZAssemblerFileEntry.class));
 		functionsByName.put("emptyOperandList", TypedFunction.buildT(ArrayList::new, T_ListOperand));
 		functionsByName.put("appendOperandList", TypedFunction.buildT(ZAssemblerParser::<Operand> appendList,
 				T_ListOperand, T_ListOperand, Operand.class));
-		functionsByName.put("emptyAEList", TypedFunction.buildT(ArrayList::new, T_ListZAssemblyFileEntry));
-		functionsByName.put("appendAEList", TypedFunction.buildT(ZAssemblerParser::<ZAssemblyFileEntry> appendList,
-				T_ListZAssemblyFileEntry, T_ListZAssemblyFileEntry, ZAssemblyFileEntry.class));
+		functionsByName.put("emptyByteSequenceList", TypedFunction.buildT(ArrayList::new, T_ListByteSequenceElement));
+		functionsByName.put("appendByteSequenceList", TypedFunction.buildT(ZAssemblerParser::<ConstantByteSequenceElement> appendList,
+				T_ListByteSequenceElement, T_ListByteSequenceElement, ConstantByteSequenceElement.class));
 
 		// Optionals
 		functionsByName.put("optFormEmpty", TypedFunction.buildT(Optional::empty, T_OptForm));
@@ -118,11 +124,14 @@ public class ZAssemblerParser
 		functionsByName.put("optIntEmpty", TypedFunction.build(OptionalInt::empty, OptionalInt.class));
 		functionsByName.put("optIntOf", TypedFunction.build(OptionalInt::of, OptionalInt.class, Integer.class));
 
-		//meta
+		// Strings, ints, booleans
 		functionsByName.put("str", TypedFunction.build(CharString::toStringNoEscaping, String.class, CharString.class));
-		functionsByName.put("text", TypedFunction.build(ZAssemblerParser::parseText, String.class, CharString.class));
-		functionsByName.put("int", TypedFunction.build((cut, base, cs) -> parseInt(cut, base, cs), Integer.class, Integer.class, Integer.class, CharString.class));
-		functionsByName.put("neg", TypedFunction.build(i -> -i, Integer.class, Integer.class));
+		functionsByName.put("parseText", TypedFunction.build(ZAssemblerParser::parseText, String.class, CharString.class));
+		functionsByName.put("parseChar", TypedFunction.build(ZAssemblerParser::parseChar, Character.class, CharString.class));
+		functionsByName.put("parseBigInt", TypedFunction.build(ZAssemblerParser::parseBigInt, BigInteger.class, Integer.class, Integer.class, CharString.class));
+		functionsByName.put("neg", TypedFunction.build(BigInteger::negate, BigInteger.class, BigInteger.class));
+		functionsByName.put("int", TypedFunction.build(BigInteger::intValueExact, Integer.class, BigInteger.class));
+		functionsByName.put("byte", TypedFunction.build(BigInteger::byteValueExact, Byte.class, BigInteger.class));
 		functionsByName.put("_0", TypedFunction.build(() -> 0, Integer.class));
 		functionsByName.put("_1", TypedFunction.build(() -> 1, Integer.class));
 		functionsByName.put("_2", TypedFunction.build(() -> 2, Integer.class));
@@ -202,31 +211,46 @@ public class ZAssemblerParser
 	{
 		String rawText = cs.toStringNoEscaping();
 		if(rawText.charAt(0) != '"' || rawText.charAt(rawText.length() - 1) != '"')
-			throw new IllegalArgumentException("Invalid text constant: " + cs);
+			throw new IllegalArgumentException("Invalid text literal: " + cs);
 
+		return parseTextOrChar(rawText, 1, rawText.length() - 1, true, "text");
+	}
+	private static Character parseChar(CharString cs)
+	{
+		String rawText = cs.toStringNoEscaping();
+		if(rawText.charAt(0) != '\'' || rawText.charAt(rawText.length() - 1) != '\'')
+			throw new IllegalArgumentException("Invalid char literal: " + cs);
+
+		String parsed = parseTextOrChar(rawText, 1, rawText.length() - 1, false, "char");
+		if(parsed.length() != 1)
+			throw new IllegalArgumentException("Invalid char literal: " + cs);
+		return parsed.charAt(0);
+	}
+
+	private static String parseTextOrChar(String rawText, int start, int endExclusive, boolean allowEscapedMultiline, String textOrChar)
+	{
 		String result = "";
 		boolean nextEscaped = false;
 		boolean nextIgnoredIfNewline = false;
-		for(int i = 1; i < rawText.length() - 1; i ++)
+		for(int i = start; i < endExclusive; i ++)
 		{
 			char c = rawText.charAt(i);
 			if(nextEscaped)
 			{
 				nextEscaped = false;
-				switch(c)
-				{
-					case '\\' -> result += '\\';
-					case '"' -> result += '"';
-					case 't' -> result += '\t';
-					case 'r' -> result += '\r';
-					case 'n', '\n' -> result += '\n';
-					case '\r' ->
+				if(!allowEscapedMultiline)
+					result += unescape(c);
+				else
+					switch(c)
 					{
-						result += '\n';
-						nextIgnoredIfNewline = true;
+						case '\n' -> result += '\n';
+						case '\r' ->
+						{
+							result += '\n';
+							nextIgnoredIfNewline = true;
+						}
+						default -> result += unescape(c);
 					}
-					default -> throw new IllegalArgumentException("Unexpected escaped char: " + c);
-				};
 			} else if(nextIgnoredIfNewline)
 			{
 				nextIgnoredIfNewline = false;
@@ -240,31 +264,39 @@ public class ZAssemblerParser
 				result += c;
 		}
 		if(nextEscaped)
-			throw new IllegalArgumentException("Invalid text constant: " + cs);
+			throw new IllegalArgumentException("Invalid " + textOrChar + " literal: " + rawText);
 
 		return result;
 	}
-
-	private static int parseInt(int cut, int base, CharString cs)
+	private static char unescape(char c)
 	{
+		return switch(c)
+		{
+			case '\\' -> '\\';
+			case '\'' -> '\'';
+			case '"' -> '"';
+			case 't' -> '\t';
+			case 'r' -> '\r';
+			case 'n' -> '\n';
+			default -> throw new IllegalArgumentException("Unexpected escaped char: " + c);
+		};
+	}
+
+	private static BigInteger parseBigInt(int cut, int base, CharString cs)
+	{
+		String string = cs.toStringNoEscaping();
 		try
 		{
-			return Integer.parseUnsignedInt(cs.toStringNoEscaping().substring(cut), base);
+			return new BigInteger(string.substring(cut), base);
 		} catch(NumberFormatException e)
 		{
-			throw new NumberFormatException("Not a valid literal (base " + base + "): " + cs.toStringNoEscaping());
+			throw new NumberFormatException("Not a valid integer literal (base " + base + "): " + string);
 		}
 	}
 
 	private static <E> List<E> appendList(List<E> list, E e)
 	{
 		list.add(e);
-		return list;
-	}
-
-	private static <E> List<E> prependList(E e, List<E> list)
-	{
-		list.add(0, e);
 		return list;
 	}
 

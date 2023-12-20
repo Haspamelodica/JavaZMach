@@ -41,21 +41,10 @@ public class CopyOnWriteMemory implements WritableMemory
 		return unchangedMem.readByte(byteAddr);
 	}
 	@Override
-	public int readWord(int byteAddr)
-	{
-		return (readByte(byteAddr) << 8) | readByte(byteAddr + 1);
-	}
-	@Override
 	public void writeByte(int byteAddr, int val)
 	{
 		int blockIndex = makeOrGetBlockIndex(byteAddr);
 		writtenBlocks[blockIndex][byteAddr & BLOCK_OFF_MASK] = (byte) val;
-	}
-	@Override
-	public void writeWord(int byteAddr, int val)
-	{
-		writeByte(byteAddr, val >>> 8);
-		writeByte(byteAddr + 1, val);
 	}
 
 	private int makeOrGetBlockIndex(int byteAddr)

@@ -1,10 +1,12 @@
 .ZVERSION 3
-.ZHEADER a b
-.ZHEADER c 100
-.ZHEADER d 0x100
-.ZHEADER e #100
-.ZHEADER g 0b100
-.ZHEADER f $$100
+
+.ZHEADER Version 3
+.ZHEADER StatLineType 0
+.ZHEADER StoryfileSplit 0
+.ZHEADER Tandy 0
+.ZHEADER ReleaseNumber 0x42
+.ZHEADER SerialNum "421337"
+.ZHEADER CompilerVer 0x1337
 
 je
 je.srt

@@ -53,18 +53,20 @@ public class HeaderParser
 		int addr = isSingleBit ? field.bitfield.addr : field.addr;
 		int len = isSingleBit ? field.bitfield.len : field.len;
 
-		int byteOrWord;
+		int valueOrBitfield;
 		if(len == 1)
-			byteOrWord = mem.readByte(addr);
+			valueOrBitfield = mem.readByte(addr);
 		else if(len == 2)
-			byteOrWord = mem.readWord(addr);
+			valueOrBitfield = mem.readWord(addr);
+		else if(len == 4)
+			valueOrBitfield = mem.readInt(addr);
 		else
 			throw new IllegalArgumentException("Field is neither byte nor word!");
 
 		if(isSingleBit)
-			return (byteOrWord >>> field.addr) & 1;
+			return (valueOrBitfield >>> field.addr) & 1;
 		else
-			return byteOrWord;
+			return valueOrBitfield;
 	}
 	public static void setFieldUnchecked(WritableMemory mem, HeaderField field, int val)
 	{
@@ -72,25 +74,69 @@ public class HeaderParser
 		int addr = isSingleBit ? field.bitfield.addr : field.addr;
 		int len = isSingleBit ? field.bitfield.len : field.len;
 
-		if(len != 1 && len != 2)
+		if(len != 1 && len != 2 && len != 4)
 			throw new IllegalArgumentException("Field neither byte nor word!");
 
-		int byteOrWord;
+		int valueOrBitfield;
 		if(isSingleBit)
 		{
 			if(len == 1)
-				byteOrWord = mem.readByte(addr);
+				valueOrBitfield = mem.readByte(addr);
 			else
-				byteOrWord = mem.readWord(addr);
-			byteOrWord |= (val & 1) << field.addr;
+				valueOrBitfield = mem.readWord(addr);
+			valueOrBitfield |= (val & 1) << field.addr;
 		} else
-			byteOrWord = val;
+			valueOrBitfield = val;
 
 		if(len == 1)
-			mem.writeByte(addr, byteOrWord);
+			mem.writeByte(addr, valueOrBitfield);
+		else if(len == 2)
+			mem.writeWord(addr, valueOrBitfield);
 		else
-			mem.writeWord(addr, byteOrWord);
+			mem.writeInt(addr, valueOrBitfield);
 	}
+
+	public static void getFieldUncheckedBytes(ReadOnlyMemory mem, HeaderField field, byte[] data, int off, int len)
+	{
+		if(field.len == 0)
+			throw new IllegalArgumentException("Field is a single bit");
+		if(len > field.len)
+			throw new IllegalArgumentException("Length mismatch: expected at most " + field.len + ", but was " + len);
+		mem.readNBytes(field.addr, data, off, len);
+	}
+	public static void getFieldUncheckedBytes(ReadOnlyMemory mem, HeaderField field, byte[] data)
+	{
+		if(field.len == 0)
+			throw new IllegalArgumentException("Field is a single bit");
+		if(data.length > field.len)
+			throw new IllegalArgumentException("Length mismatch: expected at most " + field.len + ", but was " + data.length);
+		mem.readNBytes(field.addr, data);
+	}
+	public static byte[] getFieldUncheckedBytes(ReadOnlyMemory mem, HeaderField field)
+	{
+		if(field.len == 0)
+			throw new IllegalArgumentException("Field is a single bit");
+
+		return mem.readNBytes(field.addr, field.len);
+	}
+
+	public static void setFieldUncheckedBytes(WritableMemory mem, HeaderField field, byte[] data, int off, int len)
+	{
+		if(field.len == 0)
+			throw new IllegalArgumentException("Field is a single bit");
+		if(len > field.len)
+			throw new IllegalArgumentException("Length mismatch: expected at most " + field.len + ", but was " + len);
+		mem.writeNBytes(field.addr, data, off, len);
+	}
+	public static void setFieldUncheckedBytes(WritableMemory mem, HeaderField field, byte[] data)
+	{
+		if(field.len == 0)
+			throw new IllegalArgumentException("Field is a single bit");
+		if(data.length > field.len)
+			throw new IllegalArgumentException("Length mismatch: expected at most " + field.len + ", but was " + data.length);
+		mem.writeNBytes(field.addr, data);
+	}
+
 	public boolean isAllowedAsDynamicWrite(int byteAddr, int val)
 	{
 		if(byteAddr > 0x3F)

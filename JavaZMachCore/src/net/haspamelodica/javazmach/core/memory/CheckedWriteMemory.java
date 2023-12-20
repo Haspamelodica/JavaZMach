@@ -39,11 +39,6 @@ public class CheckedWriteMemory implements WritableMemory
 		return mem.readByte(byteAddr);
 	}
 	@Override
-	public int readWord(int byteAddr)
-	{
-		return mem.readWord(byteAddr);
-	}
-	@Override
 	public void writeByte(int byteAddr, int val)
 	{
 		checkWrite(byteAddr, val);

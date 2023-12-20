@@ -1,35 +1,45 @@
 File
- -> MaybeVersionHeader HeaderEntries FileEntries { file[-1] = ZAssemblerFile(version[0], headers[1], fileEntries[2]); };
+ -> MaybeVersionHeader FileEntries { file[-1] = ZAssemblerFile(version[0], fileEntries[1]); };
 
 MaybeVersionHeader
  ->                               { version[-1] = optIntEmpty(); }
-  | '.' 'zversion' PositiveNumber { version[-1] = optIntOf(int[2]); } ;
-
-HeaderEntries
- ->                                 { headers[-1] = emptyHEList(); }
-  | HeaderEntries HeaderEntry       { headers[-1] = appendHEList(headers[0], header[1]); } ;
-
-HeaderEntry
- -> '.' 'zheader' 'ident' HeaderValue { header[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
-
-HeaderValue
- -> Constant { headerValue[-1] = constant[0]; }
-  | Label    { headerValue[-1] = label[0]; } ;
+  | '.' 'zversion' PositiveNumber { version[-1] = optIntOf(int(bigint[2])); } ;
 
 FileEntries
- ->                          { fileEntries[-1] = emptyAEList(); }
+ ->                       { fileEntries[-1] = emptyAEList(); }
   | FileEntries FileEntry { fileEntries[-1] = appendAEList(fileEntries[0], fileEntry[1]); } ;
 
 FileEntry
- -> LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
-  | Instruction { fileEntry[-1] = instruction[0]; } ;
+ -> HeaderEntry      { fileEntry[-1] = headerEntry[0]; }
+  | LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
+  | Instruction      { fileEntry[-1] = instruction[0]; } ;
+
+HeaderEntry
+ -> '.' 'zheader' 'ident' HeaderValue { headerEntry[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
+
+HeaderValue
+ -> SignedNumber                                { headerValue[-1] = ConstantInteger(bigint[0]); }
+  | ByteSequenceElementNoSignedNumber           { headerValue[-1] = ConstantByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
+  | ByteSequenceEndingComma ByteSequenceElement { headerValue[-1] = ConstantByteSequence(appendByteSequenceList(elements[0], element[1])); }
+  | Label                                       { headerValue[-1] = label[0]; } ;
+
+ByteSequenceEndingComma
+ -> ByteSequenceElement ','                         { elements[-1] = appendByteSequenceList(emptyByteSequenceList(), element[0]); }
+  | ByteSequenceEndingComma ByteSequenceElement ',' { elements[-1] = appendByteSequenceList(elements[0], element[1]); } ;
+
+ByteSequenceElement
+ -> SignedNumber                      { element[-1] = ConstantInteger(bigint[0]); }
+  | ByteSequenceElementNoSignedNumber { element[-1] = element[0]; } ;
+
+ByteSequenceElementNoSignedNumber
+ -> 'char' { element[-1] = ConstantChar(parseChar([0])); }
+  | 'text' { element[-1] = ConstantString(parseText([0])); } ;
 
 LabelDeclaration
  -> 'ident' ':' { labelDeclaration[-1] = LabelDeclaration(str([0])); } ;
 
-Instruction -> Opcode MaybeForm Operands MaybeStoreTarget MaybeBranchInfo MaybeText
-  { instruction[-1] = AssemblerZMachInstruction(
-      str(str[0]), form[1], operands[2], storeTarget[3], branchInfo[4], text[5]); } ;
+Instruction -> Opcode MaybeForm Operands MaybeStoreTarget MaybeBranchInfo MaybeText { instruction[-1] =
+    AssemblerZMachInstruction(str(str[0]), form[1], operands[2], storeTarget[3], branchInfo[4], text[5]); } ;
 
 Opcode
  -> 'opcode_orig'  { str[-1] = [0]; }
@@ -53,16 +63,16 @@ Operands
   | Operands Operand { operands[-1] = appendOperandList(operands[0], operand[1]); } ;
 
 Operand
- -> Constant { operand[-1] = constant[0]; }
-  | Variable { operand[-1] = variable[0]; }
-  | Label    { operand[-1] = label[0]; } ;
+ -> ConstantInteger { operand[-1] = constant[0]; }
+  | Variable        { operand[-1] = variable[0]; }
+  | Label           { operand[-1] = label[0]; } ;
 
 MaybeStoreTarget
  ->               { storeTarget[-1] = optVariableEmpty(); }
   | '->' Variable { storeTarget[-1] = optVariableOf(variable[1]); } ;
 
 MaybeBranchInfo
- ->            { branchInfo[-1] = optBranchInfoEmpty(); }
+ -> { branchInfo[-1] = optBranchInfoEmpty(); }
   | '?' MaybeBranchInfoBranchOnConditionFalse BranchTarget
     { branchInfo[-1] = optBranchInfoOf(BranchInfo(branchOnConditionFalse[1], branchTarget[2])); } ;
 
@@ -71,44 +81,44 @@ MaybeBranchInfoBranchOnConditionFalse
   | '~' { branchOnConditionFalse[-1] = true(); } ;
 
 BranchTarget
- -> 'rfalse' { branchTarget[-1] = RFalse(); }
-  | 'rtrue'  { branchTarget[-1] = RTrue(); }
-  | Constant { branchTarget[-1] = constant[0]; }
-  | Label    { branchTarget[-1] = label[0]; } ;
+ -> 'rfalse'        { branchTarget[-1] = RFalse(); }
+  | 'rtrue'         { branchTarget[-1] = RTrue(); }
+  | ConstantInteger { branchTarget[-1] = constant[0]; }
+  | Label           { branchTarget[-1] = label[0]; } ;
 
 MaybeText
  ->        { text[-1] = optStringEmpty(); }
-  | 'text' { text[-1] = optStringOf(text([0])); } ;
+  | 'text' { text[-1] = optStringOf(parseText([0])); } ;
 
-Label -> 'ident'           { label[-1] = Label(str([0])); } ;
+Label -> 'ident' { label[-1] = Label(str([0])); } ;
 
 // For better error handling, each terminal allows all digits,
 // and errors are catched in the function int().
 Variable
  -> 'sp'          { variable[-1] = StackPointer(); }
-  | 'lvar_dec'    { variable[-1] = LocalVariable(int(_1(), _10(), [0])); }
-  | 'lvar_hex_0x' { variable[-1] = LocalVariable(int(_3(), _16(), [0])); }
-  | 'lvar_hex_#'  { variable[-1] = LocalVariable(int(_2(), _16(), [0])); }
-  | 'lvar_bin_0b' { variable[-1] = LocalVariable(int(_3(),  _2(), [0])); }
-  | 'lvar_bin_$$' { variable[-1] = LocalVariable(int(_3(),  _2(), [0])); }
-  | 'gvar_dec'    { variable[-1] = GlobalVariable(int(_1(), _10(), [0])); }
-  | 'gvar_hex_0x' { variable[-1] = GlobalVariable(int(_3(), _16(), [0])); }
-  | 'gvar_hex_#'  { variable[-1] = GlobalVariable(int(_2(), _16(), [0])); }
-  | 'gvar_bin_0b' { variable[-1] = GlobalVariable(int(_3(),  _2(), [0])); }
-  | 'gvar_bin_$$' { variable[-1] = GlobalVariable(int(_3(),  _2(), [0])); } ;
+  | 'lvar_dec'    { variable[-1] =  LocalVariable(int(parseBigInt(_1(), _10(), [0]))); }
+  | 'lvar_hex_0x' { variable[-1] =  LocalVariable(int(parseBigInt(_3(), _16(), [0]))); }
+  | 'lvar_hex_#'  { variable[-1] =  LocalVariable(int(parseBigInt(_2(), _16(), [0]))); }
+  | 'lvar_bin_0b' { variable[-1] =  LocalVariable(int(parseBigInt(_3(),  _2(), [0]))); }
+  | 'lvar_bin_$$' { variable[-1] =  LocalVariable(int(parseBigInt(_3(),  _2(), [0]))); }
+  | 'gvar_dec'    { variable[-1] = GlobalVariable(int(parseBigInt(_1(), _10(), [0]))); }
+  | 'gvar_hex_0x' { variable[-1] = GlobalVariable(int(parseBigInt(_3(), _16(), [0]))); }
+  | 'gvar_hex_#'  { variable[-1] = GlobalVariable(int(parseBigInt(_2(), _16(), [0]))); }
+  | 'gvar_bin_0b' { variable[-1] = GlobalVariable(int(parseBigInt(_3(),  _2(), [0]))); }
+  | 'gvar_bin_$$' { variable[-1] = GlobalVariable(int(parseBigInt(_3(),  _2(), [0]))); } ;
 
-Constant -> SignedNumber { constant[-1] = Constant(int[0]); } ;
+ConstantInteger -> SignedNumber { constant[-1] = ConstantInteger(bigint[0]); } ;
 
 SignedNumber
- -> PositiveNumber     { int[-1] = int[0]; }
-  | '+' PositiveNumber { int[-1] = int[1]; }
-  | '-' PositiveNumber { int[-1] = neg(int[1]); } ;
+ -> PositiveNumber     { bigint[-1] = bigint[0]; }
+  | '+' PositiveNumber { bigint[-1] = bigint[1]; }
+  | '-' PositiveNumber { bigint[-1] = neg(bigint[1]); } ;
 
 // For better error handling, each terminal allows all digits,
-// and errors are catched in the function int().
+// and errors are catched in the function parseBigInt().
 PositiveNumber
- -> 'pos_number_dec'    { int[-1] = int(_0(), _10(), [0]); }
-  | 'pos_number_hex_0x' { int[-1] = int(_2(), _16(), [0]); }
-  | 'pos_number_hex_#'  { int[-1] = int(_1(), _16(), [0]); }
-  | 'pos_number_bin_0b' { int[-1] = int(_2(),  _2(), [0]); }
-  | 'pos_number_bin_$$' { int[-1] = int(_2(),  _2(), [0]); } ;
+ -> 'pos_number_dec'    { bigint[-1] = parseBigInt(_0(), _10(), [0]); }
+  | 'pos_number_hex_0x' { bigint[-1] = parseBigInt(_2(), _16(), [0]); }
+  | 'pos_number_hex_#'  { bigint[-1] = parseBigInt(_1(), _16(), [0]); }
+  | 'pos_number_bin_0b' { bigint[-1] = parseBigInt(_2(),  _2(), [0]); }
+  | 'pos_number_bin_$$' { bigint[-1] = parseBigInt(_2(),  _2(), [0]); } ;
