@@ -268,7 +268,7 @@ public class ZAssembler
 
 		byte[] result = new byte[storyfileSize];
 		System.arraycopy(header.data(), 0, result, headerStart, header.currentSize());
-		System.arraycopy(code.data(), 0, result, headerStart, code.currentSize());
+		System.arraycopy(code.data(), 0, result, codeStart, code.currentSize());
 		return result;
 	}
 
