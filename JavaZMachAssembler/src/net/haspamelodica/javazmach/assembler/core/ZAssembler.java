@@ -1,5 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.checkBigintMaxByteCount;
+
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -9,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import net.haspamelodica.javazmach.assembler.NoRangeCheckMemory;
@@ -21,12 +22,14 @@ import net.haspamelodica.javazmach.assembler.model.ConstantString;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.Label;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
+import net.haspamelodica.javazmach.assembler.model.Operand;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
 import net.haspamelodica.javazmach.core.header.HeaderField;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
+
 
 public class ZAssembler
 {
@@ -123,7 +126,7 @@ public class ZAssembler
 			{
 				if(!isBitfieldEntry)
 				{
-					checkHeaderBigintMaxByteCount(field.len, constant.value(), bigint -> "constant out of range: "
+					checkBigintMaxByteCount(field.len, constant.value(), bigint -> "constant out of range: "
 							+ bigint + " for field " + field);
 					byte[] valueBytes = constant.value().toByteArray();
 					int padding = field.len - valueBytes.length;
@@ -164,7 +167,7 @@ public class ZAssembler
 					{
 						case ConstantInteger element ->
 						{
-							checkHeaderBigintMaxByteCount(1, element.value(), bigint -> "byte constant out of range: "
+							checkBigintMaxByteCount(1, element.value(), bigint -> "byte constant out of range: "
 									+ bigint + " for field " + field);
 							value[i ++] = element.value().byteValue();
 						}
@@ -204,15 +207,6 @@ public class ZAssembler
 		}
 	}
 
-	public void checkHeaderBigintMaxByteCount(int maxBytes, BigInteger bigint, Function<BigInteger, String> errorMessage)
-	{
-		// Not using xyzValueExact: we want to explicitly allow positive constants which would be negative if interpreted as two's complement.
-		// We do this by checking bitLength against maxBytes*8, not maxBytes*8-1.
-		// Note that this also allows negative constants below 0x80.
-		if(bigint.bitLength() > maxBytes * 8)
-			throw new IllegalArgumentException(errorMessage.apply(bigint));
-	}
-
 	public void add(LabelDeclaration labelDeclaration)
 	{
 		addCodeLabelHere(labelDeclaration.name());
@@ -227,8 +221,62 @@ public class ZAssembler
 			// and the way instructions are parsed also might change later.
 			throw new IllegalArgumentException("Opcode " + instruction.name() + " unknown");
 
-		//TODO
-		System.out.println(instruction);
+		List<Operand> operands = instruction.operands();
+		switch(opcode.range)
+		{
+			case OP0 ->
+			{
+				if(operands.size() != 0)
+					throw new IllegalArgumentException("Opcode " + opcode + " is kind " + opcode.range
+							+ ", but was given operands: " + instruction);
+				throw new IllegalStateException("Can't assemble OP0 opcodes yet :(");
+			}
+			case OP1 ->
+			{
+				if(operands.size() != 1)
+					throw new IllegalArgumentException("Opcode " + opcode + " is kind " + opcode.range
+							+ ", but wasn't given exactly one operand: " + instruction);
+				throw new IllegalStateException("Can't assemble OP1 opcodes yet :(");
+			}
+			case OP2 ->
+			{
+				if(operands.size() > 2)
+					throw new IllegalArgumentException("Opcode " + opcode + " is kind " + opcode.range
+							+ ", but was given more than two operands: " + instruction);
+
+				// Form is either LONG or VARIABLE (decided later.)
+				// Opcode number is in bits 0x1f, regardless of whether we use LONG or VARIABLE form.
+				if((opcode.opcodeNumber & 0x1f) != opcode.opcodeNumber)
+					// There are no such opcodes, but let's be paranoid.
+					throw new IllegalArgumentException("Opcode " + opcode
+							+ " is OP2, but has an opcode number greater than 0x1f: " + opcode.opcodeNumber);
+
+				boolean canUseLongForm = true
+						&& operands.size() == 2
+						&& operands.get(0).isTypeEncodeableUsingOneBit()
+						&& operands.get(1).isTypeEncodeableUsingOneBit();
+
+				if(canUseLongForm)
+				{
+					// form LONG: bit 0x80 is 0.
+					// kind OP2: implicit.
+					byte opcodeByte = (byte) (0b0000_0000 | opcode.opcodeNumber);
+					opcodeByte |= opcode.opcodeNumber;
+				} else
+				{
+					// form VARIABLE: bit 0x80 is 1, bit 0x40 is 1.
+					// kind OP2: bit 0x20 is 0.
+					// opcode: bits 0x1f.
+					byte opcodeByte = (byte) (0b1100_0000 | opcode.opcodeNumber);
+				}
+				//TODO
+			}
+			case VAR ->
+			{
+				throw new IllegalStateException("Can't assemble VAR opcodes yet :(");
+			}
+			case EXT -> throw new IllegalStateException("Can't assemble EXT opcodes yet :(");
+		}
 	}
 
 	public byte[] assemble()

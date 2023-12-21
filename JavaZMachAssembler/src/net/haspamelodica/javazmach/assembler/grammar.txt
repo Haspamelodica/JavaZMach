@@ -64,8 +64,7 @@ Operands
 
 Operand
  -> ConstantInteger { operand[-1] = constant[0]; }
-  | Variable        { operand[-1] = variable[0]; }
-  | Label           { operand[-1] = label[0]; } ;
+  | Variable        { operand[-1] = variable[0]; } ;
 
 MaybeStoreTarget
  ->               { storeTarget[-1] = optVariableEmpty(); }

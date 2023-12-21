@@ -1,4 +1,6 @@
 package net.haspamelodica.javazmach.assembler.model;
 
-public sealed interface Operand permits ConstantInteger, Variable, Label
-{}
+public sealed interface Operand permits ConstantInteger, Variable
+{
+	boolean isTypeEncodeableUsingOneBit();
+}

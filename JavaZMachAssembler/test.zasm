@@ -8,43 +8,6 @@
 .ZHEADER SerialNum "421337"
 .ZHEADER CompilerVer 0x1337
 
-je
-je.srt
-je.lng
-je.ext
-je.var
-je l100
-je l0x100
-je l#100
-je l0b100
-je l$$100
-je g100
-je g0x100
-je g#100
-je g0b100
-je g$$100
-je l 0
-je g 0
-je sp
-je -> l0
-je -> g0
-je -> sp
-je ?rfalse
-je ?rtrue
-je ?1
-je ?l
-je ?~rfalse
-je "hello"
-
-je.srt l123 g#f asdf ->sp ?~rtrue "Hi, this is a test."
-
-decompiled_recompiled:
-print_ret.srt "Suicide is not the answer."
-je.lng g120 0x5d ?~0x000b
-print_ret.srt "How romantic!"
-je.lng g120 0x38 ?~rfalse
-get_parent.srt 0x97 -> l0
-get_parent.srt 0x99 -> sp
-je.var g0 l0 sp ?~0x0017
-print_ret.srt "Your image in the mirror looks tired."
-print_ret.srt "That's difficult unless your eyes are prehensile."
+.ZHEADER InitialPC15 start
+start:
+div 0 0

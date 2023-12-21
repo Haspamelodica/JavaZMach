@@ -33,14 +33,6 @@ public class NoRangeCheckMemory implements WritableMemory
 		data[byteAddr] = (byte) val;
 	}
 
-	@Override
-	public void writeWord(int byteAddr, int val)
-	{
-		// write upper byte first to avoid growing array twice if this word is new end of memory
-		writeByte(byteAddr + 1, val >> 8);
-		writeByte(byteAddr, val);
-	}
-
 	public byte[] data()
 	{
 		return data;

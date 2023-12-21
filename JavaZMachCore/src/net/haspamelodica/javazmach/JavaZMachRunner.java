@@ -21,11 +21,11 @@ public class JavaZMachRunner
 		GlobalConfig config = new GlobalConfig();
 		config.setBool("interpreter.debug.logs.instructions", false);
 		//String storyfilePath = "../storyfiles/tests/czech_0_8/czech.z5";
-		String storyfilePath = "../storyfiles/tests/etude/etude.z5";
+		//String storyfilePath = "../storyfiles/tests/etude/etude.z5";
 		//String storyfilePath = "../storyfiles/zork1.z3";
 		//String storyfilePath = "../storyfiles/trinity.z4";
 		//String storyfilePath = "../storyfiles/sanddancer.z8";
-		config.setString("storyfile_path", storyfilePath);
+		config.setString("storyfile_path", "../JavaZMachAssembler/test.z3");
 		return config;
 	}
 	public static void run(GlobalConfig config, VideoCard videoCard, UnicodeZSCIIConverter unicodeZSCIIConverter) throws IOException
