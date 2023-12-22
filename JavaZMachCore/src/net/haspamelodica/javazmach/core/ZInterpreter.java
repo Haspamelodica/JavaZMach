@@ -568,8 +568,7 @@ public class ZInterpreter
 			else if(currentInstr.branchOffset == 1)
 				doReturn(1);
 			else
-				//Sign-extend 14 to 32 bit
-				memAtPC.skipBytes(((currentInstr.branchOffset - 2) << 18) >> 18);
+				memAtPC.skipBytes(currentInstr.branchOffset - 2);
 		}
 		if(logInstructions)
 			System.out.println();
