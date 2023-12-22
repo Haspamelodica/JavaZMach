@@ -80,8 +80,8 @@ MaybeBranchInfoBranchOnConditionFalse
   | '~' { branchOnConditionFalse[-1] = true(); } ;
 
 BranchTarget
- -> 'rfalse'        { branchTarget[-1] = RFalse(); }
-  | 'rtrue'         { branchTarget[-1] = RTrue(); }
+ -> 'rfalse'        { branchTarget[-1] = rfalse(); }
+  | 'rtrue'         { branchTarget[-1] = rtrue(); }
   | ConstantInteger { branchTarget[-1] = constant[0]; }
   | Label           { branchTarget[-1] = label[0]; } ;
 

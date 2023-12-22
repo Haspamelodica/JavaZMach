@@ -1,11 +1,21 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.checkBigintMaxByteCount;
+import static net.haspamelodica.javazmach.assembler.core.SimpleReferenceTarget.FileLengthForHeader;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintBytesChecked;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
+import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
+import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
+import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.EXTENDED;
+import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.LONG;
+import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.SHORT;
+import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.VARIABLE;
+import static net.haspamelodica.javazmach.core.instructions.OpcodeKind.VAR;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.haspamelodica.javazmach.assembler.NoRangeCheckMemory;
+import net.haspamelodica.javazmach.assembler.model.BranchInfo;
 import net.haspamelodica.javazmach.assembler.model.ConstantByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ConstantByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.ConstantChar;
@@ -25,6 +36,7 @@ import net.haspamelodica.javazmach.assembler.model.Label;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.Operand;
+import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
@@ -34,13 +46,12 @@ import net.haspamelodica.javazmach.core.header.HeaderField;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
-import net.haspamelodica.javazmach.core.instructions.OpcodeKind;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 
 public class ZAssembler
 {
-	private static final Set<HeaderField> AUTO_FIELDS = Set.of(HeaderField.FileLength);
+	private static final Set<HeaderField> AUTO_FIELDS = Set.of(FileLength);
 
 	private final int					version;
 	private final Map<String, Opcode>	opcodesByNameLowercase;
@@ -53,14 +64,15 @@ public class ZAssembler
 
 	private final NoRangeCheckMemory			code;
 	private final SequentialMemoryWriteAccess	codeSeq;
-	private final Map<String, Integer>			codeLabelRelAddrs;
+	private final Map<String, CodeLocation>		codeLabelLocations;
+	private final List<CodeLocation>			codeLocations;
 
 	public ZAssembler(int version)
 	{
 		this.version = version;
 		this.opcodesByNameLowercase = Arrays
 				.stream(Opcode.values())
-				.filter(o -> o != Opcode._unknown_instr)
+				.filter(o -> o != _unknown_instr)
 				.filter(o -> version >= o.minVersion)
 				.filter(o -> version <= o.maxVersion || o.maxVersion <= 0)
 				// careful: don't use method "name()", but member "name".
@@ -72,7 +84,8 @@ public class ZAssembler
 		this.codeSeq = new SequentialMemoryWriteAccess(code);
 		this.setFields = new HashSet<>();
 		this.partiallySetBitfields = new HashSet<>();
-		this.codeLabelRelAddrs = new HashMap<>();
+		this.codeLabelLocations = new HashMap<>();
+		this.codeLocations = new ArrayList<>();
 	}
 
 	public void add(ZAssemblerFile file)
@@ -135,9 +148,8 @@ public class ZAssembler
 			{
 				if(!isBitfieldEntry)
 				{
-					checkBigintMaxByteCount(field.len, constant.value(), bigint -> "constant out of range: "
+					byte[] valueBytes = bigintBytesChecked(field.len * 8, constant.value(), bigint -> "constant out of range: "
 							+ bigint + " for field " + field);
-					byte[] valueBytes = constant.value().toByteArray();
 					int padding = field.len - valueBytes.length;
 					if(padding != 0)
 					{
@@ -174,12 +186,8 @@ public class ZAssembler
 				for(ConstantByteSequenceElement elementUncasted : constant.entries())
 					switch(elementUncasted)
 					{
-						case ConstantInteger element ->
-						{
-							checkBigintMaxByteCount(1, element.value(), bigint -> "byte constant out of range: "
-									+ bigint + " for field " + field);
-							value[i ++] = element.value().byteValue();
-						}
+						case ConstantInteger element -> value[i ++] = (byte) bigintIntChecked(8,
+								element.value(), bigint -> "byte constant out of range: " + bigint + " for field " + field);
 						case ConstantString element ->
 						{
 							System.arraycopy(element.value().getBytes(StandardCharsets.US_ASCII), 0, value, 0, element.value().length());
@@ -211,7 +219,7 @@ public class ZAssembler
 			{
 				if(isBitfieldEntry)
 					throw new IllegalArgumentException("Setting a bitfield entry to a label is nonsensical");
-				references.add(new Reference(new HeaderFieldReferenceSource(field), new CodeLabelReferenceTarget(label.name())));
+				references.add(new Reference(new HeaderFieldReferenceSource(field), new CodeLabelAbsoluteReference(label.name())));
 			}
 		}
 	}
@@ -245,19 +253,19 @@ public class ZAssembler
 
 		OpcodeForm form = switch(opcode.range)
 		{
-			case OP0 -> OpcodeForm.SHORT;
-			case OP1 -> OpcodeForm.SHORT;
+			case OP0 -> SHORT;
+			case OP1 -> SHORT;
 			case OP2 -> true
-					&& instruction.form().orElse(OpcodeForm.LONG) == OpcodeForm.LONG
+					&& instruction.form().orElse(LONG) == LONG
 				// yes, we need to check this even though we know the form is OP2:
 				// for example, je is OP2, but can take any number between 2 and 4 of operands.
 					&& operands.size() == 2
 					&& operands.get(0).isTypeEncodeableUsingOneBit()
 					&& operands.get(1).isTypeEncodeableUsingOneBit()
-							? OpcodeForm.LONG
-							: OpcodeForm.VARIABLE;
-			case VAR -> OpcodeForm.VARIABLE;
-			case EXT -> OpcodeForm.EXTENDED;
+							? LONG
+							: VARIABLE;
+			case VAR -> VARIABLE;
+			case EXT -> EXTENDED;
 		};
 
 		if(instruction.form().isPresent() && instruction.form().get() != form)
@@ -284,21 +292,15 @@ public class ZAssembler
 					| (operands.get(1).encodeTypeOneBit() << 5)
 					// opcode: bits 4-0.
 					| (opcode.opcodeNumber << 0));
-			case SHORT ->
-			{
-				throw new UnsupportedOperationException("Can't assemble form SHORT yet");
-			}
-			case EXTENDED ->
-			{
-				throw new UnsupportedOperationException("Can't assemble from EXTENDED yet");
-			}
+			case SHORT -> throw new UnsupportedOperationException("Can't assemble form SHORT yet");
+			case EXTENDED -> throw new UnsupportedOperationException("Can't assemble from EXTENDED yet");
 			case VARIABLE ->
 			{
 				codeSeq.writeNextByte(0
 						// form VARIABLE: bits 7-6 are 0b11.
 						| (0b11 << 6)
 						// kind: bit 5; OP2 is 0, VAR is 1.
-						| ((opcode.range == OpcodeKind.VAR ? 1 : 0) << 5)
+						| ((opcode.range == VAR ? 1 : 0) << 5)
 						// opcode: bits 4-0.
 						| (opcode.opcodeNumber << 0));
 
@@ -321,11 +323,57 @@ public class ZAssembler
 		instruction.storeTarget().ifPresent(storeTarget -> codeSeq.writeNextByte(varnumByteAndUpdateRoutine(storeTarget)));
 		instruction.branchInfo().ifPresent(branchInfo ->
 		{
-			//TODO branch info - this is hard because whether we can assemble this in the short form
-			// depends on where the label refers to, and for the labels where it matters this even
-			// will only become known in the future.
-			//TODO also maybe give programmer the possibility to choose which encoding is used?
+			switch(branchInfo.target())
+			{
+				case SimpleBranchTarget target ->
+				{
+					switch(target)
+					{
+						case rfalse -> writeEncodedBranchOffset(0, branchInfo);
+						case rtrue -> writeEncodedBranchOffset(1, branchInfo);
+					}
+				}
+				case ConstantInteger target ->
+				{
+					BigInteger branchTargetEncoded = target.value().add(BigInteger.TWO);
+					if(branchTargetEncoded.equals(BigInteger.ZERO) || branchTargetEncoded.equals(BigInteger.ONE))
+						throw new IllegalArgumentException("A branch target of " + target.value()
+								+ " is not encodable as it would conflict with rtrue / rfalse");
+					writeEncodedBranchOffset(bigintIntChecked(14, branchTargetEncoded,
+							bte -> "Branch target out of range: " + target.value()), branchInfo);
+				}
+				case Label target ->
+				{
+					// At first, optimistically assume the branch target fits into one byte.
+					// If it doesn't, the second byte will be inserted later, while filling out label references.
+					// Determining this beforehand would hard because whether we can assemble this in the short form
+					// depends on where the label refers to, and for the labels where it matters this even
+					// will only become known in the future.
+					CodeLocation codeLocationBeforeBranchOffset = codeLocationHere();
+					writeEncodedBranchOffset(0, branchInfo);
+					CodeLocation codeLocationAfterBranchOffset = codeLocationHere();
+
+					references.add(new Reference(new BranchTarget(codeLocationBeforeBranchOffset),
+							new CodeLabelRelativeReference(target.name(), codeLocationAfterBranchOffset)));
+				}
+			};
 		});
+
+		//TODO append text if given
+	}
+
+	private void writeEncodedBranchOffset(int branchOffsetEncodedOrZero, BranchInfo info)
+	{
+		//TODO maybe give programmer the possibility to choose which branch target encoding (short or long) is used?
+		boolean isShort = isBranchOffsetShort(branchOffsetEncodedOrZero);
+		codeSeq.writeNextByte(0
+				// branch-on-condition-false: bit 7; on false is 0, on true is 1.
+				| ((info.branchOnConditionFalse() ? 0 : 1) << 7)
+				// branch offset encoding: bit 6; long is 0, short is 1.
+				| ((isShort ? 1 : 0) << 6)
+				| (branchOffsetEncodedOrZero >> (isShort ? 0 : 8)));
+		if(!isShort)
+			codeSeq.writeNextByte(branchOffsetEncodedOrZero & 0xff);
 	}
 
 	private void checkOpcodeNumberMask(Opcode opcode, int mask, OpcodeForm form)
@@ -346,10 +394,7 @@ public class ZAssembler
 				if(constant.isSmallConstant())
 					codeSeq.writeNextByte(value.byteValue());
 				else
-				{
-					ZAssemblerUtils.checkBigintMaxByteCount(2, constant.value(), v -> "Immediate operand too large : " + v);
-					codeSeq.writeNextWord(constant.value().shortValue());
-				}
+					codeSeq.writeNextWord(bigintIntChecked(2, constant.value(), v -> "Immediate operand too large : " + v));
 			}
 			case Variable variable -> codeSeq.writeNextByte(varnumByteAndUpdateRoutine(variable));
 		};
@@ -383,40 +428,95 @@ public class ZAssembler
 		preAssembleHeaderSection();
 		preAssembleCodeSection();
 
-		// compute where each section will end up
-		int headerStart = 0;
-		int headerEnd = headerStart + header.currentSize();
-		int codeStart = headerEnd;
-		int codeEnd = codeStart + code.currentSize();
-		int storyfileSize = codeEnd;
+		int headerStart;
+		int headerEnd;
+		int codeStart;
+		int codeEnd;
+		int storyfileSize;
 
-		references.forEach(ref ->
+		// Try filling out references until sizes and code locations stop changing.
+		boolean sizeOrCodeLocationChanged;
+		do
 		{
-			int value = switch(ref.referent())
-			{
-				case SimpleReferenceTarget referent -> switch(referent)
-				{
-					case FileLengthForHeader -> switch(version)
-					{
-						case 1, 2, 3 -> storyfileSize / 2;
-						case 4, 5 -> storyfileSize / 4;
-						case 6, 7, 8 -> storyfileSize / 8;
-						default -> throw new IllegalStateException("Unknown version: " + version + "; don't know how file length is stored");
-					};
-				};
-				case CodeLabelReferenceTarget referent -> codeLabelRelAddrs.get(referent.label()) + codeStart;
-			};
+			sizeOrCodeLocationChanged = false;
+			// Assume sizes and code locations are correct now,
+			// and compute where each section will end up.
+			headerStart = 0;
+			headerEnd = headerStart + header.currentSize();
+			codeStart = headerEnd;
+			codeEnd = codeStart + code.currentSize();
+			storyfileSize = codeEnd;
 
-			switch(ref.referrer())
+			for(Reference ref : references)
 			{
-				case HeaderFieldReferenceSource referrer -> HeaderParser.setFieldUnchecked(header, referrer.field(), value);
+				int value = switch(ref.referent())
+				{
+					case SimpleReferenceTarget referent -> switch(referent)
+					{
+						case FileLengthForHeader -> switch(version)
+						{
+							case 1, 2, 3 -> storyfileSize / 2;
+							case 4, 5 -> storyfileSize / 4;
+							case 6, 7, 8 -> storyfileSize / 8;
+							default -> throw new IllegalStateException("Unknown version: " + version + "; don't know how file length is stored");
+						};
+					};
+					case CodeLabelAbsoluteReference referent -> codeLabelLocations.get(referent.label()).relAddr() + codeStart;
+					case CodeLabelRelativeReference referent -> codeLabelLocations.get(referent.label()).relAddr() - referent.loc().relAddr();
+				};
+
+				switch(ref.referrer())
+				{
+					case HeaderFieldReferenceSource referrer -> HeaderParser.setFieldUnchecked(header, referrer.field(), value);
+					case BranchTarget referrer ->
+					{
+						int valueEnc = value + 2;
+						int referrerRelAddr = referrer.location().relAddr();
+						int oldTargetFirstByte = code.readByte(referrerRelAddr);
+						boolean oldIsShort = (oldTargetFirstByte & (1 << 6)) != 0;
+						boolean newIsShort = isBranchOffsetShort(valueEnc);
+						if(newIsShort && oldIsShort)
+						{
+							// keep branch-on-condition-false: bit 7
+							// short branch offset encoding: bit 6 is 1
+							code.writeByte(referrerRelAddr, (oldTargetFirstByte & (1 << 7)) | (1 << 6) | valueEnc);
+						} else
+						{
+							if(newIsShort)
+								System.err.println("WARNING: Required space for branch target decreased!? Keeping long encoding.");
+							// keep branch-on-condition-false: bit 7
+							// long branch offset encoding: bit 6 is 0
+							code.writeByte(referrerRelAddr, (oldTargetFirstByte & (1 << 7)) | (0 << 6) | ((valueEnc >> 8) & 0x3f));
+							if(oldIsShort)
+							{
+								sizeOrCodeLocationChanged = true;
+								// This will move the code location representing the location this branch is relative to.
+								insertCodeByte(referrerRelAddr + 1, valueEnc & 0xff);
+							} else
+								code.writeByte(referrerRelAddr + 1, valueEnc & 0xff);
+						}
+					}
+				}
 			}
-		});
+		} while(sizeOrCodeLocationChanged);
+
+		// From here on, sizes and code locations are frozen.
 
 		byte[] result = new byte[storyfileSize];
 		System.arraycopy(header.data(), 0, result, headerStart, header.currentSize());
 		System.arraycopy(code.data(), 0, result, codeStart, code.currentSize());
 		return result;
+	}
+
+	private boolean isBranchOffsetShort(int value)
+	{
+		return value == (value & ((1 << 6) - 1));
+	}
+
+	private void insertCodeByte(int relAddr, int value)
+	{
+		code.insertByte(relAddr, value);
+		codeLocations.forEach(loc -> loc.bytesInserted(relAddr, 1));
 	}
 
 	private void preAssembleHeaderSection()
@@ -425,12 +525,12 @@ public class ZAssembler
 			if(!setFields.contains(automaticField))
 				switch(automaticField)
 				{
-					case FileLength -> references.add(new Reference(new HeaderFieldReferenceSource(HeaderField.FileLength), SimpleReferenceTarget.FileLengthForHeader));
+					case FileLength -> references.add(new Reference(new HeaderFieldReferenceSource(FileLength), FileLengthForHeader));
 					default -> throw new IllegalStateException("Field " + automaticField
-							+ " is marked as auto, but is not!? This is an assembler bug.");
+							+ " is supposedly auto, but is not handled by the assembler!? This is an assembler bug.");
 				}
 
-		// ensure header is at least 0x40 / 64byte in size (by padding with nullbytes)
+		// ensure header is at least 0x40 / 64 byte in size (by padding with nullbytes)
 		if(header.currentSize() < 0x40)
 			header.writeByte(0x3f, 0);
 
@@ -465,21 +565,33 @@ public class ZAssembler
 	private void preAssembleCodeSection()
 	{
 		for(Reference ref : references)
-			if(ref.referent() instanceof CodeLabelReferenceTarget referent)
-				if(!codeLabelRelAddrs.containsKey(referent.label()))
+			if(ref.referent() instanceof CodeLabelAbsoluteReference referent)
+				if(!codeLabelLocations.containsKey(referent.label()))
 					throw new IllegalArgumentException("Undefined label: " + referent.label());
 	}
 
 	private void addCodeLabelHere(String label)
 	{
-		addCodeLabel(label, code.currentSize());
+		addCodeLabel(label, codeLocationHere());
 	}
 
-	private void addCodeLabel(String label, int relativeAddress)
+	private void addCodeLabel(String label, CodeLocation codeLocation)
 	{
-		Integer old = codeLabelRelAddrs.put(label, relativeAddress);
+		CodeLocation old = codeLabelLocations.put(label, codeLocation);
 		if(old != null)
-			throw new IllegalArgumentException("Duplicate label: " + label + " (relative " + old + " vs. " + relativeAddress + ")");
+			throw new IllegalArgumentException("Duplicate label: " + label);
+	}
+
+	private CodeLocation codeLocationHere()
+	{
+		int reladdr = code.currentSize();
+		CodeLocation newCodeLocation = new CodeLocation(reladdr);
+		int existingLocationIndex = Collections.binarySearch(codeLocations, newCodeLocation);
+		if(existingLocationIndex >= 0)
+			return codeLocations.get(existingLocationIndex);
+
+		codeLocations.add(-existingLocationIndex - 1, newCodeLocation);
+		return newCodeLocation;
 	}
 
 	public static byte[] assemble(ZAssemblerFile file, int externallyGivenVersion, String externallyGivenVersionSourceName)

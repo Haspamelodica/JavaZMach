@@ -100,11 +100,12 @@ public class InstructionDecoder
 		{
 			int branchOffsetByte = mem.readNextByte();
 			target.branchOnConditionFalse = (branchOffsetByte & 0x80) == 0;//bit 7
-			if((branchOffsetByte & 0x40) == 0)//bit 6
+			target.branchConditionShort = (branchOffsetByte & 0x40) != 0;//bit 6
+			if(target.branchConditionShort)
+				target.branchOffset = branchOffsetByte & 0x3F;//bits 5-0
+			else
 				// The shifts by 18 effectively sign-extend 14 to 32 bit.
 				target.branchOffset = ((mem.readNextByte() | ((branchOffsetByte & 0x3F) << 8)) << 18) >> 18;//bits 5-0
-			else
-				target.branchOffset = branchOffsetByte & 0x3F;//bits 5-0
 		}
 	}
 

@@ -11,6 +11,7 @@ public class DecodedInstruction
 	public final int[]			operandValues;
 	public int					storeTarget;
 	public boolean				branchOnConditionFalse;
+	public boolean				branchConditionShort;
 	public int					branchOffset;
 
 	public DecodedInstruction()
@@ -58,6 +59,8 @@ public class DecodedInstruction
 			else
 				// using BigInteger to force %x to not emit 0xfff... for negative values
 				result.append(String.format("%0#4x", BigInteger.valueOf(branchOffset - 2)));
+			if(!branchConditionShort)
+				result.append("[longbranch]");
 		}
 		return result.toString();
 	}

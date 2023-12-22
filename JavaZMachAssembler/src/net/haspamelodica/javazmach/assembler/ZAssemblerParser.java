@@ -30,8 +30,7 @@ import net.haspamelodica.javazmach.assembler.model.Label;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.Operand;
-import net.haspamelodica.javazmach.assembler.model.RFalse;
-import net.haspamelodica.javazmach.assembler.model.RTrue;
+import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
@@ -83,8 +82,8 @@ public class ZAssemblerParser
 		functionsByName.put("AssemblerZMachInstruction", TypedFunction.buildT(ZAssemblerInstruction::new,
 				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptVariable, T_OptBranchInfo, T_OptString));
 		functionsByName.put("BranchInfo", TypedFunction.build(BranchInfo::new, BranchInfo.class, Boolean.class, BranchTarget.class));
-		functionsByName.put("RFalse", TypedFunction.build(() -> RFalse.INSTANCE, RFalse.class));
-		functionsByName.put("RTrue", TypedFunction.build(() -> RTrue.INSTANCE, RTrue.class));
+		functionsByName.put("rfalse", TypedFunction.build(() -> SimpleBranchTarget.rfalse, SimpleBranchTarget.class));
+		functionsByName.put("rtrue", TypedFunction.build(() -> SimpleBranchTarget.rtrue, SimpleBranchTarget.class));
 		functionsByName.put("Label", TypedFunction.build(Label::new, Label.class, String.class));
 		functionsByName.put("StackPointer", TypedFunction.build(() -> StackPointer.INSTANCE, StackPointer.class));
 		functionsByName.put("LocalVariable", TypedFunction.build(LocalVariable::new, LocalVariable.class, Integer.class));

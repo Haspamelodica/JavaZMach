@@ -10,4 +10,13 @@
 
 .ZHEADER InitialPC15 start
 start:
-je 0 0 ?8192
+je 1 2 ?start
+je 3 4 ?rfalse
+je 5 6 ?rtrue
+je 1 2 ?0
+je 1 2 ?1
+je 1 2 ?-3
+je 1 2 ?61
+je 1 2 ?62
+je 1 2 ?63
+je 1 2 ?64

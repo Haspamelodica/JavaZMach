@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.assembler.model;
 
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.hasBigintMaxByteCount;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.hasBigintMaxBitCountAndIsPositive;
 
 import java.math.BigInteger;
 
@@ -32,6 +32,6 @@ public record ConstantInteger(BigInteger value) implements Operand, HeaderValue,
 		// Otherwise, things like "add l0, -2" would behave very weirdly:
 		// the -2 would fit into one byte and thus be represented as the small constant 0xfe,
 		// which would not reduce l0 by 2, but increase it by 0xfe / 254.
-		return value.signum() >= 0 && hasBigintMaxByteCount(1, value);
+		return hasBigintMaxBitCountAndIsPositive(8, value);
 	}
 }

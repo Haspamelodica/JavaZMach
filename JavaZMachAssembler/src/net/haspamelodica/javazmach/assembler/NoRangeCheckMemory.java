@@ -33,6 +33,15 @@ public class NoRangeCheckMemory implements WritableMemory
 		data[byteAddr] = (byte) val;
 	}
 
+	public void insertByte(int relAddr, int val)
+	{
+		byte[] oldData = data;
+		data = new byte[oldData.length + 1];
+		System.arraycopy(oldData, 0, data, 0, relAddr);
+		data[relAddr] = (byte) val;
+		System.arraycopy(oldData, relAddr, data, relAddr + 1, oldData.length - relAddr);
+	}
+
 	public byte[] data()
 	{
 		return data;
