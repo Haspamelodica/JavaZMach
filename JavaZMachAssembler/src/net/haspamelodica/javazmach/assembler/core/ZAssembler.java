@@ -493,7 +493,7 @@ public class ZAssembler
 		else if(file.version().getAsInt() == externallyGivenVersion)
 			version = externallyGivenVersion;
 		else
-			throw new IllegalArgumentException("Z-Version given by " + externallyGivenVersionSourceName + " mismatches .ZVERSION in file");
+			throw new IllegalArgumentException("Z-version given by " + externallyGivenVersionSourceName + " mismatches .ZVERSION in file");
 
 		ZAssembler assembler = new ZAssembler(version);
 		assembler.add(file);
