@@ -10,4 +10,4 @@
 
 .ZHEADER InitialPC15 start
 start:
-div 0 0
+je 0 0 ?8192

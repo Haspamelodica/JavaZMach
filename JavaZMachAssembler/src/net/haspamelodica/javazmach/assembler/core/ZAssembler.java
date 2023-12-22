@@ -19,16 +19,23 @@ import net.haspamelodica.javazmach.assembler.model.ConstantByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.ConstantChar;
 import net.haspamelodica.javazmach.assembler.model.ConstantInteger;
 import net.haspamelodica.javazmach.assembler.model.ConstantString;
+import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.Label;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
+import net.haspamelodica.javazmach.assembler.model.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.Operand;
+import net.haspamelodica.javazmach.assembler.model.StackPointer;
+import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
 import net.haspamelodica.javazmach.core.header.HeaderField;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
+import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
+import net.haspamelodica.javazmach.core.instructions.OpcodeKind;
+import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 
 public class ZAssembler
@@ -44,8 +51,9 @@ public class ZAssembler
 	private final Set<HeaderField>	setFields;
 	private final Set<HeaderField>	partiallySetBitfields;
 
-	private final NoRangeCheckMemory	code;
-	private final Map<String, Integer>	codeLabelRelAddrs;
+	private final NoRangeCheckMemory			code;
+	private final SequentialMemoryWriteAccess	codeSeq;
+	private final Map<String, Integer>			codeLabelRelAddrs;
 
 	public ZAssembler(int version)
 	{
@@ -61,6 +69,7 @@ public class ZAssembler
 		this.header = new NoRangeCheckMemory();
 		this.references = new ArrayList<>();
 		this.code = new NoRangeCheckMemory();
+		this.codeSeq = new SequentialMemoryWriteAccess(code);
 		this.setFields = new HashSet<>();
 		this.partiallySetBitfields = new HashSet<>();
 		this.codeLabelRelAddrs = new HashMap<>();
@@ -220,63 +229,153 @@ public class ZAssembler
 			// Still, better safe than sorry - ZAssembler might theoretically be used without ZAssemblerParser,
 			// and the way instructions are parsed also might change later.
 			throw new IllegalArgumentException("Opcode " + instruction.name() + " unknown");
+		if(opcode.isStoreOpcode != instruction.storeTarget().isPresent())
+			throw new IllegalArgumentException("Opcode " + opcode + " is store, but no store target was given: " + instruction);
+		if(opcode.isBranchOpcode != instruction.branchInfo().isPresent())
+			throw new IllegalArgumentException("Opcode " + opcode + " is branch, but no branch info was given: " + instruction);
+		if(opcode.isTextOpcode != instruction.text().isPresent())
+			throw new IllegalArgumentException("Opcode " + opcode + " is text, but no text was given: " + instruction);
 
 		List<Operand> operands = instruction.operands();
-		switch(opcode.range)
+		//TODO only warn instead; do a check failing hard once form is known
+		if(operands.size() < opcode.minArgs || operands.size() > opcode.maxArgs)
+			throw new IllegalArgumentException("Incorrect number of arguments given for opcode " + opcode
+					+ ": expected " + opcode.minArgs + (opcode.maxArgs != opcode.minArgs ? "-" + opcode.maxArgs : "")
+					+ ", but was " + operands.size() + ": " + instruction);
+
+		OpcodeForm form = switch(opcode.range)
 		{
-			case OP0 ->
-			{
-				if(operands.size() != 0)
-					throw new IllegalArgumentException("Opcode " + opcode + " is kind " + opcode.range
-							+ ", but was given operands: " + instruction);
-				throw new IllegalStateException("Can't assemble OP0 opcodes yet :(");
-			}
-			case OP1 ->
-			{
-				if(operands.size() != 1)
-					throw new IllegalArgumentException("Opcode " + opcode + " is kind " + opcode.range
-							+ ", but wasn't given exactly one operand: " + instruction);
-				throw new IllegalStateException("Can't assemble OP1 opcodes yet :(");
-			}
-			case OP2 ->
-			{
-				if(operands.size() > 2)
-					throw new IllegalArgumentException("Opcode " + opcode + " is kind " + opcode.range
-							+ ", but was given more than two operands: " + instruction);
+			case OP0 -> OpcodeForm.SHORT;
+			case OP1 -> OpcodeForm.SHORT;
+			case OP2 -> true
+					&& instruction.form().orElse(OpcodeForm.LONG) == OpcodeForm.LONG
+				// yes, we need to check this even though we know the form is OP2:
+				// for example, je is OP2, but can take any number between 2 and 4 of operands.
+					&& operands.size() == 2
+					&& operands.get(0).isTypeEncodeableUsingOneBit()
+					&& operands.get(1).isTypeEncodeableUsingOneBit()
+							? OpcodeForm.LONG
+							: OpcodeForm.VARIABLE;
+			case VAR -> OpcodeForm.VARIABLE;
+			case EXT -> OpcodeForm.EXTENDED;
+		};
 
-				// Form is either LONG or VARIABLE (decided later.)
-				// Opcode number is in bits 0x1f, regardless of whether we use LONG or VARIABLE form.
-				if((opcode.opcodeNumber & 0x1f) != opcode.opcodeNumber)
-					// There are no such opcodes, but let's be paranoid.
-					throw new IllegalArgumentException("Opcode " + opcode
-							+ " is OP2, but has an opcode number greater than 0x1f: " + opcode.opcodeNumber);
+		if(instruction.form().isPresent() && instruction.form().get() != form)
+			throw new IllegalArgumentException("Illegal form requested for opcode " + opcode
+					+ ": opcode is kind " + opcode.range + ", but requested was form " + instruction.form().get());
 
-				boolean canUseLongForm = true
-						&& operands.size() == 2
-						&& operands.get(0).isTypeEncodeableUsingOneBit()
-						&& operands.get(1).isTypeEncodeableUsingOneBit();
+		// There are no opcodes which would trigger this, but let's be paranoid.
+		checkOpcodeNumberMask(opcode, switch(form)
+		{
+			case LONG, VARIABLE -> 0x1f;
+			case SHORT -> 0x0f;
+			case EXTENDED -> 0xff;
+		}, form);
 
-				if(canUseLongForm)
-				{
-					// form LONG: bit 0x80 is 0.
-					// kind OP2: implicit.
-					byte opcodeByte = (byte) (0b0000_0000 | opcode.opcodeNumber);
-					opcodeByte |= opcode.opcodeNumber;
-				} else
-				{
-					// form VARIABLE: bit 0x80 is 1, bit 0x40 is 1.
-					// kind OP2: bit 0x20 is 0.
-					// opcode: bits 0x1f.
-					byte opcodeByte = (byte) (0b1100_0000 | opcode.opcodeNumber);
-				}
-				//TODO
-			}
-			case VAR ->
+		switch(form)
+		{
+			case LONG -> codeSeq.writeNextByte(0
+					// form LONG: bit 7 is 0.
+					| (0 << 7)
+					// kind: implicitly OP2.
+					// operand type 1: bit 6
+					| (operands.get(0).encodeTypeOneBit() << 6)
+					// operand type 2: bit 5
+					| (operands.get(1).encodeTypeOneBit() << 5)
+					// opcode: bits 4-0.
+					| (opcode.opcodeNumber << 0));
+			case SHORT ->
 			{
-				throw new IllegalStateException("Can't assemble VAR opcodes yet :(");
+				throw new UnsupportedOperationException("Can't assemble form SHORT yet");
 			}
-			case EXT -> throw new IllegalStateException("Can't assemble EXT opcodes yet :(");
+			case EXTENDED ->
+			{
+				throw new UnsupportedOperationException("Can't assemble from EXTENDED yet");
+			}
+			case VARIABLE ->
+			{
+				codeSeq.writeNextByte(0
+						// form VARIABLE: bits 7-6 are 0b11.
+						| (0b11 << 6)
+						// kind: bit 5; OP2 is 0, VAR is 1.
+						| ((opcode.range == OpcodeKind.VAR ? 1 : 0) << 5)
+						// opcode: bits 4-0.
+						| (opcode.opcodeNumber << 0));
+
+				int operandTypesEncoded = 0;
+				int i;
+				for(i = 0; i < operands.size(); i ++)
+					operandTypesEncoded = (operandTypesEncoded << 2) | operands.get(i).encodeTypeTwoBits();
+				// the rest is omitted, which is encoded as 0b11
+				for(; i < (opcode.hasTwoOperandTypeBytes ? 8 : 4); i ++)
+					operandTypesEncoded = (operandTypesEncoded << 2) | 0b11;
+
+				if(opcode.hasTwoOperandTypeBytes)
+					codeSeq.writeNextWord(operandTypesEncoded);
+				else
+					codeSeq.writeNextByte(operandTypesEncoded);
+			}
 		}
+
+		operands.forEach(this::appendOperand);
+		instruction.storeTarget().ifPresent(storeTarget -> codeSeq.writeNextByte(varnumByteAndUpdateRoutine(storeTarget)));
+		instruction.branchInfo().ifPresent(branchInfo ->
+		{
+			//TODO branch info - this is hard because whether we can assemble this in the short form
+			// depends on where the label refers to, and for the labels where it matters this even
+			// will only become known in the future.
+			//TODO also maybe give programmer the possibility to choose which encoding is used?
+		});
+	}
+
+	private void checkOpcodeNumberMask(Opcode opcode, int mask, OpcodeForm form)
+	{
+		if((opcode.opcodeNumber & mask) != opcode.opcodeNumber)
+			throw new IllegalArgumentException("Opcode " + opcode
+					+ " should be assembled as " + form + ", but has an opcode number greater than 0x"
+					+ Integer.toHexString(mask) + ": " + opcode.opcodeNumber);
+	}
+
+	private void appendOperand(Operand operand)
+	{
+		switch(operand)
+		{
+			case ConstantInteger constant ->
+			{
+				BigInteger value = constant.value();
+				if(constant.isSmallConstant())
+					codeSeq.writeNextByte(value.byteValue());
+				else
+				{
+					ZAssemblerUtils.checkBigintMaxByteCount(2, constant.value(), v -> "Immediate operand too large : " + v);
+					codeSeq.writeNextWord(constant.value().shortValue());
+				}
+			}
+			case Variable variable -> codeSeq.writeNextByte(varnumByteAndUpdateRoutine(variable));
+		};
+	}
+
+	private int varnumByteAndUpdateRoutine(Variable variable)
+	{
+		return switch(variable)
+		{
+			case StackPointer var -> 0;
+			case LocalVariable var ->
+			{
+				if(var.index() < 0 || var.index() > 0x0f)
+					throw new IllegalArgumentException("Local variable out of range: " + var.index());
+				System.err.println("WARNING: local variable indices not yet checked against routine");
+				//TODO check against current routine once those are implemented
+				//TODO update routine once implemented
+				yield var.index() + 0x1;
+			}
+			case GlobalVariable var ->
+			{
+				if(var.index() < 0 || var.index() > 0xef)
+					throw new IllegalArgumentException("Global variable out of range: " + var.index());
+				yield var.index() + 0x10;
+			}
+		};
 	}
 
 	public byte[] assemble()

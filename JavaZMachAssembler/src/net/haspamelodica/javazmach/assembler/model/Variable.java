@@ -7,4 +7,16 @@ public sealed interface Variable extends Operand permits StackPointer, LocalVari
 	{
 		return true;
 	}
+
+	@Override
+	public default int encodeTypeOneBit()
+	{
+		return 1;
+	}
+
+	@Override
+	public default int encodeTypeTwoBits()
+	{
+		return 0b10;
+	}
 }
