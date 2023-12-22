@@ -73,7 +73,7 @@ public enum Opcode
 	show_status/*    */(0x0C, OP0, SBT.___, 3, 3, "show_status"),
 	verify/*         */(0x0D, OP0, SBT._B_, 3, "verify"),
 	// There is no OP0 opcode with opcode number 0x0e:
-	// it would assemble to 0xbe, but that's the marker byte for EXTENDED form.
+	// it would assemble to 0xbe, but that's the marker byte for EXTENDED form (at least in V5+).
 	piracy/*         */(0x0F, OP0, SBT._B_, 5, "piracy"),
 
 	call/*           */(0x00, VAR, SBT.S__, 1, 3, "call"),

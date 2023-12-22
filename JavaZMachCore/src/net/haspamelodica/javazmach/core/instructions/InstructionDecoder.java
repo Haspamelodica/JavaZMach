@@ -34,7 +34,7 @@ public class InstructionDecoder
 	{
 		int opcodeByte = mem.readNextByte();
 
-		OpcodeForm form = OpcodeForm.decode(opcodeByte);
+		OpcodeForm form = OpcodeForm.decode(opcodeByte, version);
 		target.form = form;
 
 		OpcodeKind kind = OpcodeKind.decode(opcodeByte, form);
