@@ -299,12 +299,19 @@ public class ZAssembler
 					| (0b10 << 6)
 					// kind: implicitly OP0 / OP1, depending on operand type (omitted means OP0).
 					// Note that this implicitly relies on the operands count check above,
-					// as well as that all opcodes of OP0 / OP1 require exactly 0 / 1 operand.
+					// as well as that the Opcode enum is sane in that
+					// all opcodes of OP0 / OP1 do in fact require exactly 0 / 1 operand.
 					// operand type (if present): bits 5-4
 					| ((opcode.range == OP0 ? 0b11 : operands.get(0).encodeTypeTwoBits()) << 4)
 					// opcode: bits 3-0.
 					| (opcode.opcodeNumber << 0));
-			case EXTENDED -> throw new UnsupportedOperationException("Can't assemble from EXTENDED yet");
+			case EXTENDED ->
+			{
+				// EXTENDED form only exists in V5+, but let's rely on the Opcode enum being sane and declaring all EXT opcodes as V5+.
+				codeSeq.writeNextByte(0xbe);
+				codeSeq.writeNextByte(opcode.opcodeNumber);
+				appendEncodedOperandTypesVar(opcode, operands);
+			}
 			case VARIABLE ->
 			{
 				codeSeq.writeNextByte(0
@@ -314,19 +321,7 @@ public class ZAssembler
 						| ((opcode.range == VAR ? 1 : 0) << 5)
 						// opcode: bits 4-0.
 						| (opcode.opcodeNumber << 0));
-
-				int operandTypesEncoded = 0;
-				int i;
-				for(i = 0; i < operands.size(); i ++)
-					operandTypesEncoded = (operandTypesEncoded << 2) | operands.get(i).encodeTypeTwoBits();
-				// the rest is omitted, which is encoded as 0b11
-				for(; i < (opcode.hasTwoOperandTypeBytes ? 8 : 4); i ++)
-					operandTypesEncoded = (operandTypesEncoded << 2) | 0b11;
-
-				if(opcode.hasTwoOperandTypeBytes)
-					codeSeq.writeNextWord(operandTypesEncoded);
-				else
-					codeSeq.writeNextByte(operandTypesEncoded);
+				appendEncodedOperandTypesVar(opcode, operands);
 			}
 		}
 
@@ -372,6 +367,22 @@ public class ZAssembler
 		});
 
 		//TODO append text if given
+	}
+
+	private void appendEncodedOperandTypesVar(Opcode opcode, List<Operand> operands)
+	{
+		int operandTypesEncoded = 0;
+		int i;
+		for(i = 0; i < operands.size(); i ++)
+			operandTypesEncoded = (operandTypesEncoded << 2) | operands.get(i).encodeTypeTwoBits();
+		// the rest is omitted, which is encoded as 0b11
+		for(; i < (opcode.hasTwoOperandTypeBytes ? 8 : 4); i ++)
+			operandTypesEncoded = (operandTypesEncoded << 2) | 0b11;
+
+		if(opcode.hasTwoOperandTypeBytes)
+			codeSeq.writeNextWord(operandTypesEncoded);
+		else
+			codeSeq.writeNextByte(operandTypesEncoded);
 	}
 
 	private void writeEncodedBranchOffset(int branchOffsetEncodedOrZero, BranchInfo info)
