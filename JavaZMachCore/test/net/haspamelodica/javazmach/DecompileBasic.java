@@ -47,7 +47,7 @@ public class DecompileBasic
 			System.out.print(": ");
 			System.out.print(instr);
 			if(instr.opcode.isBranchOpcode && instr.branchOffset != 0 && instr.branchOffset != 1)
-				System.out.printf(" (branch to 0x%04x)", memSeq.getAddress() + (((instr.branchOffset - 2) << 16) >> 16));
+				System.out.printf(" (branch to 0x%04x)", memSeq.getAddress() + instr.branchOffset - 2);
 			if(instr.opcode == Opcode.jump && instr.operandTypes[0] != OperandType.VARIABLE && instr.operandValues[0] != 0 && instr.operandValues[0] != 1)
 				System.out.printf(" (jump to 0x%04x)", memSeq.getAddress() + (((instr.operandValues[0] - 2) << 16) >> 16));
 			if(instr.opcode.isTextOpcode)
