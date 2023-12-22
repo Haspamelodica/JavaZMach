@@ -1,4 +1,8 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-public record BranchTarget(CodeLocation location) implements ReferenceSource
+import java.util.Optional;
+
+import net.haspamelodica.javazmach.assembler.model.BranchLength;
+
+public record BranchTarget(CodeLocation location, Optional<BranchLength> branchLengthOverride) implements ReferenceSource
 {}

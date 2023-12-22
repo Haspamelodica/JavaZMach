@@ -8,15 +8,18 @@
 .ZHEADER SerialNum "421337"
 .ZHEADER CompilerVer 0x1337
 
-.ZHEADER InitialPC15 start
-start:
-je 1 2 ?start
+.ZHEADER InitialPC15 entry
+entry:
+
+je 1 2 ?label1[longbranch]
+label1:
+je 1 2 ?label1 //[shortbranch]
 je 3 4 ?rfalse
 je 5 6 ?rtrue
 je 1 2 ?0
-je 1 2 ?1
+je 1 2 ?1[longbranch]
 je 1 2 ?-3
-je 1 2 ?61
-je 1 2 ?62
+je 1 2 ?61[shortbranch]
+je 1 2 ?62 //[shortbranch]
 je 1 2 ?63
 je 1 2 ?64

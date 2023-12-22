@@ -19,6 +19,10 @@ sp = sp|SP;
 ~ = ~ ;
 rtrue = rtrue|RTRUE ;
 rfalse = rfalse|RFALSE ;
+[ = \\[ ;
+] = \\] ;
+longbranch = longbranch|LONGBRANCH ;
+shortbranch = shortbranch|SHORTBRANCH ;
 
 \; = \; ;
 

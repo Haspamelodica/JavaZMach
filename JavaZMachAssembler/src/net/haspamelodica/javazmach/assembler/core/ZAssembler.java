@@ -344,16 +344,17 @@ public class ZAssembler
 				}
 				case Label target ->
 				{
-					// At first, optimistically assume the branch target fits into one byte.
-					// If it doesn't, the second byte will be inserted later, while filling out label references.
-					// Determining this beforehand would hard because whether we can assemble this in the short form
+					// Here, we write a dummy value as the branch target, which will later be overwritten by the reference.
+					// At first, optimistically assume the branch target can be assembled in short form, so choose 0 as the dummy value.
+					// If it doesn't, the second byte will be inserted later when the reference is resolved.
+					// Determining this beforehand would be hard because whether we can assemble this in the short form
 					// depends on where the label refers to, and for the labels where it matters this even
 					// will only become known in the future.
 					CodeLocation codeLocationBeforeBranchOffset = codeLocationHere();
 					writeEncodedBranchOffset(0, branchInfo);
 					CodeLocation codeLocationAfterBranchOffset = codeLocationHere();
 
-					references.add(new Reference(new BranchTarget(codeLocationBeforeBranchOffset),
+					references.add(new Reference(new BranchTarget(codeLocationBeforeBranchOffset, branchInfo.branchLengthOverride()),
 							new CodeLabelRelativeReference(target.name(), codeLocationAfterBranchOffset)));
 				}
 			};
@@ -364,8 +365,22 @@ public class ZAssembler
 
 	private void writeEncodedBranchOffset(int branchOffsetEncodedOrZero, BranchInfo info)
 	{
-		//TODO maybe give programmer the possibility to choose which branch target encoding (short or long) is used?
-		boolean isShort = isBranchOffsetShort(branchOffsetEncodedOrZero);
+		boolean isValueShort = isBranchOffsetShort(branchOffsetEncodedOrZero);
+		boolean isShort;
+		if(info.branchLengthOverride().isEmpty())
+			isShort = isValueShort;
+		else
+			isShort = switch(info.branchLengthOverride().get())
+			{
+				case LONGBRANCH -> false;
+				case SHORTBRANCH ->
+				{
+					if(!isValueShort)
+						yield throwShortOverrideButNotShort(branchOffsetEncodedOrZero);
+					yield true;
+				}
+			};
+
 		codeSeq.writeNextByte(0
 				// branch-on-condition-false: bit 7; on false is 0, on true is 1.
 				| ((info.branchOnConditionFalse() ? 0 : 1) << 7)
@@ -482,8 +497,20 @@ public class ZAssembler
 							code.writeByte(referrerRelAddr, (oldTargetFirstByte & (1 << 7)) | (1 << 6) | valueEnc);
 						} else
 						{
-							if(newIsShort)
-								System.err.println("WARNING: Required space for branch target decreased!? Keeping long encoding.");
+							if(referrer.branchLengthOverride().isPresent())
+								switch(referrer.branchLengthOverride().get())
+								{
+									case SHORTBRANCH -> throwShortOverrideButNotShort(valueEnc);
+									case LONGBRANCH ->
+									{
+										// nothing to do
+									}
+								}
+							// only warn if no length override is present
+							else if(newIsShort)
+								System.err.println("WARNING: Required space for branch target decreased!? Keeping long encoding. "
+										+ "This is probably an interpreter bug.");
+
 							// keep branch-on-condition-false: bit 7
 							// long branch offset encoding: bit 6 is 0
 							code.writeByte(referrerRelAddr, (oldTargetFirstByte & (1 << 7)) | (0 << 6) | ((valueEnc >> 8) & 0x3f));
@@ -568,6 +595,12 @@ public class ZAssembler
 			if(ref.referent() instanceof CodeLabelAbsoluteReference referent)
 				if(!codeLabelLocations.containsKey(referent.label()))
 					throw new IllegalArgumentException("Undefined label: " + referent.label());
+	}
+
+	private <R> R throwShortOverrideButNotShort(int branchOffsetEncodedOrZero)
+	{
+		throw new IllegalArgumentException("Branch target length is overridden to be short, "
+				+ "but actual encoded value can't be assembled in short form: " + branchOffsetEncodedOrZero);
 	}
 
 	private void addCodeLabelHere(String label)

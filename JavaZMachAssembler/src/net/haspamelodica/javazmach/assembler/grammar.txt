@@ -72,8 +72,8 @@ MaybeStoreTarget
 
 MaybeBranchInfo
  -> { branchInfo[-1] = optBranchInfoEmpty(); }
-  | '?' MaybeBranchInfoBranchOnConditionFalse BranchTarget
-    { branchInfo[-1] = optBranchInfoOf(BranchInfo(branchOnConditionFalse[1], branchTarget[2])); } ;
+  | '?' MaybeBranchInfoBranchOnConditionFalse BranchTarget MaybeBranchLengthOverride
+    { branchInfo[-1] = optBranchInfoOf(BranchInfo(branchOnConditionFalse[1], branchTarget[2], branchLengthOverride[3])); } ;
 
 MaybeBranchInfoBranchOnConditionFalse
  ->     { branchOnConditionFalse[-1] = false(); }
@@ -84,6 +84,11 @@ BranchTarget
   | 'rtrue'         { branchTarget[-1] = rtrue(); }
   | ConstantInteger { branchTarget[-1] = constant[0]; }
   | Label           { branchTarget[-1] = label[0]; } ;
+
+MaybeBranchLengthOverride
+ ->                      { branchLengthOverride[-1] = optBranchLengthEmpty(); } 
+  | '[' 'longbranch' ']' { branchLengthOverride[-1] = optBranchLengthOf(LONGBRANCH()); } 
+  | '[' 'shortbranch' ']' { branchLengthOverride[-1] = optBranchLengthOf(SHORTBRANCH()); } ;
 
 MaybeText
  ->        { text[-1] = optStringEmpty(); }
