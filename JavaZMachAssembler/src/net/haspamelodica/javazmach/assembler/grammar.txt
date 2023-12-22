@@ -23,6 +23,7 @@ HeaderValue
   | ByteSequenceEndingComma ByteSequenceElement { headerValue[-1] = ConstantByteSequence(appendByteSequenceList(elements[0], element[1])); }
   | Label                                       { headerValue[-1] = label[0]; } ;
 
+// TODO don't require commas here, but instead between operands.
 ByteSequenceEndingComma
  -> ByteSequenceElement ','                         { elements[-1] = appendByteSequenceList(emptyByteSequenceList(), element[0]); }
   | ByteSequenceEndingComma ByteSequenceElement ',' { elements[-1] = appendByteSequenceList(elements[0], element[1]); } ;

@@ -9,6 +9,7 @@ import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.EXTENDED;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.LONG;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.SHORT;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.VARIABLE;
+import static net.haspamelodica.javazmach.core.instructions.OpcodeKind.OP0;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeKind.VAR;
 
 import java.math.BigInteger;
@@ -257,7 +258,7 @@ public class ZAssembler
 			case OP1 -> SHORT;
 			case OP2 -> true
 					&& instruction.form().orElse(LONG) == LONG
-				// yes, we need to check this even though we know the form is OP2:
+				// yes, we need to check operand count even though we know the form is OP2:
 				// for example, je is OP2, but can take any number between 2 and 4 of operands.
 					&& operands.size() == 2
 					&& operands.get(0).isTypeEncodeableUsingOneBit()
@@ -270,7 +271,8 @@ public class ZAssembler
 
 		if(instruction.form().isPresent() && instruction.form().get() != form)
 			throw new IllegalArgumentException("Illegal form requested for opcode " + opcode
-					+ ": opcode is kind " + opcode.range + ", but requested was form " + instruction.form().get());
+					+ ": kind " + opcode.range + " opcode with " + operands.size()
+					+ " operands, but requested was form " + instruction.form().get());
 
 		// There are no opcodes which would trigger this, but let's be paranoid.
 		checkOpcodeNumberMask(opcode, switch(form)
@@ -292,7 +294,16 @@ public class ZAssembler
 					| (operands.get(1).encodeTypeOneBit() << 5)
 					// opcode: bits 4-0.
 					| (opcode.opcodeNumber << 0));
-			case SHORT -> throw new UnsupportedOperationException("Can't assemble form SHORT yet");
+			case SHORT -> codeSeq.writeNextByte(0
+					// form SHORT: bits 7-6 are 0b10.
+					| (0b10 << 6)
+					// kind: implicitly OP0 / OP1, depending on operand type (omitted means OP0).
+					// Note that this implicitly relies on the operands count check above,
+					// as well as that all opcodes of OP0 / OP1 require exactly 0 / 1 operand.
+					// operand type (if present): bits 5-4
+					| ((opcode.range == OP0 ? 0b11 : operands.get(0).encodeTypeTwoBits()) << 4)
+					// opcode: bits 3-0.
+					| (opcode.opcodeNumber << 0));
 			case EXTENDED -> throw new UnsupportedOperationException("Can't assemble from EXTENDED yet");
 			case VARIABLE ->
 			{

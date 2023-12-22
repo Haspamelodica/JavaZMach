@@ -20,6 +20,7 @@ import net.haspamelodica.javazmach.GlobalConfig;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.DecodedInstruction;
 import net.haspamelodica.javazmach.core.instructions.InstructionDecoder;
+import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.io.IOCard;
 import net.haspamelodica.javazmach.core.io.VideoCard;
 import net.haspamelodica.javazmach.core.memory.CheckedWriteMemory;
@@ -178,6 +179,9 @@ public class ZInterpreter
 				for(int i = 1; i < currentInstr.operandCount; i ++)
 					System.out.printf(", 0x%04x", operandEvaluatedValuesBuf[i]);
 			}
+			// ensure that when calling quit, the trace line has a line terminator.
+			if(currentInstr.opcode == Opcode.quit)
+				System.out.println();
 		}
 
 		boolean doStore = currentInstr.opcode.isStoreOpcode;

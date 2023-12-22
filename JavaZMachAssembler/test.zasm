@@ -23,3 +23,5 @@ je 1 2 ?61[shortbranch]
 je 1 2 ?62 //[shortbranch]
 je 1 2 ?63
 je 1 2 ?64
+jz 1 ?label1
+quit
