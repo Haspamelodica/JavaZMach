@@ -17,15 +17,29 @@ public class JavaZMachRunner
 	}
 	public static GlobalConfig readConfigFromArgs(String[] args)
 	{
-		//TODO read config and game path from commandline / args
 		GlobalConfig config = new GlobalConfig();
 		config.setBool("interpreter.debug.logs.instructions", false);
-		//String storyfilePath = "../storyfiles/tests/czech_0_8/czech.z5";
-		//String storyfilePath = "../storyfiles/tests/etude/etude.z5";
-		//String storyfilePath = "../storyfiles/zork1.z3";
-		//String storyfilePath = "../storyfiles/trinity.z4";
-		//String storyfilePath = "../storyfiles/sanddancer.z8";
-		config.setString("storyfile_path", "../JavaZMachAssembler/test.z3");
+		String storyfilePath = null;
+		for(String arg : args)
+		{
+			int indexOfEquals = arg.indexOf('=');
+			if(indexOfEquals < 0)
+				if(storyfilePath != null)
+					throw new IllegalArgumentException("More than one storyfile given: " + storyfilePath + " and " + arg);
+				else
+					storyfilePath = arg;
+			else
+			{
+				String key = arg.substring(0, indexOfEquals);
+				String value = arg.substring(indexOfEquals + 1);
+				if(key.equals("storyfile_path"))
+					storyfilePath = value;
+				else
+					config.setString(key, value);
+			}
+		}
+		if(storyfilePath != null)
+			config.setString("storyfile_path", storyfilePath);
 		return config;
 	}
 	public static void run(GlobalConfig config, VideoCard videoCard, UnicodeZSCIIConverter unicodeZSCIIConverter) throws IOException
