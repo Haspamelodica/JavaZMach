@@ -7,10 +7,10 @@ public class InstructionDecoder
 {
 	private final int version;
 
-	private final boolean	dontIgnoreUnknownInstructions;
-	private final boolean	checkVersion;
-	private final boolean	checkOperandsAreInBlock;
-	private final boolean	checkOperandsCount;
+	private final boolean	ignoreUnknownInstructions;
+	private final boolean	ignoreIncorrectVersion;
+	private final boolean	ignoreVarOperandsGaps;
+	private final boolean	ignoreIncorrectOperandsCount;
 
 	private final SequentialMemoryAccess mem;
 
@@ -19,10 +19,10 @@ public class InstructionDecoder
 	{
 		this.version = version;
 
-		this.dontIgnoreUnknownInstructions = config.getBool("instructions.decoding.dont_ignore_unknown_instructions");
-		this.checkVersion = config.getBool("instructions.decoding.check_version");
-		this.checkOperandsAreInBlock = config.getBool("instructions.decoding.operands.check_var_block");
-		this.checkOperandsCount = config.getBool("instructions.decoding.operands.check_count");
+		this.ignoreUnknownInstructions = config.getBool("instructions.decoding.ignore_unknown_instructions");
+		this.ignoreIncorrectVersion = config.getBool("instructions.decoding.ignore_incorrect_version");
+		this.ignoreVarOperandsGaps = config.getBool("instructions.decoding.operands.ignore_var_operands_gaps");
+		this.ignoreIncorrectOperandsCount = config.getBool("instructions.decoding.operands.ignore_incorrect_operand_count");
 
 		this.mem = mem;
 	}
@@ -45,9 +45,9 @@ public class InstructionDecoder
 		else
 			opcode = Opcode.decode(opcodeByte, form, kind, version);
 		target.opcode = opcode;
-		if(opcode == Opcode._unknown_instr && dontIgnoreUnknownInstructions)
+		if(opcode == Opcode._unknown_instr && !ignoreUnknownInstructions)
 			throw new InstructionFormatException("Unknown instruction: " + opcodeByte);
-		if((opcode.minVersion > version || (opcode.maxVersion > 0 && opcode.maxVersion < version)) && checkVersion)
+		if((opcode.minVersion > version || (opcode.maxVersion > 0 && opcode.maxVersion < version)) && !ignoreIncorrectVersion)
 			throw new InstructionFormatException("Instruction not valid for version " + version +
 					" (V" + opcode.minVersion + (opcode.maxVersion > 0 ? "-" + opcode.maxVersion : "+") + "): " + opcode);
 		switch(kind)
@@ -91,7 +91,8 @@ public class InstructionDecoder
 				throw new IllegalArgumentException("Unknown enum type: " + kind);
 		}
 
-		if(checkOperandsCount && opcode != Opcode._unknown_instr && (target.operandCount < opcode.minArgs || target.operandCount > opcode.maxArgs))
+		if(!ignoreIncorrectOperandsCount && opcode != Opcode._unknown_instr
+				&& (target.operandCount < opcode.minArgs || target.operandCount > opcode.maxArgs))
 			throw new InstructionFormatException("Too many / few operands (" + target.operandCount + ") for " + opcode);
 
 		if(opcode.isStoreOpcode)
@@ -136,7 +137,7 @@ public class InstructionDecoder
 					readOperand(type, operandI ++, target.operandValues);
 				}
 			else
-				followingOperandsMustBeOmitted = checkOperandsAreInBlock;
+				followingOperandsMustBeOmitted = !ignoreVarOperandsGaps;
 		}
 		target.operandCount = operandI;
 	}

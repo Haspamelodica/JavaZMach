@@ -50,7 +50,7 @@ public class IOCard
 
 	private final int version;
 
-	private final boolean replaceAllSpacesWithExtraNL;
+	private final boolean replaceOnlyFirstSpaceWithExtraNL;
 
 	private final HeaderParser			headerParser;
 	private final VideoCard				videoCard;
@@ -79,7 +79,7 @@ public class IOCard
 	{
 		this.version = version;
 
-		this.replaceAllSpacesWithExtraNL = config.getBool("io.wrapping.replace_all_spaces");
+		this.replaceOnlyFirstSpaceWithExtraNL = config.getBool("io.wrapping.replace_only_first_space");
 
 		this.headerParser = headerParser;
 		this.videoCard = videoCard;
@@ -392,7 +392,7 @@ public class IOCard
 		{
 			if(firstNonSpaceIndex < 0)
 				firstNonSpaceIndex = outputBufferLength;
-			if(replaceAllSpacesWithExtraNL)
+			if(!replaceOnlyFirstSpaceWithExtraNL)
 				bufferPrintIndex = firstNonSpaceIndex;
 			else if(firstNonSpaceIndex > 0)
 				bufferPrintIndex = 1;

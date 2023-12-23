@@ -16,7 +16,7 @@ public class GlobalConfig
 			"no", "n", "false", "f", "0")));
 
 	private static final String		stringDefault	= "";
-	private static final boolean	boolDefault		= true;
+	private static final boolean	boolDefault		= false;
 	private static final int		intDefault		= 0;
 
 	private final Map<String, String> values;
@@ -38,6 +38,10 @@ public class GlobalConfig
 	}
 	public boolean getBool(String name)
 	{
+		return getBool(name, true);
+	}
+	private boolean getBool(String name, boolean maybeDefaultingMessage)
+	{
 		return getGeneric(name, "bool", this::toConfVal, boolDefault, val ->
 		{
 			if(boolTrue.contains(val))
@@ -46,7 +50,7 @@ public class GlobalConfig
 				return false;
 			else
 				return null;
-		});
+		}, maybeDefaultingMessage);
 	}
 	public int getInt(String name)
 	{
@@ -76,6 +80,10 @@ public class GlobalConfig
 
 	private <T> T getGeneric(String name, String convValTypeName, Function<T, String> toConfVal, T defaultVal, Function<String, T> parseConvVal)
 	{
+		return getGeneric(name, convValTypeName, toConfVal, defaultVal, parseConvVal, true);
+	}
+	private <T> T getGeneric(String name, String convValTypeName, Function<T, String> toConfVal, T defaultVal, Function<String, T> parseConvVal, boolean maybeDefaultingMessage)
+	{
 		if(values.containsKey(name))
 		{
 			String val = values.get(name);
@@ -88,7 +96,8 @@ public class GlobalConfig
 				return t;
 		} else
 		{
-			System.err.println("<Config> No value given for \"" + name + "\"; defaulting to \"" + toConfVal.apply(defaultVal) + '"');
+			if(maybeDefaultingMessage && getBool("config.warn_defaulting", false))
+				System.err.println("<Config> No value given for \"" + name + "\"; defaulting to \"" + toConfVal.apply(defaultVal) + '"');
 			return defaultVal;
 		}
 	}

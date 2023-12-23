@@ -7,7 +7,7 @@ public class DictionaryLookupZCharStreamReceiver implements ZCharStreamReceiver
 {
 	private final int version;
 
-	private final boolean checkEntryLength;
+	private final boolean ignoreIllegalEntryLength;
 
 	private final ReadOnlyMemory mem;
 
@@ -25,7 +25,7 @@ public class DictionaryLookupZCharStreamReceiver implements ZCharStreamReceiver
 	{
 		this.version = version;
 
-		this.checkEntryLength = config.getBool("text.tokenise.dictionary.check_entry_length");
+		this.ignoreIllegalEntryLength = config.getBool("text.tokenise.dictionary.ignore_illegal_entry_length");
 
 		this.mem = mem;
 	}
@@ -33,7 +33,7 @@ public class DictionaryLookupZCharStreamReceiver implements ZCharStreamReceiver
 	{
 		int wordSeparatorsCount = mem.readByte(dictionaryAddr);
 		entryLength = mem.readByte(dictionaryAddr + wordSeparatorsCount + 1);
-		if(checkEntryLength && entryLength < (version > 4 ? 6 : 4))
+		if(!ignoreIllegalEntryLength && entryLength < (version > 4 ? 6 : 4))
 			throw new TextException("Illegal dictionary entry length: " + entryLength);
 		entryNumber = mem.readWord(dictionaryAddr + wordSeparatorsCount + 2);
 		receivedZCharsSoFar = 0;

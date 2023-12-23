@@ -18,7 +18,6 @@ public class JavaZMachRunner
 	public static GlobalConfig readConfigFromArgs(String[] args)
 	{
 		GlobalConfig config = new GlobalConfig();
-		config.setBool("interpreter.debug.logs.instructions", false);
 		String storyfilePath = null;
 		for(String arg : args)
 		{
@@ -32,7 +31,7 @@ public class JavaZMachRunner
 			{
 				String key = arg.substring(0, indexOfEquals);
 				String value = arg.substring(indexOfEquals + 1);
-				if(key.equals("storyfile_path"))
+				if(key.equals("storyfile.path"))
 					storyfilePath = value;
 				else
 					config.setString(key, value);
@@ -41,7 +40,7 @@ public class JavaZMachRunner
 		if(storyfilePath == null)
 			throw new IllegalStateException("No storyfile given");
 
-		config.setString("storyfile_path", storyfilePath);
+		config.setString("storyfile.path", storyfilePath);
 		return config;
 	}
 	public static void run(GlobalConfig config, VideoCard videoCard, UnicodeZSCIIConverter unicodeZSCIIConverter) throws IOException
@@ -56,6 +55,6 @@ public class JavaZMachRunner
 	}
 	public static StaticArrayBackedMemory readStoryfileROM(GlobalConfig config) throws IOException
 	{
-		return new StaticArrayBackedMemory(Files.readAllBytes(Paths.get(config.getString("storyfile_path"))));
+		return new StaticArrayBackedMemory(Files.readAllBytes(Paths.get(config.getString("storyfile.path"))));
 	}
 }

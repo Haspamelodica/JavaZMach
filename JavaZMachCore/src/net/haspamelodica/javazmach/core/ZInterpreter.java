@@ -45,9 +45,9 @@ public class ZInterpreter
 	private final int version;
 
 	private final boolean	logInstructions;
-	private final boolean	dontIgnoreIllegalVariableCount;
-	private final boolean	readMoreThan15VarsForIllegalVariableCount;
-	private final boolean	dontIgnoreDiv0;
+	private final boolean	ignoreIllegalVariableCount;
+	private final boolean	readOnlyVarsForIllegalVariableCount;
+	private final boolean	ignoreDiv0;
 
 	private final HeaderParser					headerParser;
 	private final ReadOnlyMemory				storyfileROM;
@@ -94,9 +94,9 @@ public class ZInterpreter
 		this.memCheckedWrite = new CheckedWriteMemory(config, headerParser, memUncheckedWrite);
 
 		this.logInstructions = config.getBool("interpreter.debug.logs.instructions");
-		this.dontIgnoreIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.dont_ignore");
-		this.readMoreThan15VarsForIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.allow_read_more_than_15_vars");
-		this.dontIgnoreDiv0 = config.getBool("interpreter.dont_ignore_div0");
+		this.ignoreIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.ignore");
+		this.readOnlyVarsForIllegalVariableCount = config.getBool("interpreter.variables.illegal_var_count.read_only_15_vars");
+		this.ignoreDiv0 = config.getBool("interpreter.ignore_div0");
 
 		this.stack = new CallStack();
 		this.memAtPC = new SequentialMemoryAccess(memCheckedWrite);
@@ -246,14 +246,20 @@ public class ZInterpreter
 				storeVal = o0E * o1E;
 				break;
 			case div:
-				if(o1E == 0 && dontIgnoreDiv0)
+				if(o1E != 0)
+					storeVal = o0E / o1E;
+				else if(!ignoreDiv0)
 					throw new ArithmeticException("Division by 0");
-				storeVal = o0E / o1E;
+				else
+					storeVal = 0;
 				break;
 			case mod:
-				if(o1E == 0 && dontIgnoreDiv0)
+				if(o1E != 0)
+					storeVal = o0E % o1E;
+				else if(!ignoreDiv0)
 					throw new ArithmeticException("Division by 0");
-				storeVal = o0E % o1E;
+				else
+					storeVal = 0;
 				break;
 			case inc:
 				writeVariable(o0, readVariable(o0) + 1);
@@ -662,7 +668,7 @@ public class ZInterpreter
 			int variablesCount;
 			if(specifiedVarCount >>> 4 == 0)//only the lower 4 bit are allowed to be set
 				variablesCount = specifiedVarCount;
-			else if(dontIgnoreIllegalVariableCount)
+			else if(!ignoreIllegalVariableCount)
 				throw new VariableException("Illegal variable count: " + specifiedVarCount);
 			else
 				variablesCount = 15;//the maximum we can supply
@@ -672,7 +678,7 @@ public class ZInterpreter
 				memAtPC.skipWords(suppliedArgumentCount);//skip overwritten initial values
 				for(int i = suppliedArgumentCount; i < variablesCount; i ++)
 					variablesInitialValuesBuf[i] = memAtPC.readNextWord();
-				if(readMoreThan15VarsForIllegalVariableCount && specifiedVarCount >>> 4 != 0)
+				if(!readOnlyVarsForIllegalVariableCount && specifiedVarCount >>> 4 != 0)
 					memAtPC.skipWords(specifiedVarCount - 15);
 			} else
 				Arrays.fill(variablesInitialValuesBuf, suppliedArgumentCount, variablesCount, 0);

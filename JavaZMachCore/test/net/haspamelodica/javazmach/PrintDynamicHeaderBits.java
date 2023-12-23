@@ -12,7 +12,7 @@ public class PrintDynamicHeaderBits
 		{
 			System.out.println("---Version " + version + "---");
 			GlobalConfig config = new GlobalConfig();
-			config.setBool("header.dont_allow_undefined_field_write", false);
+			config.setBool("header.allow_undefined_field_write", true);
 			HeaderParser headerParser = new HeaderParser(config, version, new CopyOnWriteMemory(new StaticArrayBackedMemory(64)));
 			for(int row = 0; row < 16; row ++)
 			{

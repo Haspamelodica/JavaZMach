@@ -4,14 +4,14 @@ import net.haspamelodica.javazmach.GlobalConfig;
 
 public class UnicodeZSCIIConverterNoSpecialChars implements UnicodeZSCIIConverter
 {
-	private final boolean	dontIgnoreIllegalZSCIIChars;
+	private final boolean	ignoreIllegalZSCIIChars;
 	private final char[]	zscii13Equivalent;
 
 	private boolean afterCR;
 
 	public UnicodeZSCIIConverterNoSpecialChars(GlobalConfig config)
 	{
-		this.dontIgnoreIllegalZSCIIChars = config.getBool("text.zscii.dont_ignore_illegal_chars");
+		this.ignoreIllegalZSCIIChars = config.getBool("text.zscii.ignore_illegal_chars");
 		boolean cr = config.getBool("text.unicode.newline.cr");
 		boolean lf = config.getBool("text.unicode.newline.lf");
 		this.zscii13Equivalent = cr
@@ -36,13 +36,12 @@ public class UnicodeZSCIIConverterNoSpecialChars implements UnicodeZSCIIConverte
 			return '\t';
 		else if(zsciiChar > 31 && zsciiChar < 127)
 			return (char) zsciiChar;
-		else if(dontIgnoreIllegalZSCIIChars)
-			if(zsciiChar == 13)
-				throw new IllegalArgumentException("NL (ZSCII 13) given to zsciiToUnicodeNoNL");
-			else
-				throw new TextException("ZSCII char is undefined for output: " + zsciiChar);
-		else
+		else if(ignoreIllegalZSCIIChars)
 			return '?';
+		else if(zsciiChar == 13)
+			throw new IllegalArgumentException("NL (ZSCII 13) given to zsciiToUnicodeNoNL");
+		else
+			throw new TextException("ZSCII char is undefined for output: " + zsciiChar);
 	}
 	@Override
 	public void resetUnicodeToZSCII()

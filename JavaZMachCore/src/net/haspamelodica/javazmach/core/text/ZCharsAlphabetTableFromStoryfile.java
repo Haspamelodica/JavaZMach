@@ -10,7 +10,7 @@ public class ZCharsAlphabetTableFromStoryfile implements ZCharsAlphabetTable
 {
 	private final int version;
 
-	private final boolean checkZSCIIRange;
+	private final boolean ignoreZSCIINotInRange;
 
 	private final HeaderParser		headerParser;
 	private final ReadOnlyMemory	mem;
@@ -23,7 +23,7 @@ public class ZCharsAlphabetTableFromStoryfile implements ZCharsAlphabetTable
 	{
 		this.version = version;
 
-		this.checkZSCIIRange = config.getBool("text.zscii.check_10bit_range");
+		this.ignoreZSCIINotInRange = config.getBool("text.zscii.ignore_zscii_not_in_range");
 
 		this.headerParser = headerParser;
 		this.mem = mem;
@@ -44,7 +44,7 @@ public class ZCharsAlphabetTableFromStoryfile implements ZCharsAlphabetTable
 			return alphabetTableDefault.translateZCharToZSCII(zChar, alphabet);
 
 		int zscii = mem.readWord(alphabetTableLoc + ((zChar - 6) << 1) + (alphabet * 26));
-		if(zscii > 0x3FF && checkZSCIIRange)
+		if(zscii > 0x3FF && !ignoreZSCIINotInRange)
 			throw new TextException("Out-of-range ZSCII char: " + zscii);
 		return zscii;
 	}

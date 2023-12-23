@@ -7,8 +7,8 @@ import net.haspamelodica.javazmach.core.header.HeaderParser;
 
 public class CheckedWriteMemory implements WritableMemory
 {
-	private final boolean	dontIgnoreStaticMemWrite;
-	private final boolean	checkHeaderWrite;
+	private final boolean	ignoreStaticMemWrite;
+	private final boolean	ignoreNondynamicHeaderWrite;
 
 	private final HeaderParser		headerParser;
 	private final WritableMemory	mem;
@@ -17,8 +17,8 @@ public class CheckedWriteMemory implements WritableMemory
 
 	public CheckedWriteMemory(GlobalConfig config, HeaderParser headerParser, WritableMemory mem)
 	{
-		this.dontIgnoreStaticMemWrite = config.getBool("memory.dont_ignore_static_mem_write");
-		this.checkHeaderWrite = config.getBool("memory.check_header_write");
+		this.ignoreStaticMemWrite = config.getBool("memory.ignore_static_mem_write");
+		this.ignoreNondynamicHeaderWrite = config.getBool("memory.ignore_nondynamic_header_write");
 
 		this.headerParser = headerParser;
 		this.mem = mem;
@@ -52,9 +52,9 @@ public class CheckedWriteMemory implements WritableMemory
 	}
 	private void checkWrite(int byteAddr, int val)
 	{
-		if(dontIgnoreStaticMemWrite && byteAddr > lastDynamicMemByte)
+		if(!ignoreStaticMemWrite && byteAddr > lastDynamicMemByte)
 			throw new MemoryException("Write to static / high memory");
-		if(checkHeaderWrite && !headerParser.isAllowedAsDynamicWrite(byteAddr, val))
+		if(!ignoreNondynamicHeaderWrite && !headerParser.isAllowedAsDynamicWrite(byteAddr, val))
 			throw new MemoryException("Write to non-dynamic header field");
 	}
 }

@@ -11,8 +11,8 @@ public class ZCharsToZSCIIConverterStream implements ZSCIICharStream
 {
 	private final int version;
 
-	private final boolean	dontAllowNestedAbbreviations;
-	private final boolean	checkAbbreviationsDontStopIncomplete;
+	private final boolean	allowNestedAbbreviations;
+	private final boolean	ignoreIncompleteConstructionInAbbreviation;
 
 	private final HeaderParser				headerParser;
 	private final ReadOnlyMemory			mem;
@@ -45,8 +45,8 @@ public class ZCharsToZSCIIConverterStream implements ZSCIICharStream
 	{
 		this.version = version;
 
-		this.dontAllowNestedAbbreviations = config.getBool("text.zchars.abbreviations.dont_allow_nesting");
-		this.checkAbbreviationsDontStopIncomplete = config.getBool("text.zchars.abbreviations.check_no_incomplete_construction_stop");
+		this.allowNestedAbbreviations = config.getBool("text.zchars.abbreviations.allow_nesting");
+		this.ignoreIncompleteConstructionInAbbreviation = config.getBool("text.zchars.abbreviations.ignore_incomplete_construction_in_abbreviation");
 
 		this.headerParser = headerParser;
 		this.mem = mem;
@@ -97,7 +97,7 @@ public class ZCharsToZSCIIConverterStream implements ZSCIICharStream
 				decode(abbrevStream);
 				abbrevSeqMem.setAddress(oldAbbrevAddr);
 				isAbbreviation = oldIsAbbreviation;
-				if(checkAbbreviationsDontStopIncomplete && state != 5)
+				if(!ignoreIncompleteConstructionInAbbreviation && state != 5)
 					throw new TextException("Abbreviation ended with an incomplete multi-Z-char construction");
 				state = 5;
 				alphabetLock = oldAlphabetLock;
@@ -120,7 +120,7 @@ public class ZCharsToZSCIIConverterStream implements ZSCIICharStream
 					case 1:
 						if(version < 2)
 							target.accept(13);//newline
-						else if(isAbbreviation && dontAllowNestedAbbreviations)
+						else if(isAbbreviation && !allowNestedAbbreviations)
 							throw new TextException("Nested abbreviation");
 						else
 							state = 0;
@@ -129,7 +129,7 @@ public class ZCharsToZSCIIConverterStream implements ZSCIICharStream
 					case 3:
 						if(version < 3)
 							nextAlphabetCurrent = (alphabetCurrent + zChar - 1) % 3;
-						else if(isAbbreviation && dontAllowNestedAbbreviations)
+						else if(isAbbreviation && !allowNestedAbbreviations)
 							throw new TextException("Nested abbreviation");
 						else
 							state = zChar - 1;

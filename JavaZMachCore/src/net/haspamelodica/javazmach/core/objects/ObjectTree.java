@@ -10,9 +10,9 @@ public class ObjectTree
 {
 	private final int version;
 
-	private final boolean	checkPropsDescending;
-	private final boolean	checkNoProp0;
-	private final boolean	checkPutPropVal;
+	private final boolean	ignorePropsNondescending;
+	private final boolean	ignoreProp0;
+	private final boolean	ignorePropValOutOfRange;
 
 	private final HeaderParser		headerParser;
 	private final WritableMemory	mem;
@@ -26,9 +26,9 @@ public class ObjectTree
 	{
 		this.version = version;
 
-		this.checkPropsDescending = config.getBool("objects.properties.check_descending_order");
-		this.checkNoProp0 = config.getBool("objects.properties.check_no_prop_0");
-		this.checkPutPropVal = config.getBool("objects.properties.check_put_prop_val");
+		this.ignorePropsNondescending = config.getBool("objects.properties.ignore_nondescending_order");
+		this.ignoreProp0 = config.getBool("objects.properties.ignore_prop_0");
+		this.ignorePropValOutOfRange = config.getBool("objects.properties.ignore_prop_val_out_of_range");
 
 		this.headerParser = headerParser;
 		this.mem = mem;
@@ -164,11 +164,11 @@ public class ObjectTree
 		int propAddr = getPropAddrOrThrow(objNumber, propNumber);
 		int propSize = getPropSizeByPropAddr(propAddr);
 		if(propSize == 1)
-			if((val & ~0xFF) != 0 && checkPutPropVal)
+			if((val & ~0xFF) != 0 && !ignorePropValOutOfRange)
 				throw new ObjectException("Value too high to fit into a property of length 1");
 			else
 				mem.writeByte(propAddr, val);
-		else if((val & ~0xFFFF) != 0 && checkPutPropVal)
+		else if((val & ~0xFFFF) != 0 && !ignorePropValOutOfRange)
 			throw new ObjectException("Value too high to fit into a property of length 2");
 		else
 			mem.writeWord(propAddr, val);
@@ -237,11 +237,11 @@ public class ObjectTree
 			int currentPropNumber = getPropNumberByFirstSizeByte(currentFirstSizeByte);
 			if(currentPropNumber == propNumber)
 				return currentPropSizeAddr;
-			if(checkPropsDescending && currentPropNumber < propNumber)
+			if(!ignorePropsNondescending && currentPropNumber < propNumber)
 				return -1;
-			if(currentPropNumber == 0 && checkNoProp0)
+			if(currentPropNumber == 0 && !ignoreProp0)
 				throw new ObjectException("Property nubmer 0 illegal");
-			if(lastPropNumber <= currentPropNumber && checkPropsDescending)
+			if(lastPropNumber <= currentPropNumber && !ignorePropsNondescending)
 				throw new ObjectException("Properties not in descending order");
 			lastPropNumber = currentPropNumber;
 			int currentPropAddr = currentPropSizeAddr + getPropAddrPropSizeAddrDeltaBySizeByte(currentFirstSizeByte);

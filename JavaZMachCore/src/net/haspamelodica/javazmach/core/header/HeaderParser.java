@@ -16,7 +16,7 @@ public class HeaderParser
 	{
 		this.version = version;
 
-		this.undefinedHeaderFieldDynamic = !config.getBool("header.dont_allow_undefined_field_write");
+		this.undefinedHeaderFieldDynamic = config.getBool("header.allow_undefined_field_write");
 
 		this.mem = mem;
 	}
