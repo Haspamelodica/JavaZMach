@@ -550,7 +550,7 @@ public class ZAssembler
 			default -> throw new IllegalStateException("Unknown version: " + version + "; don't know how file length is stored");
 		};
 
-		// Try filling out references until sizes and code locations stop changing.
+		// Try resolving references until sizes and code locations stop changing.
 		boolean sizeOrCodeLocationChanged;
 		do
 		{
@@ -562,7 +562,7 @@ public class ZAssembler
 			codeStart = headerEnd;
 			codeEnd = codeStart + code.currentSize();
 			storyfileSize = codeEnd;
-			// Conecptually VERY inefficient, but in practice probably not too bad.
+			// Conecptually VERY inefficient, but in practice probably not too bad, considering how small the possible divisors are.
 			while(storyfileSize % storyfileSizeDivisor != 0)
 				storyfileSize ++;
 
