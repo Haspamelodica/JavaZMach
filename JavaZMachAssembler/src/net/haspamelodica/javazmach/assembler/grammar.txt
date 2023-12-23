@@ -92,8 +92,15 @@ MaybeBranchLengthOverride
   | '[' 'shortbranch' ']' { branchLengthOverride[-1] = optBranchLengthOf(SHORTBRANCH()); } ;
 
 MaybeText
- ->        { text[-1] = optStringEmpty(); }
-  | 'text' { text[-1] = optStringOf(parseText([0])); } ;
+ ->                 { text[-1] = optZStringEmpty(); }
+  | ZStringElements { text[-1] = optZStringOf(ZString(elements[0])); } ;
+
+ZStringElements
+ -> ZStringElement                 { elements[-1] = appendZStringElementList(emptyZStringElementList(), element[0]); }
+  | ZStringElements ZStringElement { elements[-1] = appendZStringElementList(elements[0], element[1]); } ;
+
+ZStringElement
+ -> 'text' { element[-1] = ZStringElement(parseText([0])); } ;
 
 Label -> 'ident' { label[-1] = Label(str([0])); } ;
 

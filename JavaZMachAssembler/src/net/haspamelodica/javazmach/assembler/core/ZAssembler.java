@@ -42,11 +42,16 @@ import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
+import net.haspamelodica.javazmach.assembler.model.ZString;
+import net.haspamelodica.javazmach.assembler.model.ZStringElement;
 import net.haspamelodica.javazmach.core.header.HeaderField;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
+import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverterNoSpecialChars;
+import net.haspamelodica.javazmach.core.text.ZCharsAlphabetTableDefault;
+import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssembler
 {
@@ -128,8 +133,7 @@ public class ZAssembler
 
 		if(version < field.minVersion || (field.maxVersion > 0 && version > field.maxVersion))
 			throw new IllegalArgumentException("Field " + field + " does not exist in version " + version
-					+ "; only V" + field.minVersion +
-					(field.maxVersion <= 0 ? "+" : field.maxVersion != field.minVersion ? "-" + field.maxVersion : ""));
+					+ "; only " + versionRangeString(field.minVersion, field.maxVersion));
 		if(!setFields.add(field))
 			System.err.println("WARNING: Field " + field + " set twice - old value will be overwritten");
 		if(field.isBitfield && partiallySetBitfields.contains(field))
@@ -223,6 +227,11 @@ public class ZAssembler
 		}
 	}
 
+	private static String versionRangeString(int minVersion, int maxVersion)
+	{
+		return "V" + minVersion + (maxVersion <= 0 ? "+" : maxVersion != minVersion ? "-" + maxVersion : "");
+	}
+
 	public void add(LabelDeclaration labelDeclaration)
 	{
 		addCodeLabelHere(labelDeclaration.name());
@@ -230,12 +239,21 @@ public class ZAssembler
 
 	public void add(ZAssemblerInstruction instruction)
 	{
-		Opcode opcode = opcodesByNameLowercase.get(instruction.name().toLowerCase());
+		Opcode opcode = opcodesByNameLowercase.get(instruction.opcode().toLowerCase());
 		if(opcode == null)
-			// shouldn't really matter - the grammar knows which opcodes there are.
+		{
+			String existingVersionsThisName = Arrays.stream(Opcode.values())
+					.filter(opcode2 -> opcode2.name.toLowerCase().equals(instruction.opcode().toLowerCase()))
+					.map(opcode2 -> versionRangeString(opcode2.minVersion, opcode2.maxVersion))
+					.collect(Collectors.joining(", "));
+			if(!existingVersionsThisName.isEmpty())
+				throw new IllegalArgumentException("Opcode " + instruction.opcode() + " doesn't exist in V" + version
+						+ ", only " + existingVersionsThisName);
+			// shouldn't really be possible - the grammar knows which opcodes there are.
 			// Still, better safe than sorry - ZAssembler might theoretically be used without ZAssemblerParser,
 			// and the way instructions are parsed also might change later.
-			throw new IllegalArgumentException("Opcode " + instruction.name() + " unknown");
+			throw new IllegalArgumentException("Opcode " + instruction.opcode() + " unknown");
+		}
 		if(opcode.isStoreOpcode != instruction.storeTarget().isPresent())
 			throw new IllegalArgumentException("Opcode " + opcode + " is store, but no store target was given: " + instruction);
 		if(opcode.isBranchOpcode != instruction.branchInfo().isPresent())
@@ -274,7 +292,7 @@ public class ZAssembler
 			case OP2 -> true
 					&& instruction.form().orElse(LONG) == LONG
 				// yes, we need to check operand count even though we know the form is OP2:
-				// for example, je is OP2, but can take any number between 2 and 4 of operands.
+				// for example, je is OP2, but can take any number between 1 and 4 of operands.
 					&& operands.size() == 2
 					&& operands.get(0).isTypeEncodeableUsingOneBit()
 					&& operands.get(1).isTypeEncodeableUsingOneBit()
@@ -285,9 +303,8 @@ public class ZAssembler
 		};
 
 		if(instruction.form().isPresent() && instruction.form().get() != form)
-			throw new IllegalArgumentException("Illegal form requested for opcode " + opcode
-					+ ": kind " + opcode.range + " opcode with " + operands.size()
-					+ " operands, but requested was form " + instruction.form().get());
+			throw new IllegalArgumentException("Illegal form requested: kind " + opcode.range + " opcode with "
+					+ operands.size() + " operands, but requested was form " + instruction.form().get());
 
 		// There are no opcodes which would trigger this, but let's be paranoid.
 		checkOpcodeNumberMask(opcode, switch(form)
@@ -379,7 +396,49 @@ public class ZAssembler
 			};
 		});
 
-		//TODO append text if given
+		instruction.text().ifPresent(text -> appendZString(codeSeq, text));
+	}
+
+	private void appendZString(SequentialMemoryWriteAccess target, ZString text)
+	{
+		List<Byte> zchars = toZChars(text);
+		while(zchars.size() % 3 != 0)
+			zchars.add((byte) 5);
+		for(int i = 0; i < zchars.size(); i += 3)
+			target.writeNextWord(0
+					// at end: bit 15; 0 means no, 1 means yes
+					| ((i == zchars.size() - 3 ? 1 : 0) << 15)
+					// Z-char 1: bits 14-10
+					| ((zchars.get(i + 0) & 0x1f) << 10)
+					// Z-char 2: bits 9-5
+					| ((zchars.get(i + 1) & 0x1f) << 5)
+					// Z-char 3: bits 4-0
+					| ((zchars.get(i + 2) & 0x1f) << 0));
+	}
+
+	private List<Byte> toZChars(ZString text)
+	{
+		// TODO what about custom alphabets?
+		ZSCIICharZCharConverter converter = new ZSCIICharZCharConverter(version, new ZCharsAlphabetTableDefault(version));
+
+		List<Byte> result = new ArrayList<>();
+		for(ZStringElement element : text.elements())
+		{
+			// TODO abbreviation handling, once implemented
+			element
+					.string()
+					.codePoints()
+					.peek(cp ->
+					{
+						if(cp == '\r')
+							System.err.println("WARNING: \\r in ZSCII text will be ignored; use \\n for linebreaks instead.");
+					})
+					.filter(cp -> cp != '\r')
+					.map(UnicodeZSCIIConverterNoSpecialChars::unicodeToZsciiNoCR)
+					.forEach(zsciiChar -> converter.translateZSCIIToZChars(zsciiChar, result::add));
+		}
+
+		return result;
 	}
 
 	private void appendEncodedOperandTypesVar(Opcode opcode, List<Operand> operands)

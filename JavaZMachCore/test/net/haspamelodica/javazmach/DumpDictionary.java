@@ -14,9 +14,9 @@ import net.haspamelodica.javazmach.core.memory.StaticArrayBackedMemory;
 import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverter;
 import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverterNoSpecialChars;
 import net.haspamelodica.javazmach.core.text.ZCharStream;
-import net.haspamelodica.javazmach.core.text.ZCharsAlphabet;
 import net.haspamelodica.javazmach.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javazmach.core.text.ZCharsToZSCIIConverterStream;
+import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class DumpDictionary
 {
@@ -27,12 +27,12 @@ public class DumpDictionary
 		int version = HeaderParser.getFieldUnchecked(mem, Version);
 		HeaderParser header = new HeaderParser(config, version, mem);
 		SequentialMemoryAccess seqMem = new SequentialMemoryAccess(mem);
-		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
+		ZSCIICharZCharConverter zsciiZcharConverter = new ZSCIICharZCharConverter(config, version, header, mem);
 		ZCharStream zCharsUnpacker = new ZCharsSeqMemUnpacker(seqMem);
-		ZCharsToZSCIIConverterStream textConverter = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet);
+		ZCharsToZSCIIConverterStream textConverter = new ZCharsToZSCIIConverterStream(config, version, header, mem, zsciiZcharConverter);
 		UnicodeZSCIIConverter unicodeConv = new UnicodeZSCIIConverterNoSpecialChars(config);
 		mem.reset();
-		alphabet.reset();
+		zsciiZcharConverter.reset();
 		textConverter.reset(zCharsUnpacker);
 		seqMem.setAddress(header.getField(DictionaryLoc));
 		System.out.print("Word separators: ");

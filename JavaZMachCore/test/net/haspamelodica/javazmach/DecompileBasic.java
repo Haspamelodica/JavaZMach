@@ -16,9 +16,9 @@ import net.haspamelodica.javazmach.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javazmach.core.memory.StaticArrayBackedMemory;
 import net.haspamelodica.javazmach.core.text.ZCharStream;
-import net.haspamelodica.javazmach.core.text.ZCharsAlphabet;
 import net.haspamelodica.javazmach.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javazmach.core.text.ZCharsToZSCIIConverterStream;
+import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class DecompileBasic
 {
@@ -30,10 +30,10 @@ public class DecompileBasic
 		SequentialMemoryAccess memSeq = new SequentialMemoryAccess(mem);
 		int version = header.getField(Version);
 		InstructionDecoder decoder = new InstructionDecoder(config, version, memSeq);
-		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
+		ZSCIICharZCharConverter zsciiZcharConverter = new ZSCIICharZCharConverter(config, version, header, mem);
 		ZCharStream zCharStream = new ZCharsSeqMemUnpacker(memSeq);
-		ZCharsToZSCIIConverterStream textConverter = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet);
-		alphabet.reset();
+		ZCharsToZSCIIConverterStream textConverter = new ZCharsToZSCIIConverterStream(config, version, header, mem, zsciiZcharConverter);
+		zsciiZcharConverter.reset();
 		textConverter.reset(zCharStream);
 		memSeq.setAddress(header.getField(InitialPC15));//TODO V6+
 		memSeq.setAddress(0x535E);//address of Overview example

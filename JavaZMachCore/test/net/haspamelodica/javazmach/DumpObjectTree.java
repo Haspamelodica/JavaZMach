@@ -11,9 +11,9 @@ import net.haspamelodica.javazmach.core.memory.CopyOnWriteMemory;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryAccess;
 import net.haspamelodica.javazmach.core.memory.StaticArrayBackedMemory;
 import net.haspamelodica.javazmach.core.objects.ObjectTree;
-import net.haspamelodica.javazmach.core.text.ZCharsAlphabet;
 import net.haspamelodica.javazmach.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javazmach.core.text.ZCharsToZSCIIConverterStream;
+import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class DumpObjectTree
 {
@@ -25,10 +25,10 @@ public class DumpObjectTree
 		SequentialMemoryAccess textConvSeqMem = new SequentialMemoryAccess(mem);
 		int version = header.getField(Version);
 		ObjectTree tree = new ObjectTree(config, version, header, mem);
-		ZCharsAlphabet alphabet = new ZCharsAlphabet(config, version, header, mem);
+		ZSCIICharZCharConverter zsciiZcharConverter = new ZSCIICharZCharConverter(config, version, header, mem);
 		ZCharsSeqMemUnpacker zCharStream = new ZCharsSeqMemUnpacker(textConvSeqMem);
-		ZCharsToZSCIIConverterStream textConv = new ZCharsToZSCIIConverterStream(config, version, header, mem, alphabet);
-		alphabet.reset();
+		ZCharsToZSCIIConverterStream textConv = new ZCharsToZSCIIConverterStream(config, version, header, mem, zsciiZcharConverter);
+		zsciiZcharConverter.reset();
 		textConv.reset(zCharStream);
 		tree.reset();
 		for(int objNumber = 1; objNumber < 255; objNumber ++)

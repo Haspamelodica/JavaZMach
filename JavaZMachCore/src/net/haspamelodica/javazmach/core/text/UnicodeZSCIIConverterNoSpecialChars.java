@@ -56,23 +56,26 @@ public class UnicodeZSCIIConverterNoSpecialChars implements UnicodeZSCIIConverte
 		{
 			afterCR = true;
 			return 13;
-		} else if(unicodeChar == '\n')
+		} else if(unicodeChar == '\n' && afterCR)
 		{
-			if(afterCR)
-			{
-				afterCR = false;
-				return -1;
-			} else
-				return 13;
+			afterCR = false;
+			return -1;
 		} else
 		{
 			afterCR = false;
-			if(unicodeChar == '\t')
-				return 9;
-			else if(unicodeChar > 31 && unicodeChar < 127)
-				return unicodeChar;
-			else
-				return 0x3F;//question mark
+			return unicodeToZsciiNoCR(unicodeChar);
 		}
+	}
+
+	public static int unicodeToZsciiNoCR(int unicodeCodepoint)
+	{
+		if(unicodeCodepoint == '\n')
+			return 13;
+		else if(unicodeCodepoint == '\t')
+			return 9;
+		else if(unicodeCodepoint > 31 && unicodeCodepoint < 127)
+			return unicodeCodepoint;
+		else
+			return 0x3F;//question mark
 	}
 }

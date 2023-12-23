@@ -12,16 +12,16 @@ import net.haspamelodica.javazmach.core.memory.WritableBuffer;
 public class Tokeniser
 {
 	private final HeaderParser							headerParser;
-	private final ZCharsAlphabet						alphabet;
+	private final ZSCIICharZCharConverter				converter;
 	private final DictionaryLookupZCharStreamReceiver	dictLookupZRecv;
 	private final LengthStartedReadOnlyByteSet			wordSeparatorSet;
 
 	private int defaultDictionary;
 
-	public Tokeniser(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem, ZCharsAlphabet alphabet)
+	public Tokeniser(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem, ZSCIICharZCharConverter converter)
 	{
 		this.headerParser = headerParser;
-		this.alphabet = alphabet;
+		this.converter = converter;
 		this.dictLookupZRecv = new DictionaryLookupZCharStreamReceiver(config, version, mem);
 		this.wordSeparatorSet = new LengthStartedReadOnlyByteSet(mem, false);
 	}
@@ -55,7 +55,7 @@ public class Tokeniser
 			if(wordSeparatorSet.contains(zsciiChar))
 			{
 				writeParsedResultAndResetDictLookup(textBufOffFirstLetter, zsciiLen, skipWordsNotInDict, targetBuf, dictionary);
-				alphabet.translateZSCIIToZChars(zsciiChar, dictLookupZRecv);
+				converter.translateZSCIIToZChars(zsciiChar, dictLookupZRecv);
 				zsciiLen = 1;
 				writeParsedResultAndResetDictLookup(textBufOffFirstLetter, zsciiLen, skipWordsNotInDict, targetBuf, dictionary);
 				zsciiLen = 0;
@@ -67,7 +67,7 @@ public class Tokeniser
 			{
 				if(zsciiLen == 0)
 					textBufOffFirstLetter = textBufOff;
-				alphabet.translateZSCIIToZChars(zsciiChar, dictLookupZRecv);
+				converter.translateZSCIIToZChars(zsciiChar, dictLookupZRecv);
 				zsciiLen ++;
 			}
 			textBufOff ++;

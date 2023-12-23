@@ -34,11 +34,11 @@ import net.haspamelodica.javazmach.core.stack.CallStack;
 import net.haspamelodica.javazmach.core.text.FixedZSCIICharStream;
 import net.haspamelodica.javazmach.core.text.Tokeniser;
 import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverter;
-import net.haspamelodica.javazmach.core.text.ZCharsAlphabet;
 import net.haspamelodica.javazmach.core.text.ZCharsSeqMemUnpacker;
 import net.haspamelodica.javazmach.core.text.ZCharsToZSCIIConverterStream;
 import net.haspamelodica.javazmach.core.text.ZSCIICharStream;
 import net.haspamelodica.javazmach.core.text.ZSCIICharStreamReceiver;
+import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZInterpreter
 {
@@ -61,7 +61,7 @@ public class ZInterpreter
 	private final ReadOnlyBuffer				rBuf;
 	private final WritableUndoableBuffer		wBuf;
 	private final SequentialMemoryAccess		seqMemROBuf;
-	private final ZCharsAlphabet				alphabet;
+	private final ZSCIICharZCharConverter		zsciiZcharsConverter;
 	private final ZCharsSeqMemUnpacker			zCharsUnpackerFromSeqMemRO;
 	private final ZCharsSeqMemUnpacker			zCharsUnpackerFromPC;
 	private final ZCharsToZSCIIConverterStream	textConv;
@@ -105,14 +105,14 @@ public class ZInterpreter
 		this.rBuf = new ReadOnlyBuffer(memCheckedWrite);
 		this.wBuf = new WritableUndoableBuffer(memCheckedWrite);
 		this.seqMemROBuf = new SequentialMemoryAccess(memCheckedWrite);
-		this.alphabet = new ZCharsAlphabet(config, version, headerParser, memCheckedWrite);
+		this.zsciiZcharsConverter = new ZSCIICharZCharConverter(config, version, headerParser, memCheckedWrite);
 		this.zCharsUnpackerFromSeqMemRO = new ZCharsSeqMemUnpacker(seqMemROBuf);
 		this.zCharsUnpackerFromPC = new ZCharsSeqMemUnpacker(memAtPC);
-		this.textConv = new ZCharsToZSCIIConverterStream(config, version, headerParser, memCheckedWrite, alphabet);
+		this.textConv = new ZCharsToZSCIIConverterStream(config, version, headerParser, memCheckedWrite, zsciiZcharsConverter);
 		this.illegalObjectZSCIIStream = new FixedZSCIICharStream(unicodeZSCIIConverter, "<illegal object>");
 		this.ioCard = new IOCard(config, version, headerParser, memCheckedWrite, videoCard);
 		this.printZSCIITarget = ioCard::printZSCII;
-		this.tokeniser = new Tokeniser(config, version, headerParser, memCheckedWrite, alphabet);
+		this.tokeniser = new Tokeniser(config, version, headerParser, memCheckedWrite, zsciiZcharsConverter);
 		this.trueRandom = new Random();
 		this.rand = new Random();
 
@@ -134,7 +134,7 @@ public class ZInterpreter
 		globalVariablesOffset = headerParser.getField(GlobalVarTableLoc) - 0x20;
 		stack.reset();
 		objectTree.reset();
-		alphabet.reset();
+		zsciiZcharsConverter.reset();
 		ioCard.reset();
 		tokeniser.reset();
 		//TODO set header fields

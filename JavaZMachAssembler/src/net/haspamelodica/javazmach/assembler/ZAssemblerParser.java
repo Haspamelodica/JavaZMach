@@ -37,6 +37,8 @@ import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
+import net.haspamelodica.javazmach.assembler.model.ZString;
+import net.haspamelodica.javazmach.assembler.model.ZStringElement;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
 import net.haspamelodica.parser.ast.InnerNode;
@@ -68,11 +70,12 @@ public class ZAssemblerParser
 		ParameterizedType T_ListZAssemblyFileEntry = new ParameterizedTypeImpl(null, List.class, ZAssemblerFileEntry.class);
 		ParameterizedType T_ListOperand = new ParameterizedTypeImpl(null, List.class, Operand.class);
 		ParameterizedType T_ListByteSequenceElement = new ParameterizedTypeImpl(null, List.class, ConstantByteSequenceElement.class);
+		ParameterizedType T_ListZStringElement = new ParameterizedTypeImpl(null, List.class, ZStringElement.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptBranchInfo = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptBLO = new ParameterizedTypeImpl(null, Optional.class, BranchLength.class);
-		ParameterizedType T_OptString = new ParameterizedTypeImpl(null, Optional.class, String.class);
+		ParameterizedType T_OptZString = new ParameterizedTypeImpl(null, Optional.class, ZString.class);
 
 		Map<String, TypedFunction> functionsByName = new HashMap<>();
 
@@ -82,24 +85,24 @@ public class ZAssemblerParser
 		functionsByName.put("HeaderEntry", TypedFunction.build(HeaderEntry::new, HeaderEntry.class, String.class, HeaderValue.class));
 		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, String.class));
 		functionsByName.put("AssemblerZMachInstruction", TypedFunction.buildT(ZAssemblerInstruction::new,
-				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptVariable, T_OptBranchInfo, T_OptString));
+				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptVariable, T_OptBranchInfo, T_OptZString));
 		functionsByName.put("BranchInfo", TypedFunction.buildT(BranchInfo::new,
 				BranchInfo.class, Boolean.class, BranchTarget.class, T_OptBLO));
-		functionsByName.put("LONGBRANCH", TypedFunction.build(() -> BranchLength.LONGBRANCH, BranchLength.class));
-		functionsByName.put("SHORTBRANCH", TypedFunction.build(() -> BranchLength.SHORTBRANCH, BranchLength.class));
-		functionsByName.put("rfalse", TypedFunction.build(() -> SimpleBranchTarget.rfalse, SimpleBranchTarget.class));
-		functionsByName.put("rtrue", TypedFunction.build(() -> SimpleBranchTarget.rtrue, SimpleBranchTarget.class));
 		functionsByName.put("Label", TypedFunction.build(Label::new, Label.class, String.class));
-		functionsByName.put("StackPointer", TypedFunction.build(() -> StackPointer.INSTANCE, StackPointer.class));
 		functionsByName.put("LocalVariable", TypedFunction.build(LocalVariable::new, LocalVariable.class, Integer.class));
 		functionsByName.put("GlobalVariable", TypedFunction.build(GlobalVariable::new, GlobalVariable.class, Integer.class));
+		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
+		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
 		functionsByName.put("ConstantByteSequence", TypedFunction.buildT(ConstantByteSequence::new,
 				ConstantByteSequence.class, T_ListByteSequenceElement));
 		functionsByName.put("ConstantInteger", TypedFunction.build(ConstantInteger::new, ConstantInteger.class, BigInteger.class));
 		functionsByName.put("ConstantChar", TypedFunction.build(ConstantChar::new, ConstantChar.class, Character.class));
 		functionsByName.put("ConstantString", TypedFunction.build(ConstantString::new, ConstantString.class, String.class));
-
-		// OpcodeForms
+		functionsByName.put("LONGBRANCH", TypedFunction.build(() -> BranchLength.LONGBRANCH, BranchLength.class));
+		functionsByName.put("SHORTBRANCH", TypedFunction.build(() -> BranchLength.SHORTBRANCH, BranchLength.class));
+		functionsByName.put("rfalse", TypedFunction.build(() -> SimpleBranchTarget.rfalse, SimpleBranchTarget.class));
+		functionsByName.put("rtrue", TypedFunction.build(() -> SimpleBranchTarget.rtrue, SimpleBranchTarget.class));
+		functionsByName.put("StackPointer", TypedFunction.build(() -> StackPointer.INSTANCE, StackPointer.class));
 		functionsByName.put("LONG", TypedFunction.build(() -> OpcodeForm.LONG, OpcodeForm.class));
 		functionsByName.put("SHORT", TypedFunction.build(() -> OpcodeForm.SHORT, OpcodeForm.class));
 		functionsByName.put("EXTENDED", TypedFunction.build(() -> OpcodeForm.EXTENDED, OpcodeForm.class));
@@ -115,6 +118,9 @@ public class ZAssemblerParser
 		functionsByName.put("emptyByteSequenceList", TypedFunction.buildT(ArrayList::new, T_ListByteSequenceElement));
 		functionsByName.put("appendByteSequenceList", TypedFunction.buildT(ZAssemblerParser::<ConstantByteSequenceElement> appendList,
 				T_ListByteSequenceElement, T_ListByteSequenceElement, ConstantByteSequenceElement.class));
+		functionsByName.put("emptyZStringElementList", TypedFunction.buildT(ArrayList::new, T_ListZStringElement));
+		functionsByName.put("appendZStringElementList", TypedFunction.buildT(ZAssemblerParser::<ZStringElement> appendList,
+				T_ListZStringElement, T_ListZStringElement, ZStringElement.class));
 
 		// Optionals
 		functionsByName.put("optFormEmpty", TypedFunction.buildT(Optional::empty, T_OptForm));
@@ -125,8 +131,8 @@ public class ZAssemblerParser
 		functionsByName.put("optBranchInfoOf", TypedFunction.buildT(Optional::of, T_OptBranchInfo, BranchInfo.class));
 		functionsByName.put("optBranchLengthEmpty", TypedFunction.buildT(Optional::empty, T_OptBLO));
 		functionsByName.put("optBranchLengthOf", TypedFunction.buildT(Optional::of, T_OptBLO, BranchLength.class));
-		functionsByName.put("optStringEmpty", TypedFunction.buildT(Optional::empty, T_OptString));
-		functionsByName.put("optStringOf", TypedFunction.buildT(Optional::of, T_OptString, String.class));
+		functionsByName.put("optZStringEmpty", TypedFunction.buildT(Optional::empty, T_OptZString));
+		functionsByName.put("optZStringOf", TypedFunction.buildT(Optional::of, T_OptZString, ZString.class));
 		functionsByName.put("optIntEmpty", TypedFunction.build(OptionalInt::empty, OptionalInt.class));
 		functionsByName.put("optIntOf", TypedFunction.build(OptionalInt::of, OptionalInt.class, Integer.class));
 

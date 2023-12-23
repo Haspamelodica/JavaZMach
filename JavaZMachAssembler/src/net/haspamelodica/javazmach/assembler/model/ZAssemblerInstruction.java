@@ -5,6 +5,6 @@ import java.util.Optional;
 
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
 
-public record ZAssemblerInstruction(String name, Optional<OpcodeForm> form, List<Operand> operands, Optional<Variable> storeTarget,
-		Optional<BranchInfo> branchInfo, Optional<String> text) implements ZAssemblerFileEntry
+public record ZAssemblerInstruction(String opcode, Optional<OpcodeForm> form, List<Operand> operands, Optional<Variable> storeTarget,
+		Optional<BranchInfo> branchInfo, Optional<ZString> text) implements ZAssemblerFileEntry
 {}

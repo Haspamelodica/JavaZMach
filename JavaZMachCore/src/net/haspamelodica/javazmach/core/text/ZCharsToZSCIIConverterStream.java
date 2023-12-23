@@ -14,10 +14,10 @@ public class ZCharsToZSCIIConverterStream implements ZSCIICharStream
 	private final boolean	dontAllowNestedAbbreviations;
 	private final boolean	checkAbbreviationsDontStopIncomplete;
 
-	private final HeaderParser			headerParser;
-	private final ReadOnlyMemory		mem;
-	private final ZCharsAlphabet		alphabet;
-	private final ZCharStreamReceiver	zCharsTarget;
+	private final HeaderParser				headerParser;
+	private final ReadOnlyMemory			mem;
+	private final ZSCIICharZCharConverter	converter;
+	private final ZCharStreamReceiver		zCharsTarget;
 
 	private final SequentialMemoryAccess	abbrevSeqMem;
 	private final ZCharStream				abbrevStream;
@@ -40,7 +40,8 @@ public class ZCharsToZSCIIConverterStream implements ZSCIICharStream
 	int		zsciiCharTopHalf;
 	boolean	isAbbreviation;
 
-	public ZCharsToZSCIIConverterStream(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem, ZCharsAlphabet alphabet)
+	public ZCharsToZSCIIConverterStream(GlobalConfig config, int version, HeaderParser headerParser, ReadOnlyMemory mem,
+			ZSCIICharZCharConverter converter)
 	{
 		this.version = version;
 
@@ -49,7 +50,7 @@ public class ZCharsToZSCIIConverterStream implements ZSCIICharStream
 
 		this.headerParser = headerParser;
 		this.mem = mem;
-		this.alphabet = alphabet;
+		this.converter = converter;
 		this.zCharsTarget = this::decodeNextChar;
 
 		this.abbrevSeqMem = new SequentialMemoryAccess(mem);
@@ -155,7 +156,7 @@ public class ZCharsToZSCIIConverterStream implements ZSCIICharStream
 						}
 						//intentional fall-through
 					default:
-						target.accept(alphabet.translateZCharToZSCII(zChar, alphabetCurrent));
+						target.accept(converter.translateZCharToZSCII(zChar, alphabetCurrent));
 						break;
 				}
 				break;
