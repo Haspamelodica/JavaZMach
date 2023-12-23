@@ -4,6 +4,7 @@ import static net.haspamelodica.javazmach.assembler.core.SimpleReferenceTarget.F
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintBytesChecked;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
+import static net.haspamelodica.javazmach.core.header.HeaderField.Version;
 import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.EXTENDED;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.LONG;
@@ -49,7 +50,7 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public class ZAssembler
 {
-	private static final Set<HeaderField> AUTO_FIELDS = Set.of(FileLength);
+	private static final Set<HeaderField> AUTO_FIELDS = Set.of(FileLength, Version);
 
 	private final int					version;
 	private final Map<String, Opcode>	opcodesByNameLowercase;
@@ -347,8 +348,8 @@ public class ZAssembler
 				{
 					switch(target)
 					{
-						case rfalse -> writeEncodedBranchOffset(0, branchInfo);
-						case rtrue -> writeEncodedBranchOffset(1, branchInfo);
+						case rfalse -> appendEncodedBranchOffset(0, branchInfo);
+						case rtrue -> appendEncodedBranchOffset(1, branchInfo);
 					}
 				}
 				case ConstantInteger target ->
@@ -357,7 +358,7 @@ public class ZAssembler
 					if(branchTargetEncoded.equals(BigInteger.ZERO) || branchTargetEncoded.equals(BigInteger.ONE))
 						throw new IllegalArgumentException("A branch target of " + target.value()
 								+ " is not encodable as it would conflict with rtrue / rfalse");
-					writeEncodedBranchOffset(bigintIntChecked(14, branchTargetEncoded,
+					appendEncodedBranchOffset(bigintIntChecked(14, branchTargetEncoded,
 							bte -> "Branch target out of range: " + target.value()), branchInfo);
 				}
 				case Label target ->
@@ -369,7 +370,7 @@ public class ZAssembler
 					// depends on where the label refers to, and for the labels where it matters this even
 					// will only become known in the future.
 					CodeLocation codeLocationBeforeBranchOffset = codeLocationHere();
-					writeEncodedBranchOffset(0, branchInfo);
+					appendEncodedBranchOffset(0, branchInfo);
 					CodeLocation codeLocationAfterBranchOffset = codeLocationHere();
 
 					references.add(new Reference(new BranchTarget(codeLocationBeforeBranchOffset, branchInfo.branchLengthOverride()),
@@ -397,7 +398,7 @@ public class ZAssembler
 			codeSeq.writeNextByte(operandTypesEncoded);
 	}
 
-	private void writeEncodedBranchOffset(int branchOffsetEncodedOrZero, BranchInfo info)
+	private void appendEncodedBranchOffset(int branchOffsetEncodedOrZero, BranchInfo info)
 	{
 		boolean isValueShort = isBranchOffsetShort(branchOffsetEncodedOrZero);
 		boolean isShort;
@@ -587,6 +588,7 @@ public class ZAssembler
 				switch(automaticField)
 				{
 					case FileLength -> references.add(new Reference(new HeaderFieldReferenceSource(FileLength), FileLengthForHeader));
+					case Version -> HeaderParser.setFieldUnchecked(header, Version, version);
 					default -> throw new IllegalStateException("Field " + automaticField
 							+ " is supposedly auto, but is not handled by the assembler!? This is an assembler bug.");
 				}

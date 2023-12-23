@@ -1,6 +1,5 @@
 .ZVERSION 3
 
-.ZHEADER Version 3
 .ZHEADER StatLineType 0
 .ZHEADER StoryfileSplit 0
 .ZHEADER Tandy 0
@@ -10,18 +9,5 @@
 
 .ZHEADER InitialPC15 entry
 entry:
-
-je 1 2 ?label1[longbranch]
-label1:
-je 1 2 ?label1 //[shortbranch]
-je 3 4 ?rfalse
-je 5 6 ?rtrue
-je 1 2 ?0
-je 1 2 ?1[longbranch]
-je 1 2 ?-3
-je 1 2 ?61[shortbranch]
-je 1 2 ?62 //[shortbranch]
-je 1 2 ?63
-je 1 2 ?64
-jz 1 ?label1
+print "Hello World!"
 quit
