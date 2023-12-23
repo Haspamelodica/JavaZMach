@@ -4,7 +4,7 @@ import static net.haspamelodica.javazmach.assembler.core.SimpleReferenceTarget.F
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintBytesChecked;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
-import static net.haspamelodica.javazmach.core.header.HeaderField.Version;
+import static net.haspamelodica.javazmach.core.header.HeaderField.*;
 import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.EXTENDED;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.LONG;
@@ -55,7 +55,7 @@ import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssembler
 {
-	private static final Set<HeaderField> AUTO_FIELDS = Set.of(FileLength, Version);
+	private static final Set<HeaderField> AUTO_FIELDS = Set.of(FileLength, Version, AlphabetTableLoc);
 
 	private final int					version;
 	private final Map<String, Opcode>	opcodesByNameLowercase;
@@ -542,6 +542,13 @@ public class ZAssembler
 		int codeStart;
 		int codeEnd;
 		int storyfileSize;
+		int storyfileSizeDivisor = switch(version)
+		{
+			case 1, 2, 3 -> 2;
+			case 4, 5 -> 4;
+			case 6, 7, 8 -> 8;
+			default -> throw new IllegalStateException("Unknown version: " + version + "; don't know how file length is stored");
+		};
 
 		// Try filling out references until sizes and code locations stop changing.
 		boolean sizeOrCodeLocationChanged;
@@ -555,6 +562,9 @@ public class ZAssembler
 			codeStart = headerEnd;
 			codeEnd = codeStart + code.currentSize();
 			storyfileSize = codeEnd;
+			// Conecptually VERY inefficient, but in practice probably not too bad.
+			while(storyfileSize % storyfileSizeDivisor != 0)
+				storyfileSize ++;
 
 			for(Reference ref : references)
 			{
@@ -562,13 +572,7 @@ public class ZAssembler
 				{
 					case SimpleReferenceTarget referent -> switch(referent)
 					{
-						case FileLengthForHeader -> switch(version)
-						{
-							case 1, 2, 3 -> storyfileSize / 2;
-							case 4, 5 -> storyfileSize / 4;
-							case 6, 7, 8 -> storyfileSize / 8;
-							default -> throw new IllegalStateException("Unknown version: " + version + "; don't know how file length is stored");
-						};
+						case FileLengthForHeader -> storyfileSize / storyfileSizeDivisor;
 					};
 					case CodeLabelAbsoluteReference referent -> codeLabelLocations.get(referent.label()).relAddr() + codeStart;
 					case CodeLabelRelativeReference referent -> codeLabelLocations.get(referent.label()).relAddr() - referent.loc().relAddr();
@@ -626,6 +630,7 @@ public class ZAssembler
 		byte[] result = new byte[storyfileSize];
 		System.arraycopy(header.data(), 0, result, headerStart, header.currentSize());
 		System.arraycopy(code.data(), 0, result, codeStart, code.currentSize());
+		// No need to care for padding: If storyfile is padded, the padding bytes will already be 0.
 		return result;
 	}
 
@@ -648,6 +653,8 @@ public class ZAssembler
 				{
 					case FileLength -> references.add(new Reference(new HeaderFieldReferenceSource(FileLength), FileLengthForHeader));
 					case Version -> HeaderParser.setFieldUnchecked(header, Version, version);
+					// we don't support custom alphabets (yet), so set this to 0
+					case AlphabetTableLoc -> HeaderParser.setFieldUnchecked(header, AlphabetTableLoc, 0);
 					default -> throw new IllegalStateException("Field " + automaticField
 							+ " is supposedly auto, but is not handled by the assembler!? This is an assembler bug.");
 				}
