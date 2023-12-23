@@ -9,5 +9,5 @@
 
 .ZHEADER InitialPC15 entry
 entry:
-print "Hello World!\n"
+print "Hello World!"
 quit

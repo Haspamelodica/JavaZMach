@@ -546,6 +546,7 @@ public class ZInterpreter
 				reset();
 				break;
 			case quit:
+				ioCard.flushBuffer();
 				return false;
 			case verify:
 				int expectedChecksum = headerParser.getField(FileChecksum);

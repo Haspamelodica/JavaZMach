@@ -384,7 +384,7 @@ public class IOCard
 		flushBuffer();
 		videoCard.flushScreen();
 	}
-	private void flushBuffer()
+	public void flushBuffer()
 	{
 		WindowPropsAttrs properties = currentWindowProperties;
 		int bufferPrintIndex;
