@@ -1,4 +1,4 @@
-package net.haspamelodica.javazmach.assembler;
+package net.haspamelodica.javazmach.assembler.core;
 
 import java.util.Arrays;
 

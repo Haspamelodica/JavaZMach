@@ -582,6 +582,7 @@ public class ZInterpreter
 	{
 		int fileLengthField = headerParser.getField(FileLength);
 		//Actually, version 1-2 can't occur, since verify exists since V3
+		//TODO z1point1 says even V1 uses scaling of 2.
 		int fileLengthScaleFactor = version > 5 ? 8 : (version > 3 ? 4 : (version > 2 ? 2 : 1));
 		int checksum = 0;
 		for(int a = fileLengthField * fileLengthScaleFactor - 1; a > 0x3F; a --)

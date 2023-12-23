@@ -38,8 +38,10 @@ public class JavaZMachRunner
 					config.setString(key, value);
 			}
 		}
-		if(storyfilePath != null)
-			config.setString("storyfile_path", storyfilePath);
+		if(storyfilePath == null)
+			throw new IllegalStateException("No storyfile given");
+
+		config.setString("storyfile_path", storyfilePath);
 		return config;
 	}
 	public static void run(GlobalConfig config, VideoCard videoCard, UnicodeZSCIIConverter unicodeZSCIIConverter) throws IOException

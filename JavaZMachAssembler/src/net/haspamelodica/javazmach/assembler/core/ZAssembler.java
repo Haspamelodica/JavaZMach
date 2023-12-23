@@ -9,7 +9,6 @@ import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.EXTENDED;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.LONG;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.SHORT;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.VARIABLE;
-import static net.haspamelodica.javazmach.core.instructions.OpcodeKind.OP0;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeKind.VAR;
 
 import java.math.BigInteger;
@@ -24,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import net.haspamelodica.javazmach.assembler.NoRangeCheckMemory;
 import net.haspamelodica.javazmach.assembler.model.BranchInfo;
 import net.haspamelodica.javazmach.assembler.model.ConstantByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ConstantByteSequenceElement;
@@ -48,7 +46,6 @@ import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
-
 
 public class ZAssembler
 {
@@ -246,9 +243,26 @@ public class ZAssembler
 			throw new IllegalArgumentException("Opcode " + opcode + " is text, but no text was given: " + instruction);
 
 		List<Operand> operands = instruction.operands();
-		//TODO only warn instead; do a check failing hard once form is known
+
+		if(operands.size() < switch(opcode.range)
+		{
+			case OP0, OP2, VAR, EXT -> 0;
+			case OP1 -> 1;
+		})
+			throw new IllegalArgumentException("Too few operands for " + opcode.range + " instruction; not encodeable: " + instruction);
+
+		if(operands.size() > switch(opcode.range)
+		{
+			case OP0 -> 0;
+			case OP1 -> 1;
+			// yes, 4 / 8 even for OP2 - 4 / 8 operands are actually encodeable for OP2.
+			// Case in point: je, which is OP2, takes up to 4 operands.
+			case OP2, VAR, EXT -> opcode.hasTwoOperandTypeBytes ? 8 : 4;
+		})
+			throw new IllegalArgumentException("Too many operands for " + opcode.range + " instruction; not encodeable: " + instruction);
+
 		if(operands.size() < opcode.minArgs || operands.size() > opcode.maxArgs)
-			throw new IllegalArgumentException("Incorrect number of arguments given for opcode " + opcode
+			System.err.println("WARNING: Incorrect number of operands given for opcode " + opcode
 					+ ": expected " + opcode.minArgs + (opcode.maxArgs != opcode.minArgs ? "-" + opcode.maxArgs : "")
 					+ ", but was " + operands.size() + ": " + instruction);
 
@@ -297,12 +311,10 @@ public class ZAssembler
 			case SHORT -> codeSeq.writeNextByte(0
 					// form SHORT: bits 7-6 are 0b10.
 					| (0b10 << 6)
-					// kind: implicitly OP0 / OP1, depending on operand type (omitted means OP0).
-					// Note that this implicitly relies on the operands count check above,
-					// as well as that the Opcode enum is sane in that
-					// all opcodes of OP0 / OP1 do in fact require exactly 0 / 1 operand.
+					// kind: implicitly OP0 / OP1, depending on operand type: omitted means OP0.
+					// No need to check this here; operand count is already checked above.
 					// operand type (if present): bits 5-4
-					| ((opcode.range == OP0 ? 0b11 : operands.get(0).encodeTypeTwoBits()) << 4)
+					| ((operands.size() == 0 ? 0b11 : operands.get(0).encodeTypeTwoBits()) << 4)
 					// opcode: bits 3-0.
 					| (opcode.opcodeNumber << 0));
 			case EXTENDED ->
