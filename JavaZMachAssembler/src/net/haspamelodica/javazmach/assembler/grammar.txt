@@ -73,9 +73,9 @@ MaybeBranchInfoBranchOnConditionFalse
   | '~' { branchOnConditionFalse[-1] = true(); } ;
 
 BranchTarget
- -> 'rfalse'      { branchTarget[-1] = rfalse(); }
-  | 'rtrue'       { branchTarget[-1] = rtrue(); }
-  | IntegralValue { branchTarget[-1] = value[0]; } ;
+ -> 'rfalse'             { branchTarget[-1] = rfalse(); }
+  | 'rtrue'              { branchTarget[-1] = rtrue(); }
+  | IntegralValueNoTilde { branchTarget[-1] = value[0]; } ;
 
 MaybeBranchLengthOverride
  ->                      { branchLengthOverride[-1] = optBranchLengthEmpty(); } 
@@ -111,50 +111,76 @@ ByteSequenceElement
 ByteSequenceElementNoIntegralLiteral
  -> 'text' { element[-1] = StringLiteral(parseText([0])); } ;
 
+// NoTilde variant disallows a ~ at the start.
+// Needed because otherwise the grammar would be ambiguous because of clash with branch-on-condition-false.
 IntegralValue -> IExpr { value[-1] = value[0]; } ;
+IntegralValueNoTilde -> IExprNoTilde { value[-1] = value[0]; } ;
 
 IExpr -> IExprOr { value[-1] = value[0]; } ;
+IExprNoTilde -> IExprOrNoTilde { value[-1] = value[0]; } ;
 
 IExprOr
- -> IExprXor { value[-1] = value[0]; }
+ -> IExprXor             { value[-1] = value[0]; }
   | IExprOr '|' IExprXor { value[-1] = BinaryExpression(value[0], BITWISE_OR(), value[2]); } ;
+IExprOrNoTilde
+ -> IExprXorNoTilde             { value[-1] = value[0]; }
+  | IExprOrNoTilde '|' IExprXor { value[-1] = BinaryExpression(value[0], BITWISE_OR(), value[2]); } ;
 
 IExprXor
- -> IExprAnd { value[-1] = value[0]; }
+ -> IExprAnd              { value[-1] = value[0]; }
   | IExprXor '^' IExprAnd { value[-1] = BinaryExpression(value[0], BITWISE_XOR(), value[2]); } ;
+IExprXorNoTilde
+ -> IExprAndNoTilde              { value[-1] = value[0]; }
+  | IExprXorNoTilde '^' IExprAnd { value[-1] = BinaryExpression(value[0], BITWISE_XOR(), value[2]); } ;
 
 IExprAnd
- -> IExprShift { value[-1] = value[0]; }
+ -> IExprShift              { value[-1] = value[0]; }
   | IExprAnd '&' IExprShift { value[-1] = BinaryExpression(value[0], BITWISE_AND(), value[2]); } ;
+IExprAndNoTilde
+ -> IExprShiftNoTilde              { value[-1] = value[0]; }
+  | IExprAndNoTilde '&' IExprShift { value[-1] = BinaryExpression(value[0], BITWISE_AND(), value[2]); } ;
 
 IExprShift
- -> IExprAdditive { value[-1] = value[0]; }
+ -> IExprAdditive                 { value[-1] = value[0]; }
   | IExprShift '<<' IExprAdditive { value[-1] = BinaryExpression(value[0], LSHIFT(), value[2]); }
   | IExprShift '>>' IExprAdditive { value[-1] = BinaryExpression(value[0], RSHIFT(), value[2]); } ;
+IExprShiftNoTilde
+ -> IExprAdditiveNoTilde                 { value[-1] = value[0]; }
+  | IExprShiftNoTilde '<<' IExprAdditive { value[-1] = BinaryExpression(value[0], LSHIFT(), value[2]); }
+  | IExprShiftNoTilde '>>' IExprAdditive { value[-1] = BinaryExpression(value[0], RSHIFT(), value[2]); } ;
 
 IExprAdditive
- -> IExprMultiplicative { value[-1] = value[0]; }
+ -> IExprMultiplicative                   { value[-1] = value[0]; }
   | IExprAdditive '+' IExprMultiplicative { value[-1] = BinaryExpression(value[0], ADD(), value[2]); }
   | IExprAdditive '-' IExprMultiplicative { value[-1] = BinaryExpression(value[0], SUBTRACT(), value[2]); } ;
+IExprAdditiveNoTilde
+ -> IExprMultiplicativeNoTilde                   { value[-1] = value[0]; }
+  | IExprAdditiveNoTilde '+' IExprMultiplicative { value[-1] = BinaryExpression(value[0], ADD(), value[2]); }
+  | IExprAdditiveNoTilde '-' IExprMultiplicative { value[-1] = BinaryExpression(value[0], SUBTRACT(), value[2]); } ;
 
 IExprMultiplicative
- -> IExprUnary { value[-1] = value[0]; }
+ -> IExprUnary                         { value[-1] = value[0]; }
   | IExprMultiplicative '*' IExprUnary { value[-1] = BinaryExpression(value[0], MULTIPLY(), value[2]); }
   | IExprMultiplicative '/' IExprUnary { value[-1] = BinaryExpression(value[0], DIVIDE(), value[2]); }
   | IExprMultiplicative '%' IExprUnary { value[-1] = BinaryExpression(value[0], MODULO(), value[2]); } ;
+IExprMultiplicativeNoTilde
+ -> IExprUnaryNoTilde                         { value[-1] = value[0]; }
+  | IExprMultiplicativeNoTilde '*' IExprUnary { value[-1] = BinaryExpression(value[0], MULTIPLY(), value[2]); }
+  | IExprMultiplicativeNoTilde '/' IExprUnary { value[-1] = BinaryExpression(value[0], DIVIDE(), value[2]); }
+  | IExprMultiplicativeNoTilde '%' IExprUnary { value[-1] = BinaryExpression(value[0], MODULO(), value[2]); } ;
 
 IExprUnary
- -> IExprPrimary { value[-1] = value[0]; }
+ -> IExprUnaryNoTilde { value[-1] = value[0]; }
+  | '~' IExprUnary    { value[-1] = UnaryExpression(BITWISE_NOT(), value[1]); } ;
+IExprUnaryNoTilde
+ -> IExprPrimary   { value[-1] = value[0]; }
   | '+' IExprUnary { value[-1] = value[1]; }
-  | '-' IExprUnary { value[-1] = UnaryExpression(NEGATE(), value[1]); }
-//TODO using single tilde would make the grammar ambiguous because of clash with branch-on-condition-false.
-// Instead of this uglyness, duplicate expression tree to IExprNoTilde / IExpr.
-  | ".~" IExprUnary { value[-1] = UnaryExpression(BITWISE_NOT(), value[2]); } ;
+  | '-' IExprUnary { value[-1] = UnaryExpression(NEGATE(), value[1]); } ;
 
 IExprPrimary
  -> IntegralLiteral { value[-1] = literal[0]; }
-  | LabelReference { value[-1] = label[0]; }
-  | '(' IExpr ')' { value[-1] = value[1]; } ;
+  | LabelReference  { value[-1] = label[0]; }
+  | '(' IExpr ')'   { value[-1] = value[1]; } ;
 
 LabelReference -> 'ident' { label[-1] = LabelReference(str([0])); } ;
 
