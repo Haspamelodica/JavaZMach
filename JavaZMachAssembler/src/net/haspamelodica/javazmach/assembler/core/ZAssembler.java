@@ -3,8 +3,9 @@ package net.haspamelodica.javazmach.assembler.core;
 import static net.haspamelodica.javazmach.assembler.core.SimpleReferenceTarget.FileLengthForHeader;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintBytesChecked;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
+import static net.haspamelodica.javazmach.core.header.HeaderField.AlphabetTableLoc;
 import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
-import static net.haspamelodica.javazmach.core.header.HeaderField.*;
+import static net.haspamelodica.javazmach.core.header.HeaderField.Version;
 import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.EXTENDED;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.LONG;
@@ -25,19 +26,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.haspamelodica.javazmach.assembler.model.BranchInfo;
+import net.haspamelodica.javazmach.assembler.model.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.ConstantByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ConstantByteSequenceElement;
-import net.haspamelodica.javazmach.assembler.model.ConstantChar;
-import net.haspamelodica.javazmach.assembler.model.ConstantInteger;
-import net.haspamelodica.javazmach.assembler.model.ConstantString;
 import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
-import net.haspamelodica.javazmach.assembler.model.Label;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
+import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
+import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.Operand;
 import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
+import net.haspamelodica.javazmach.assembler.model.StringLiteral;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
@@ -147,7 +148,7 @@ public class ZAssembler
 
 		switch(headerEntry.value())
 		{
-			case ConstantInteger constant ->
+			case NumberLiteral constant ->
 			{
 				if(!isBitfieldEntry)
 				{
@@ -179,9 +180,9 @@ public class ZAssembler
 						.stream()
 						.mapToInt(e -> switch(e)
 						{
-							case ConstantInteger elementInteger -> 1;
-							case ConstantString elementString -> elementString.value().length();
-							case ConstantChar elementChar -> 1;
+							case NumberLiteral elementInteger -> 1;
+							case StringLiteral elementString -> elementString.value().length();
+							case CharLiteral elementChar -> 1;
 						})
 						.sum();
 				byte[] value = new byte[length];
@@ -189,14 +190,14 @@ public class ZAssembler
 				for(ConstantByteSequenceElement elementUncasted : constant.entries())
 					switch(elementUncasted)
 					{
-						case ConstantInteger element -> value[i ++] = (byte) bigintIntChecked(8,
+						case NumberLiteral element -> value[i ++] = (byte) bigintIntChecked(8,
 								element.value(), bigint -> "byte constant out of range: " + bigint + " for field " + field);
-						case ConstantString element ->
+						case StringLiteral element ->
 						{
 							System.arraycopy(element.value().getBytes(StandardCharsets.US_ASCII), 0, value, 0, element.value().length());
 							i += element.value().length();
 						}
-						case ConstantChar element ->
+						case CharLiteral element ->
 						{
 							if((element.value() & ~0x7f) != 0)
 								throw new IllegalArgumentException("char constant out of range (not ASCII): " + element.value()
@@ -218,11 +219,11 @@ public class ZAssembler
 
 				HeaderParser.setFieldUncheckedBytes(header, field, value);
 			}
-			case Label label ->
+			case LabelReference labelReference ->
 			{
 				if(isBitfieldEntry)
 					throw new IllegalArgumentException("Setting a bitfield entry to a label is nonsensical");
-				references.add(new Reference(new HeaderFieldReferenceSource(field), new CodeLabelAbsoluteReference(label.name())));
+				references.add(new Reference(new HeaderFieldReferenceSource(field), new CodeLabelAbsoluteReference(labelReference.name())));
 			}
 		}
 	}
@@ -321,9 +322,9 @@ public class ZAssembler
 					| (0 << 7)
 					// kind: implicitly OP2.
 					// operand type 1: bit 6
-					| (operands.get(0).encodeTypeOneBit() << 6)
+					| (operands.get(0).encodeTypeOneBitAssumePossible() << 6)
 					// operand type 2: bit 5
-					| (operands.get(1).encodeTypeOneBit() << 5)
+					| (operands.get(1).encodeTypeOneBitAssumePossible() << 5)
 					// opcode: bits 4-0.
 					| (opcode.opcodeNumber << 0));
 			case SHORT -> codeSeq.writeNextByte(0
@@ -369,7 +370,7 @@ public class ZAssembler
 						case rtrue -> appendEncodedBranchOffset(1, branchInfo);
 					}
 				}
-				case ConstantInteger target ->
+				case NumberLiteral target ->
 				{
 					BigInteger branchTargetEncoded = target.value().add(BigInteger.TWO);
 					if(branchTargetEncoded.equals(BigInteger.ZERO) || branchTargetEncoded.equals(BigInteger.ONE))
@@ -378,7 +379,7 @@ public class ZAssembler
 					appendEncodedBranchOffset(bigintIntChecked(14, branchTargetEncoded,
 							bte -> "Branch target out of range: " + target.value()), branchInfo);
 				}
-				case Label target ->
+				case LabelReference target ->
 				{
 					// Here, we write a dummy value as the branch target, which will later be overwritten by the reference.
 					// At first, optimistically assume the branch target can be assembled in short form, so choose 0 as the dummy value.
@@ -497,7 +498,7 @@ public class ZAssembler
 	{
 		switch(operand)
 		{
-			case ConstantInteger constant ->
+			case NumberLiteral constant ->
 			{
 				BigInteger value = constant.value();
 				if(constant.isSmallConstant())
@@ -525,6 +526,7 @@ public class ZAssembler
 			}
 			case GlobalVariable var ->
 			{
+				//TODO check against global variable table length
 				if(var.index() < 0 || var.index() > 0xef)
 					throw new IllegalArgumentException("Global variable out of range: " + var.index());
 				yield var.index() + 0x10;

@@ -2,8 +2,8 @@ File
  -> MaybeVersionHeader FileEntries { file[-1] = ZAssemblerFile(version[0], fileEntries[1]); };
 
 MaybeVersionHeader
- ->                               { version[-1] = optIntEmpty(); }
-  | '.' 'zversion' PositiveNumber { version[-1] = optIntOf(int(bigint[2])); } ;
+ ->                              { version[-1] = optIntEmpty(); }
+  | '.' 'zversion' NumberLiteral { version[-1] = optIntOf(int(bigint[2])); } ;
 
 FileEntries
  ->                       { fileEntries[-1] = emptyAEList(); }
@@ -18,26 +18,11 @@ HeaderEntry
  -> '.' 'zheader' 'ident' HeaderValue { headerEntry[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
 
 HeaderValue
- -> SignedNumber                                { headerValue[-1] = ConstantInteger(bigint[0]); }
-  | ByteSequenceElementNoSignedNumber           { headerValue[-1] = ConstantByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
-  | ByteSequenceEndingComma ByteSequenceElement { headerValue[-1] = ConstantByteSequence(appendByteSequenceList(elements[0], element[1])); }
-  | Label                                       { headerValue[-1] = label[0]; } ;
+ -> IntegralValue                        { headerValue[-1] = value[0]; }
+  | ByteSequenceElementNoIntegralLiteral { headerValue[-1] = ByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
+  | ByteSequenceMin2                     { headerValue[-1] = sequence[0]; } ;
 
-// TODO don't require commas here, but instead between operands.
-ByteSequenceEndingComma
- -> ByteSequenceElement ','                         { elements[-1] = appendByteSequenceList(emptyByteSequenceList(), element[0]); }
-  | ByteSequenceEndingComma ByteSequenceElement ',' { elements[-1] = appendByteSequenceList(elements[0], element[1]); } ;
-
-ByteSequenceElement
- -> SignedNumber                      { element[-1] = ConstantInteger(bigint[0]); }
-  | ByteSequenceElementNoSignedNumber { element[-1] = element[0]; } ;
-
-ByteSequenceElementNoSignedNumber
- -> 'char' { element[-1] = ConstantChar(parseChar([0])); }
-  | 'text' { element[-1] = ConstantString(parseText([0])); } ;
-
-LabelDeclaration
- -> 'ident' ':' { labelDeclaration[-1] = LabelDeclaration(str([0])); } ;
+LabelDeclaration -> 'ident' ':' { labelDeclaration[-1] = LabelDeclaration(str([0])); } ;
 
 Instruction -> Opcode MaybeForm Operands MaybeStoreTarget MaybeBranchInfo MaybeText { instruction[-1] =
     AssemblerZMachInstruction(str(str[0]), form[1], operands[2], storeTarget[3], branchInfo[4], text[5]); } ;
@@ -60,12 +45,19 @@ Form
   | 'var' { formRaw[-1] = VARIABLE(); } ;
 
 Operands
- ->                  { operands[-1] = emptyOperandList(); }
-  | Operands Operand { operands[-1] = appendOperandList(operands[0], operand[1]); } ;
+ ->              { operands[-1] = emptyOperandList(); }
+  | Operand      { operands[-1] = appendOperandList(emptyOperandList(), operand[0]); }
+  | OperandsMin2 { operands[-1] = operands[0]; } ;
+
+OperandsMin2 -> OperandsEndingComma Operand { operands[-1] = appendOperandList(operands[0], operand[1]); } ;
+
+OperandsEndingComma
+ -> Operand ','                     { operands[-1] = appendOperandList(emptyOperandList(), operand[0]); }
+  | OperandsEndingComma Operand ',' { operands[-1] = appendOperandList(operands[0], operand[1]); } ;
 
 Operand
- -> ConstantInteger { operand[-1] = constant[0]; }
-  | Variable        { operand[-1] = variable[0]; } ;
+ -> IntegralValue { operand[-1] = value[0]; }
+  | Variable      { operand[-1] = variable[0]; } ;
 
 MaybeStoreTarget
  ->               { storeTarget[-1] = optVariableEmpty(); }
@@ -81,10 +73,9 @@ MaybeBranchInfoBranchOnConditionFalse
   | '~' { branchOnConditionFalse[-1] = true(); } ;
 
 BranchTarget
- -> 'rfalse'        { branchTarget[-1] = rfalse(); }
-  | 'rtrue'         { branchTarget[-1] = rtrue(); }
-  | ConstantInteger { branchTarget[-1] = constant[0]; }
-  | Label           { branchTarget[-1] = label[0]; } ;
+ -> 'rfalse'      { branchTarget[-1] = rfalse(); }
+  | 'rtrue'       { branchTarget[-1] = rtrue(); }
+  | IntegralValue { branchTarget[-1] = value[0]; } ;
 
 MaybeBranchLengthOverride
  ->                      { branchLengthOverride[-1] = optBranchLengthEmpty(); } 
@@ -102,7 +93,70 @@ ZStringElements
 ZStringElement
  -> 'text' { element[-1] = ZStringElement(parseText([0])); } ;
 
-Label -> 'ident' { label[-1] = Label(str([0])); } ;
+//ByteSequence
+// -> ByteSequenceElement { sequence[-1] = ByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
+//  | ByteSequenceMin2    { sequence[-1] = sequence[0]; } ;
+
+ByteSequenceMin2 -> ByteSequenceEndingComma ByteSequenceElement
+  { sequence[-1] = ByteSequence(appendByteSequenceList(elements[0], element[1])); } ;
+
+ByteSequenceEndingComma
+ -> ByteSequenceElement ','                         { elements[-1] = appendByteSequenceList(emptyByteSequenceList(), element[0]); }
+  | ByteSequenceEndingComma ByteSequenceElement ',' { elements[-1] = appendByteSequenceList(elements[0], element[1]); } ;
+
+ByteSequenceElement
+ -> IntegralLiteral                      { element[-1] = literal[0]; }
+  | ByteSequenceElementNoIntegralLiteral { element[-1] = element[0]; } ;
+
+ByteSequenceElementNoIntegralLiteral
+ -> 'text' { element[-1] = StringLiteral(parseText([0])); } ;
+
+IntegralValue -> IExpr { value[-1] = value[0]; } ;
+
+IExpr -> IExprOr { value[-1] = value[0]; } ;
+
+IExprOr
+ -> IExprXor { value[-1] = value[0]; }
+  | IExprOr '|' IExprXor { value[-1] = BinaryExpression(value[0], BITWISE_OR(), value[2]); } ;
+
+IExprXor
+ -> IExprAnd { value[-1] = value[0]; }
+  | IExprXor '^' IExprAnd { value[-1] = BinaryExpression(value[0], BITWISE_XOR(), value[2]); } ;
+
+IExprAnd
+ -> IExprShift { value[-1] = value[0]; }
+  | IExprAnd '&' IExprShift { value[-1] = BinaryExpression(value[0], BITWISE_AND(), value[2]); } ;
+
+IExprShift
+ -> IExprAdditive { value[-1] = value[0]; }
+  | IExprShift '<<' IExprAdditive { value[-1] = BinaryExpression(value[0], LSHIFT(), value[2]); }
+  | IExprShift '>>' IExprAdditive { value[-1] = BinaryExpression(value[0], RSHIFT(), value[2]); } ;
+
+IExprAdditive
+ -> IExprMultiplicative { value[-1] = value[0]; }
+  | IExprAdditive '+' IExprMultiplicative { value[-1] = BinaryExpression(value[0], ADD(), value[2]); }
+  | IExprAdditive '-' IExprMultiplicative { value[-1] = BinaryExpression(value[0], SUBTRACT(), value[2]); } ;
+
+IExprMultiplicative
+ -> IExprUnary { value[-1] = value[0]; }
+  | IExprMultiplicative '*' IExprUnary { value[-1] = BinaryExpression(value[0], MULTIPLY(), value[2]); }
+  | IExprMultiplicative '/' IExprUnary { value[-1] = BinaryExpression(value[0], DIVIDE(), value[2]); }
+  | IExprMultiplicative '%' IExprUnary { value[-1] = BinaryExpression(value[0], MODULO(), value[2]); } ;
+
+IExprUnary
+ -> IExprPrimary { value[-1] = value[0]; }
+  | '+' IExprUnary { value[-1] = value[1]; }
+  | '-' IExprUnary { value[-1] = UnaryExpression(NEGATE(), value[1]); }
+//TODO using single tilde would make the grammar ambiguous because of clash with branch-on-condition-false.
+// Instead of this uglyness, duplicate expression tree to IExprNoTilde / IExpr.
+  | ".~" IExprUnary { value[-1] = UnaryExpression(BITWISE_NOT(), value[2]); } ;
+
+IExprPrimary
+ -> IntegralLiteral { value[-1] = literal[0]; }
+  | LabelReference { value[-1] = label[0]; }
+  | '(' IExpr ')' { value[-1] = value[1]; } ;
+
+LabelReference -> 'ident' { label[-1] = LabelReference(str([0])); } ;
 
 // For better error handling, each terminal allows all digits,
 // and errors are catched in the function int().
@@ -119,16 +173,13 @@ Variable
   | 'gvar_bin_0b' { variable[-1] = GlobalVariable(int(parseBigInt(_3(),  _2(), [0]))); }
   | 'gvar_bin_$$' { variable[-1] = GlobalVariable(int(parseBigInt(_3(),  _2(), [0]))); } ;
 
-ConstantInteger -> SignedNumber { constant[-1] = ConstantInteger(bigint[0]); } ;
-
-SignedNumber
- -> PositiveNumber     { bigint[-1] = bigint[0]; }
-  | '+' PositiveNumber { bigint[-1] = bigint[1]; }
-  | '-' PositiveNumber { bigint[-1] = neg(bigint[1]); } ;
+IntegralLiteral
+ -> NumberLiteral { literal[-1] = NumberLiteral(bigint[0]); }
+  | 'char'        { literal[-1] = CharLiteral(parseChar([0])); } ;
 
 // For better error handling, each terminal allows all digits,
 // and errors are catched in the function parseBigInt().
-PositiveNumber
+NumberLiteral
  -> 'pos_number_dec'    { bigint[-1] = parseBigInt(_0(), _10(), [0]); }
   | 'pos_number_hex_0x' { bigint[-1] = parseBigInt(_2(), _16(), [0]); }
   | 'pos_number_hex_#'  { bigint[-1] = parseBigInt(_1(), _16(), [0]); }

@@ -16,23 +16,26 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.model.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.BranchInfo;
 import net.haspamelodica.javazmach.assembler.model.BranchLength;
 import net.haspamelodica.javazmach.assembler.model.BranchTarget;
-import net.haspamelodica.javazmach.assembler.model.ConstantByteSequence;
-import net.haspamelodica.javazmach.assembler.model.ConstantByteSequenceElement;
-import net.haspamelodica.javazmach.assembler.model.ConstantChar;
-import net.haspamelodica.javazmach.assembler.model.ConstantInteger;
-import net.haspamelodica.javazmach.assembler.model.ConstantString;
+import net.haspamelodica.javazmach.assembler.model.ByteSequence;
+import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
+import net.haspamelodica.javazmach.assembler.model.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.HeaderValue;
-import net.haspamelodica.javazmach.assembler.model.Label;
+import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
+import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
+import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.Operand;
 import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
+import net.haspamelodica.javazmach.assembler.model.StringLiteral;
+import net.haspamelodica.javazmach.assembler.model.UnaryExpression;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
@@ -69,7 +72,7 @@ public class ZAssemblerParser
 	{
 		ParameterizedType T_ListZAssemblyFileEntry = new ParameterizedTypeImpl(null, List.class, ZAssemblerFileEntry.class);
 		ParameterizedType T_ListOperand = new ParameterizedTypeImpl(null, List.class, Operand.class);
-		ParameterizedType T_ListByteSequenceElement = new ParameterizedTypeImpl(null, List.class, ConstantByteSequenceElement.class);
+		ParameterizedType T_ListByteSequenceElement = new ParameterizedTypeImpl(null, List.class, ByteSequenceElement.class);
 		ParameterizedType T_ListZStringElement = new ParameterizedTypeImpl(null, List.class, ZStringElement.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
@@ -79,7 +82,7 @@ public class ZAssemblerParser
 
 		Map<String, TypedFunction> functionsByName = new HashMap<>();
 
-		// constructors and enum constants
+		// constructors
 		functionsByName.put("ZAssemblerFile", TypedFunction.buildT(ZAssemblerFile::new,
 				ZAssemblerFile.class, OptionalInt.class, T_ListZAssemblyFileEntry));
 		functionsByName.put("HeaderEntry", TypedFunction.build(HeaderEntry::new, HeaderEntry.class, String.class, HeaderValue.class));
@@ -88,16 +91,22 @@ public class ZAssemblerParser
 				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptVariable, T_OptBranchInfo, T_OptZString));
 		functionsByName.put("BranchInfo", TypedFunction.buildT(BranchInfo::new,
 				BranchInfo.class, Boolean.class, BranchTarget.class, T_OptBLO));
-		functionsByName.put("Label", TypedFunction.build(Label::new, Label.class, String.class));
+		functionsByName.put("LabelReference", TypedFunction.build(LabelReference::new, LabelReference.class, String.class));
 		functionsByName.put("LocalVariable", TypedFunction.build(LocalVariable::new, LocalVariable.class, Integer.class));
 		functionsByName.put("GlobalVariable", TypedFunction.build(GlobalVariable::new, GlobalVariable.class, Integer.class));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
 		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
-		functionsByName.put("ConstantByteSequence", TypedFunction.buildT(ConstantByteSequence::new,
-				ConstantByteSequence.class, T_ListByteSequenceElement));
-		functionsByName.put("ConstantInteger", TypedFunction.build(ConstantInteger::new, ConstantInteger.class, BigInteger.class));
-		functionsByName.put("ConstantChar", TypedFunction.build(ConstantChar::new, ConstantChar.class, Character.class));
-		functionsByName.put("ConstantString", TypedFunction.build(ConstantString::new, ConstantString.class, String.class));
+		functionsByName.put("ByteSequence", TypedFunction.buildT(ByteSequence::new,
+				ByteSequence.class, T_ListByteSequenceElement));
+		functionsByName.put("BinaryExpression", TypedFunction.build(BinaryExpression::new,
+				BinaryExpression.class, IntegralValue.class, BinaryExpression.Op.class, IntegralValue.class));
+		functionsByName.put("UnaryExpression", TypedFunction.build(UnaryExpression::new,
+				UnaryExpression.class, UnaryExpression.Op.class, IntegralValue.class));
+		functionsByName.put("NumberLiteral", TypedFunction.build(NumberLiteral::new, NumberLiteral.class, BigInteger.class));
+		functionsByName.put("CharLiteral", TypedFunction.build(CharLiteral::new, CharLiteral.class, Character.class));
+		functionsByName.put("StringLiteral", TypedFunction.build(StringLiteral::new, StringLiteral.class, String.class));
+
+		// enum constants
 		functionsByName.put("LONGBRANCH", TypedFunction.build(() -> BranchLength.LONGBRANCH, BranchLength.class));
 		functionsByName.put("SHORTBRANCH", TypedFunction.build(() -> BranchLength.SHORTBRANCH, BranchLength.class));
 		functionsByName.put("rfalse", TypedFunction.build(() -> SimpleBranchTarget.rfalse, SimpleBranchTarget.class));
@@ -107,6 +116,18 @@ public class ZAssemblerParser
 		functionsByName.put("SHORT", TypedFunction.build(() -> OpcodeForm.SHORT, OpcodeForm.class));
 		functionsByName.put("EXTENDED", TypedFunction.build(() -> OpcodeForm.EXTENDED, OpcodeForm.class));
 		functionsByName.put("VARIABLE", TypedFunction.build(() -> OpcodeForm.VARIABLE, OpcodeForm.class));
+		functionsByName.put("BITWISE_OR", TypedFunction.build(() -> BinaryExpression.Op.BITWISE_OR, BinaryExpression.Op.class));
+		functionsByName.put("BITWISE_XOR", TypedFunction.build(() -> BinaryExpression.Op.BITWISE_XOR, BinaryExpression.Op.class));
+		functionsByName.put("BITWISE_AND", TypedFunction.build(() -> BinaryExpression.Op.BITWISE_AND, BinaryExpression.Op.class));
+		functionsByName.put("LSHIFT", TypedFunction.build(() -> BinaryExpression.Op.LSHIFT, BinaryExpression.Op.class));
+		functionsByName.put("RSHIFT", TypedFunction.build(() -> BinaryExpression.Op.RSHIFT, BinaryExpression.Op.class));
+		functionsByName.put("ADD", TypedFunction.build(() -> BinaryExpression.Op.ADD, BinaryExpression.Op.class));
+		functionsByName.put("SUBTRACT", TypedFunction.build(() -> BinaryExpression.Op.SUBTRACT, BinaryExpression.Op.class));
+		functionsByName.put("MULTIPLY", TypedFunction.build(() -> BinaryExpression.Op.MULTIPLY, BinaryExpression.Op.class));
+		functionsByName.put("DIVIDE", TypedFunction.build(() -> BinaryExpression.Op.DIVIDE, BinaryExpression.Op.class));
+		functionsByName.put("MODULO", TypedFunction.build(() -> BinaryExpression.Op.MODULO, BinaryExpression.Op.class));
+		functionsByName.put("NEGATE", TypedFunction.build(() -> UnaryExpression.Op.NEGATE, UnaryExpression.Op.class));
+		functionsByName.put("BITWISE_NOT", TypedFunction.build(() -> UnaryExpression.Op.BITWISE_NOT, UnaryExpression.Op.class));
 
 		// lists
 		functionsByName.put("emptyAEList", TypedFunction.buildT(ArrayList::new, T_ListZAssemblyFileEntry));
@@ -116,8 +137,8 @@ public class ZAssemblerParser
 		functionsByName.put("appendOperandList", TypedFunction.buildT(ZAssemblerParser::<Operand> appendList,
 				T_ListOperand, T_ListOperand, Operand.class));
 		functionsByName.put("emptyByteSequenceList", TypedFunction.buildT(ArrayList::new, T_ListByteSequenceElement));
-		functionsByName.put("appendByteSequenceList", TypedFunction.buildT(ZAssemblerParser::<ConstantByteSequenceElement> appendList,
-				T_ListByteSequenceElement, T_ListByteSequenceElement, ConstantByteSequenceElement.class));
+		functionsByName.put("appendByteSequenceList", TypedFunction.buildT(ZAssemblerParser::<ByteSequenceElement> appendList,
+				T_ListByteSequenceElement, T_ListByteSequenceElement, ByteSequenceElement.class));
 		functionsByName.put("emptyZStringElementList", TypedFunction.buildT(ArrayList::new, T_ListZStringElement));
 		functionsByName.put("appendZStringElementList", TypedFunction.buildT(ZAssemblerParser::<ZStringElement> appendList,
 				T_ListZStringElement, T_ListZStringElement, ZStringElement.class));
@@ -141,9 +162,7 @@ public class ZAssemblerParser
 		functionsByName.put("parseText", TypedFunction.build(ZAssemblerParser::parseText, String.class, CharString.class));
 		functionsByName.put("parseChar", TypedFunction.build(ZAssemblerParser::parseChar, Character.class, CharString.class));
 		functionsByName.put("parseBigInt", TypedFunction.build(ZAssemblerParser::parseBigInt, BigInteger.class, Integer.class, Integer.class, CharString.class));
-		functionsByName.put("neg", TypedFunction.build(BigInteger::negate, BigInteger.class, BigInteger.class));
 		functionsByName.put("int", TypedFunction.build(BigInteger::intValueExact, Integer.class, BigInteger.class));
-		functionsByName.put("byte", TypedFunction.build(BigInteger::byteValueExact, Byte.class, BigInteger.class));
 		functionsByName.put("_0", TypedFunction.build(() -> 0, Integer.class));
 		functionsByName.put("_1", TypedFunction.build(() -> 1, Integer.class));
 		functionsByName.put("_2", TypedFunction.build(() -> 2, Integer.class));

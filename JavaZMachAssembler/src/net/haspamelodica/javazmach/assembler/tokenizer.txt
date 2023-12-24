@@ -5,13 +5,12 @@ var = var|VAR ;
 
 zversion = zversion|ZVERSION ;
 zheader = zheader|ZHEADER ;
+routine = routine|ROUTINE ;
 
 : = : ;
 
 . = . ;
 , = , ;
-
-sp = sp|SP;
 
 -> = -\\> ;
 
@@ -26,20 +25,31 @@ shortbranch = shortbranch|SHORTBRANCH ;
 
 \; = \; ;
 
+| = \\| ;
+^ = \\^ ;
+& = & ;
+<< = \\<\\< ;
+>> = \\>\\> ;
 + = \\+ ;
 - = - ;
+* = \\* ;
+/ = / ;
+% = % ;
+( = \\( ;
+) = \\) ;
+
 pos_number_dec = [0-9]([0-9ac-fAC-F][0-9a-fA-F]*|) ;
 pos_number_hex_0x = 0[xX][0-9a-fA-F]* ;
 pos_number_hex_# = #[0-9a-fA-F]* ;
 pos_number_bin_0b = 0[bB][0-9a-fA-F]* ;
 pos_number_bin_$$ = $$[0-9a-fA-F]* ;
 
+sp = sp|SP;
 lvar_dec = [lL][0-9]([0-9ac-fAC-F][0-9a-fA-F]*|) ;
 lvar_hex_0x = [lL]0[xX][0-9a-fA-F]* ;
 lvar_hex_# = [lL]#[0-9a-fA-F]* ;
 lvar_bin_0b = [lL]0[bB][0-9a-fA-F]* ;
 lvar_bin_$$ = [lL]$$[0-9a-fA-F]* ;
-
 gvar_dec = [gG][0-9]([0-9ac-fAC-F][0-9a-fA-F]*|) ;
 gvar_hex_0x = [gG]0[xX][0-9a-fA-F]* ;
 gvar_hex_# = [gG]#[0-9a-fA-F]* ;
