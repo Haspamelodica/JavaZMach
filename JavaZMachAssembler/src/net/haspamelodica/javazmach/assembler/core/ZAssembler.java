@@ -1,9 +1,9 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-import static net.haspamelodica.javazmach.assembler.core.SimpleReferenceTarget.FileLengthForHeader;
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintBytesChecked;
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultInfo;
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.throwShortOverrideButNotShort;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.versionRangeString;
 import static net.haspamelodica.javazmach.core.header.HeaderField.AlphabetTableLoc;
 import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
@@ -14,7 +14,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,12 +21,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.core.CodeLocation.InstructionPart;
 import net.haspamelodica.javazmach.assembler.model.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
+import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
-import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.StringLiteral;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
@@ -45,8 +45,8 @@ public class ZAssembler
 	private final int					version;
 	private final Map<String, Opcode>	opcodesByNameLowercase;
 
-	private final NoRangeCheckMemory			header;
-	private final List<AssembledHeaderField>	assembledHeaderFields;
+	private final NoRangeCheckMemory					header;
+	private final List<AssembledIntegralHeaderField>	assembledHeaderFields;
 
 	private final Set<HeaderField>	setFields;
 	private final Set<HeaderField>	partiallySetBitfields;
@@ -54,7 +54,7 @@ public class ZAssembler
 	private final List<AssembledInstruction>	code;
 	private final NoRangeCheckMemory			codeMem;
 	private final SequentialMemoryWriteAccess	codeSeq;
-	private final Map<String, CodeLocation>		codeLabelLocations;
+	private final Map<String, Location>			labelLocations;
 
 	public ZAssembler(int version)
 	{
@@ -74,13 +74,13 @@ public class ZAssembler
 		this.codeSeq = new SequentialMemoryWriteAccess(codeMem);
 		this.setFields = new HashSet<>();
 		this.partiallySetBitfields = new HashSet<>();
-		this.codeLabelLocations = new HashMap<>();
+		this.labelLocations = new HashMap<>();
 	}
 
 	public void add(ZAssemblerFile file)
 	{
 		if(file.version().isPresent() && file.version().getAsInt() != version)
-			throw new IllegalArgumentException("Version mismatch");
+			defaultError("Version mismatch");
 
 		add(file.entries());
 	}
@@ -109,7 +109,8 @@ public class ZAssembler
 			field = HeaderField.valueOf(headerEntry.name());
 		} catch(IllegalArgumentException e)
 		{
-			throw new IllegalArgumentException("Unknown header field: " + headerEntry.name());
+			defaultError("Unknown header field: " + headerEntry.name());
+			return;
 		}
 
 		boolean isBitfieldEntry = field.bitfield != null;
@@ -117,49 +118,27 @@ public class ZAssembler
 			partiallySetBitfields.add(field.bitfield);
 
 		if(version < field.minVersion || (field.maxVersion > 0 && version > field.maxVersion))
-			throw new IllegalArgumentException("Field " + field + " does not exist in version " + version
+			defaultError("Field " + field + " does not exist in version " + version
 					+ "; only " + versionRangeString(field.minVersion, field.maxVersion));
 		if(!setFields.add(field))
-			System.err.println("WARNING: Field " + field + " set twice - old value will be overwritten");
+			defaultWarning("Field " + field + " set twice - old value will be overwritten");
 		if(field.isBitfield && partiallySetBitfields.contains(field))
-			System.err.println("WARNING: Bitfield " + field
+			defaultWarning("Bitfield " + field
 					+ " is set after some bitfield entries have been set - old bitfield entry values will be overwritten");
 		if(field.isRst)
-			System.err.println("INFO: Field " + field + " is Rst - will usually be overwritten by interpreter on startup");
+			defaultInfo("Field " + field + " is Rst - will usually be overwritten by interpreter on startup");
 
 		if(AUTO_FIELDS.contains(field))
-			System.err.println("INFO: Automatically computed value of " + field + " is overwritten with explicit value");
+			defaultInfo("Automatically computed value of " + field + " is overwritten with explicit value");
 
 		switch(headerEntry.value())
 		{
-			case NumberLiteral constant ->
+			case IntegralValue value -> assembledHeaderFields.add(isBitfieldEntry
+					? new AssembledIntegralBitfieldHeaderField(field, value)
+					: new AssembledIntegralRegularHeaderField(field, value));
+			case ByteSequence byteSequence ->
 			{
-				if(!isBitfieldEntry)
-				{
-					byte[] valueBytes = bigintBytesChecked(field.len * 8, constant.value(), bigint -> "constant out of range: "
-							+ bigint + " for field " + field);
-					int padding = field.len - valueBytes.length;
-					if(padding != 0)
-					{
-						byte[] valueBytesOrig = valueBytes;
-						valueBytes = new byte[field.len];
-						System.arraycopy(valueBytesOrig, 0, valueBytes, padding, valueBytesOrig.length);
-						if(constant.value().signum() < 0)
-							Arrays.fill(valueBytes, 0, padding, (byte) -1);
-					}
-					HeaderParser.setFieldUncheckedBytes(header, field, valueBytes, 0, field.len);
-				} else
-				{
-					if(constant.value().signum() != 0 && !constant.value().equals(BigInteger.ONE))
-						throw new IllegalArgumentException("Value of bitfield entry is neither 0 nor 1: field "
-								+ field + ", value " + constant.value());
-
-					HeaderParser.setFieldUnchecked(header, field, constant.value().testBit(0) ? 1 : 0);
-				}
-			}
-			case ByteSequence constant ->
-			{
-				int length = constant
+				int length = byteSequence
 						.elements()
 						.stream()
 						.mapToInt(e -> switch(e)
@@ -171,11 +150,11 @@ public class ZAssembler
 						.sum();
 				byte[] value = new byte[length];
 				int i = 0;
-				for(ByteSequenceElement elementUncasted : constant.elements())
+				for(ByteSequenceElement elementUncasted : byteSequence.elements())
 					switch(elementUncasted)
 					{
 						case NumberLiteral element -> value[i ++] = (byte) bigintIntChecked(8,
-								element.value(), bigint -> "byte constant out of range: " + bigint + " for field " + field);
+								element.value(), bigint -> "byte literal out of range: " + bigint + " for field " + field);
 						case StringLiteral element ->
 						{
 							System.arraycopy(element.value().getBytes(StandardCharsets.US_ASCII), 0, value, 0, element.value().length());
@@ -184,37 +163,31 @@ public class ZAssembler
 						case CharLiteral element ->
 						{
 							if((element.value() & ~0x7f) != 0)
-								throw new IllegalArgumentException("char constant out of range (not ASCII): " + element.value()
+								defaultError("char literal out of range (not ASCII): " + element.value()
 										+ " for field " + field);
 							value[i ++] = (byte) element.value();
 						}
 					};
 
 				if(isBitfieldEntry)
-					throw new IllegalArgumentException("Setting a bitfield entry to a byte sequence "
+					defaultError("Setting a bitfield entry to a byte sequence "
 							+ "(not a single integer literal) is nonsensical: " + field);
 
 				if(field.len > value.length)
-					System.err.println("WARNING: Byte sequence value for field " + field + " is too short ("
+					defaultWarning("Byte sequence value for field " + field + " is too short ("
 							+ value.length + "<" + field.len + "); will be padded with nullbytes");
 				else if(field.len < value.length)
-					throw new IllegalArgumentException("Byte sequence value for field " + field + " is too long: "
+					defaultError("Byte sequence value for field " + field + " is too long: "
 							+ value.length + ">" + field.len);
 
 				HeaderParser.setFieldUncheckedBytes(header, field, value);
-			}
-			case LabelReference labelReference ->
-			{
-				if(isBitfieldEntry)
-					throw new IllegalArgumentException("Setting a bitfield entry to a label is nonsensical");
-				assembledHeaderFields.add(new Reference(new HeaderFieldReferenceSource(field), new CodeLabelAbsoluteReference(labelReference.name())));
 			}
 		}
 	}
 
 	public void add(LabelDeclaration labelDeclaration)
 	{
-		addCodeLabelHere(labelDeclaration.name());
+		defineLabelCodeHere(labelDeclaration.name());
 	}
 
 	public void add(ZAssemblerInstruction instruction)
@@ -224,98 +197,35 @@ public class ZAssembler
 
 	public byte[] assemble()
 	{
-		preAssembleHeaderSection();
-		preAssembleCodeSection();
+		preAssembleHeader();
 
-		int headerStart;
-		int headerEnd;
-		int codeStart;
-		int codeEnd;
-		int storyfileSize;
+		int headerStart = 0;
+		int headerEnd = headerStart + header.currentSize();
+		int codeStart = headerEnd;
+
+		// Try resolving references until sizes and code locations stop changing.
+		CodeAssembler codeAssembler = new CodeAssembler(code, codeMem, codeSeq, labelLocations, codeStart);
+		codeAssembler.assembleUntilConvergence();
+
+		// Assembling converged; code size is known!
+		int codeEnd = codeStart + codeMem.currentSize();
+		// Compute entire storyfile size; maybe pad
 		int storyfileSizeDivisor = switch(version)
 		{
 			case 1, 2, 3 -> 2;
 			case 4, 5 -> 4;
 			case 6, 7, 8 -> 8;
-			default -> throw new IllegalStateException("Unknown version: " + version + "; don't know how file length is stored");
+			default -> defaultError("Unknown version: " + version + "; don't know how file length is stored");
 		};
+		int storyfileSize = codeEnd;
+		// Conecptually VERY inefficient, but in practice probably not too bad, considering how small the possible divisors are.
+		while(storyfileSize % storyfileSizeDivisor != 0)
+			storyfileSize ++;
 
-		// Try resolving references until sizes and code locations stop changing.
-		boolean sizeOrCodeLocationChanged;
-		do
-		{
-			sizeOrCodeLocationChanged = false;
-			// Assume sizes and code locations are correct now,
-			// and compute where each section will end up.
-			headerStart = 0;
-			headerEnd = headerStart + header.currentSize();
-			codeStart = headerEnd;
-			codeEnd = codeStart + codeMem.currentSize();
-			storyfileSize = codeEnd;
-			// Conecptually VERY inefficient, but in practice probably not too bad, considering how small the possible divisors are.
-			while(storyfileSize % storyfileSizeDivisor != 0)
-				storyfileSize ++;
+		// From here on, sizes and code locations are known and frozen.
 
-			for(Reference ref : assembledHeaderFields)
-			{
-				int value = switch(ref.referent())
-				{
-					case SimpleReferenceTarget referent -> switch(referent)
-					{
-						case FileLengthForHeader -> storyfileSize / storyfileSizeDivisor;
-					};
-					case CodeLabelAbsoluteReference referent -> codeLabelLocations.get(referent.label()).relAddr() + codeStart;
-					case CodeLabelRelativeReference referent -> codeLabelLocations.get(referent.label()).relAddr() - referent.loc().relAddr();
-				};
-
-				switch(ref.referrer())
-				{
-					case HeaderFieldReferenceSource referrer -> HeaderParser.setFieldUnchecked(header, referrer.field(), value);
-					case BranchTarget referrer ->
-					{
-						int valueEnc = value + 2;
-						int referrerRelAddr = referrer.location().relAddr();
-						int oldTargetFirstByte = codeMem.readByte(referrerRelAddr);
-						boolean oldIsShort = (oldTargetFirstByte & (1 << 6)) != 0;
-						boolean newIsShort = isBranchOffsetShort(valueEnc);
-						if(newIsShort && oldIsShort)
-						{
-							// keep branch-on-condition-false: bit 7
-							// short branch offset encoding: bit 6 is 1
-							codeMem.writeByte(referrerRelAddr, (oldTargetFirstByte & (1 << 7)) | (1 << 6) | valueEnc);
-						} else
-						{
-							if(referrer.branchLengthOverride().isPresent())
-								switch(referrer.branchLengthOverride().get())
-								{
-									case SHORTBRANCH -> throwShortOverrideButNotShort(valueEnc);
-									case LONGBRANCH ->
-									{
-										// nothing to do
-									}
-								}
-							// only warn if no length override is present
-							else if(newIsShort)
-								System.err.println("WARNING: Required space for branch target decreased!? Keeping long encoding. "
-										+ "This is probably an interpreter bug.");
-
-							// keep branch-on-condition-false: bit 7
-							// long branch offset encoding: bit 6 is 0
-							codeMem.writeByte(referrerRelAddr, (oldTargetFirstByte & (1 << 7)) | (0 << 6) | ((valueEnc >> 8) & 0x3f));
-							if(oldIsShort)
-							{
-								sizeOrCodeLocationChanged = true;
-								// This will move the code location representing the location this branch is relative to.
-								insertCodeByte(referrerRelAddr + 1, valueEnc & 0xff);
-							} else
-								codeMem.writeByte(referrerRelAddr + 1, valueEnc & 0xff);
-						}
-					}
-				}
-			}
-		} while(sizeOrCodeLocationChanged);
-
-		// From here on, sizes and code locations are frozen.
+		// Now that all sizes and locations are known, we can assemble the header.
+		assembleHeader(codeAssembler, storyfileSize / storyfileSizeDivisor);
 
 		byte[] result = new byte[storyfileSize];
 		System.arraycopy(header.data(), 0, result, headerStart, header.currentSize());
@@ -324,23 +234,37 @@ public class ZAssembler
 		return result;
 	}
 
-	private void preAssembleHeaderSection()
+	private void preAssembleHeader()
 	{
+		// Write bogus values to all header fields to ensure header is grown to correct size
+		for(AssembledIntegralHeaderField assembledIntegralHeaderField : assembledHeaderFields)
+			HeaderParser.setFieldUnchecked(header, assembledIntegralHeaderField.getField(), 0);
+
+		// Ensure header is at least 0x40 long by padding with nullbytes
+		if(header.currentSize() < 0x40)
+			// We are sure that this doesn't overwrite anything because we just checked that the header is shorter.
+			// Also, the header values themselves will only be inserted later on.
+			header.writeByte(0x3f, 0x00);
+	}
+
+	private void assembleHeader(LocationResolver locationResolver, int predividedStoryfileSize)
+	{
+		for(AssembledIntegralHeaderField assembledField : assembledHeaderFields)
+			assembledField.assemble(header, locationResolver);
+
 		for(HeaderField automaticField : AUTO_FIELDS)
 			if(!setFields.contains(automaticField))
 				switch(automaticField)
 				{
-					case FileLength -> assembledHeaderFields.add(new Reference(new HeaderFieldReferenceSource(FileLength), FileLengthForHeader));
+					case FileLength -> HeaderParser.setFieldUnchecked(header, FileLength, bigintIntChecked(FileLength.len * 8,
+							BigInteger.valueOf(predividedStoryfileSize),
+							v -> "Storyfile too large: storyfile size header field would have to be " + v));
 					case Version -> HeaderParser.setFieldUnchecked(header, Version, version);
 					// we don't support custom alphabets (yet), so set this to 0
 					case AlphabetTableLoc -> HeaderParser.setFieldUnchecked(header, AlphabetTableLoc, 0);
-					default -> throw new IllegalStateException("Field " + automaticField
+					default -> defaultError("Field " + automaticField
 							+ " is supposedly auto, but is not handled by the assembler!? This is an assembler bug.");
 				}
-
-		// ensure header is at least 0x40 / 64 byte in size (by padding with nullbytes)
-		if(header.currentSize() < 0x40)
-			header.writeByte(0x3f, 0);
 
 		List<HeaderField> unsetHeaderFields = Arrays.stream(HeaderField.values())
 				.filter(f -> version >= f.minVersion)
@@ -367,49 +291,41 @@ public class ZAssembler
 				.collect(Collectors.joining(", "));
 
 		if(!unsetHeaderFieldsStr.isEmpty())
-			System.err.println("INFO: The following non-Rst header fields have no explicit value and will default to 0: " + unsetHeaderFieldsStr);
+			defaultInfo("The following non-Rst header fields have no explicit value and will default to 0: " + unsetHeaderFieldsStr);
 	}
 
-	private void preAssembleCodeSection()
+	private void defineLabelCodeHere(String label)
 	{
-		//TODO split to checking header fields and label references in code.
-		// Or just don't check explicitly and let things crash.
-		for(Reference ref : assembledHeaderFields)
-			if(ref.referent() instanceof CodeLabelAbsoluteReference referent)
-				if(!codeLabelLocations.containsKey(referent.label()))
-					throw new IllegalArgumentException("Undefined label: " + referent.label());
+		defineLabel(label, codeLocationHere());
 	}
 
-	private void addCodeLabelHere(String label)
+	private void defineLabel(String label, Location location)
 	{
-		addCodeLabel(label, codeLocationHere());
-	}
-
-	private void addCodeLabel(String label, CodeLocation codeLocation)
-	{
-		CodeLocation old = codeLabelLocations.put(label, codeLocation);
+		Location old = labelLocations.put(label, location);
 		if(old != null)
-			throw new IllegalArgumentException("Duplicate label: " + label);
+			defaultError("Duplicate label: " + label);
 	}
 
-	private CodeLocation codeLocationHere()
+	private Location codeLocationHere()
 	{
-		//TODO
-		return null;
+		if(code.isEmpty())
+			return SimpleLocation.CODE_START;
+		else
+			return new CodeLocation(code.get(code.size() - 1), InstructionPart.AFTER);
 	}
 
 	public static byte[] assemble(ZAssemblerFile file, int externallyGivenVersion, String externallyGivenVersionSourceName)
 	{
 		int version;
 		if(externallyGivenVersion <= 0)
-			version = file.version().orElseThrow(() -> new IllegalArgumentException(
+			version = file.version().orElseThrow(() -> defaultError(
 					"Z-version not given: neither by " + externallyGivenVersionSourceName + ", nor by .ZVERSION in file"));
 		else if(file.version().isEmpty())
 			version = externallyGivenVersion;
 		else if(file.version().getAsInt() == externallyGivenVersion)
 			version = externallyGivenVersion;
 		else
-			throw new IllegalArgumentException("Z-version given by " + externallyGivenVersionSourceName + " mismatches .ZVERSION in file");
+			return defaultError("Z-version given by " + externallyGivenVersionSourceName + " mismatches .ZVERSION in file");
 
 		ZAssembler assembler = new ZAssembler(version);
 		assembler.add(file);

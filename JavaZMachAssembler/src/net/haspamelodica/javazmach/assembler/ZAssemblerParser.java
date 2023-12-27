@@ -107,8 +107,8 @@ public class ZAssemblerParser
 		functionsByName.put("StringLiteral", TypedFunction.build(StringLiteral::new, StringLiteral.class, String.class));
 
 		// enum constants
-		functionsByName.put("LONGBRANCH", TypedFunction.build(() -> BranchLength.LONGBRANCH, BranchLength.class));
 		functionsByName.put("SHORTBRANCH", TypedFunction.build(() -> BranchLength.SHORTBRANCH, BranchLength.class));
+		functionsByName.put("LONGBRANCH", TypedFunction.build(() -> BranchLength.LONGBRANCH, BranchLength.class));
 		functionsByName.put("rfalse", TypedFunction.build(() -> SimpleBranchTarget.rfalse, SimpleBranchTarget.class));
 		functionsByName.put("rtrue", TypedFunction.build(() -> SimpleBranchTarget.rtrue, SimpleBranchTarget.class));
 		functionsByName.put("StackPointer", TypedFunction.build(() -> StackPointer.INSTANCE, StackPointer.class));
@@ -217,7 +217,7 @@ public class ZAssemblerParser
 		}
 		Set<Nonterminal> unreachableNonterminals = grammarResult.getGrammar().calculateUnreachableNonterminals();
 		if(!unreachableNonterminals.isEmpty())
-			System.err.println("Warning: grammar contains unreachable symbols: " + unreachableNonterminals);
+			System.err.println("WARNING: Grammar contains unreachable symbols - this is an assembler bug: " + unreachableNonterminals);
 		// This grammar is not LR(1) in two places: when discerning ".zversion" and ".zheader" after the dot,
 		// and when discerning whether an ident is a label declaration or a label usage as an operand.
 		parser = LRkParserGenerator.generate(grammarResult.getGrammar(), 2);

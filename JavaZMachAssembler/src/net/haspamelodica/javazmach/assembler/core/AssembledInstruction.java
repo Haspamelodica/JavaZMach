@@ -1,9 +1,8 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.appendZString;
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.integralValue;
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.throwShortOverrideButNotShort;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.varnumByteAndUpdateRoutine;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.versionRangeString;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.EXTENDED;
@@ -12,17 +11,15 @@ import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.SHORT;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.VARIABLE;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeKind.VAR;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import net.haspamelodica.javazmach.assembler.model.BranchInfo;
+import net.haspamelodica.javazmach.assembler.core.CodeLocation.InstructionPart;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.Operand;
-import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
 import net.haspamelodica.javazmach.assembler.model.ZString;
@@ -30,16 +27,16 @@ import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public final class AssembledInstruction implements CodeLocation
+public final class AssembledInstruction
 {
 	private final int version;
 
-	private final Opcode					opcode;
-	private final Optional<OpcodeForm>		formOverride;
-	private final List<AssembledOperand>	operands;
-	private final Optional<Variable>		storeTarget;
-	private final Optional<BranchInfo>		branchInfo;
-	private final Optional<ZString>			text;
+	private final Opcode						opcode;
+	private final Optional<OpcodeForm>			formOverride;
+	private final List<AssembledOperand>		operands;
+	private final Optional<Variable>			storeTarget;
+	private final Optional<AssembledBranchInfo>	branchInfo;
+	private final Optional<ZString>				text;
 
 	public AssembledInstruction(ZAssemblerInstruction instruction, int version, Map<String, Opcode> opcodesByNameLowercase)
 	{
@@ -53,19 +50,19 @@ public final class AssembledInstruction implements CodeLocation
 					.map(opcode2 -> versionRangeString(opcode2.minVersion, opcode2.maxVersion))
 					.collect(Collectors.joining(", "));
 			if(!existingVersionsThisName.isEmpty())
-				throw new IllegalArgumentException("Opcode " + instruction.opcode() + " doesn't exist in V" + version
+				defaultError("Opcode " + instruction.opcode() + " doesn't exist in V" + version
 						+ ", only " + existingVersionsThisName);
 			// shouldn't really be possible - the grammar knows which opcodes there are.
 			// Still, better safe than sorry - ZAssembler might theoretically be used without ZAssemblerParser,
 			// and the way instructions are parsed also might change later.
-			throw new IllegalArgumentException("Opcode " + instruction.opcode() + " unknown");
+			defaultError("Opcode " + instruction.opcode() + " unknown");
 		}
 		if(opcode.isStoreOpcode != instruction.storeTarget().isPresent())
-			throw new IllegalArgumentException("Opcode " + opcode + " is store, but no store target was given: " + instruction);
+			defaultError("Opcode " + opcode + " is store, but no store target was given: " + instruction);
 		if(opcode.isBranchOpcode != instruction.branchInfo().isPresent())
-			throw new IllegalArgumentException("Opcode " + opcode + " is branch, but no branch info was given: " + instruction);
+			defaultError("Opcode " + opcode + " is branch, but no branch info was given: " + instruction);
 		if(opcode.isTextOpcode != instruction.text().isPresent())
-			throw new IllegalArgumentException("Opcode " + opcode + " is text, but no text was given: " + instruction);
+			defaultError("Opcode " + opcode + " is text, but no text was given: " + instruction);
 
 		List<Operand> operandsUnassembled = instruction.operands();
 
@@ -74,7 +71,7 @@ public final class AssembledInstruction implements CodeLocation
 			case OP0, OP2, VAR, EXT -> 0;
 			case OP1 -> 1;
 		})
-			throw new IllegalArgumentException("Too few operands for " + opcode.range + " instruction; not encodeable: " + instruction);
+			defaultError("Too few operands for " + opcode.range + " instruction; not encodeable: " + instruction);
 
 		if(operandsUnassembled.size() > switch(opcode.range)
 		{
@@ -84,31 +81,34 @@ public final class AssembledInstruction implements CodeLocation
 			// Case in point: je, which is OP2, takes up to 4 operands.
 			case OP2, VAR, EXT -> opcode.hasTwoOperandTypeBytes ? 8 : 4;
 		})
-			throw new IllegalArgumentException("Too many operands for " + opcode.range + " instruction; not encodeable: " + instruction);
+			defaultError("Too many operands for " + opcode.range + " instruction; not encodeable: " + instruction);
 
 		if(operandsUnassembled.size() < opcode.minArgs || operandsUnassembled.size() > opcode.maxArgs)
-			System.err.println("WARNING: Incorrect number of operands given for opcode " + opcode
+			// no need to go through custom DiagnosticHandler: won't change in later iterations
+			defaultWarning("Incorrect number of operands given for opcode " + opcode
 					+ ": expected " + opcode.minArgs + (opcode.maxArgs != opcode.minArgs ? "-" + opcode.maxArgs : "")
 					+ ", but was " + operandsUnassembled.size() + ": " + instruction);
 
 		this.formOverride = instruction.form();
+		boolean formOverriddenToLONG = formOverride.isPresent() && formOverride.get() == LONG;
 		this.operands = instruction.operands().stream().map(o -> switch(o)
 		{
-			case IntegralValue value -> new AssembledConstantOperand(value);
+			case IntegralValue value -> new AssembledImmediateOperand(value, formOverriddenToLONG);
 			case Variable variable -> new AssembledVariableOperand(variable);
 		}).toList();
 		this.storeTarget = instruction.storeTarget();
-		this.branchInfo = instruction.branchInfo();
+		Location branchOriginLocation = new CodeLocation(this, InstructionPart.BRANCH_ORIGIN);
+		this.branchInfo = instruction.branchInfo().map(branchInfo -> new AssembledBranchInfo(branchInfo, branchOriginLocation));
 		this.text = instruction.text();
 	}
 
-	public int sizeEstimate()
+	public void updateResolvedValues(LocationResolver locationResolver)
 	{
-		//TODO
-		return -1;
+		operands.forEach(operand -> operand.updateResolvedValue(locationResolver));
+		branchInfo.ifPresent(branchInfo -> branchInfo.updateResolvedTarget(locationResolver));
 	}
 
-	public void append(SequentialMemoryWriteAccess codeSeq, LabelResolver labelResolver)
+	public void appendUntilBranchOrigin(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
 	{
 		OpcodeForm form = switch(opcode.range)
 		{
@@ -119,8 +119,8 @@ public final class AssembledInstruction implements CodeLocation
 				// yes, we need to check operand count even though we know the form is OP2:
 				// for example, je is OP2, but can take any number between 1 and 4 of operands.
 					&& operands.size() == 2
-					&& operands.get(0).typeEncodeableOneBit(labelResolver)
-					&& operands.get(1).typeEncodeableOneBit(labelResolver)
+					&& operands.get(0).typeEncodeableOneBit()
+					&& operands.get(1).typeEncodeableOneBit()
 							? LONG
 							: VARIABLE;
 			case VAR -> VARIABLE;
@@ -128,8 +128,7 @@ public final class AssembledInstruction implements CodeLocation
 		};
 
 		if(formOverride.isPresent() && formOverride.get() != form)
-			//TODO add case OP2 doesn't work if an operand is not a small constant to error message
-			throw new IllegalArgumentException("Illegal form requested: kind " + opcode.range + " opcode with "
+			defaultError("Illegal form requested: kind " + opcode.range + " opcode with "
 					+ operands.size() + " operands, but requested was form " + formOverride.get());
 
 		// There are no opcodes which would trigger this, but let's be paranoid.
@@ -181,58 +180,22 @@ public final class AssembledInstruction implements CodeLocation
 			}
 		}
 
-		operands.forEach(operand -> operand.append(codeSeq, labelResolver));
+		operands.forEach(operand -> operand.append(codeSeq, diagnosticHandler));
 		storeTarget.ifPresent(storeTarget -> codeSeq.writeNextByte(varnumByteAndUpdateRoutine(storeTarget)));
-		branchInfo.ifPresent(branchInfo ->
-		{
-			switch(branchInfo.target())
-			{
-				case SimpleBranchTarget target ->
-				{
-					switch(target)
-					{
-						case rfalse -> appendEncodedBranchOffset(codeSeq, 0, branchInfo);
-						case rtrue -> appendEncodedBranchOffset(codeSeq, 1, branchInfo);
-					}
-				}
-				case IntegralValue target ->
-				{
-					BigInteger targetBigint = integralValue(target, labelResolver);
-					BigInteger branchTargetEncoded = targetBigint.add(BigInteger.TWO);
-					if(branchTargetEncoded.equals(BigInteger.ZERO) || branchTargetEncoded.equals(BigInteger.ONE))
-						throw new IllegalArgumentException("A branch target of " + targetBigint
-								+ " is not encodable as it would conflict with rtrue / rfalse");
-					appendEncodedBranchOffset(codeSeq, bigintIntChecked(14, branchTargetEncoded,
-							bte -> "Branch target out of range: " + targetBigint), branchInfo);
-				}
-				//TODO obsolete, but maybe something is worth savouring?
-				/*
-				case LabelReference target ->
-				{
-					// Here, we write a dummy value as the branch target, which will later be overwritten by the reference.
-					// At first, optimistically assume the branch target can be assembled in short form, so choose 0 as the dummy value.
-					// If it doesn't, the second byte will be inserted later when the reference is resolved.
-					// Determining this beforehand would be hard because whether we can assemble this in the short form
-					// depends on where the label refers to, and for the labels where it matters this even
-					// will only become known in the future.
-					CodeLocation codeLocationBeforeBranchOffset = codeLocationHere();
-					appendEncodedBranchOffset(0, branchInfo);
-					CodeLocation codeLocationAfterBranchOffset = codeLocationHere();
-				
-					references.add(new Reference(new BranchTarget(codeLocationBeforeBranchOffset, branchInfo.branchLengthOverride()),
-							new CodeLabelRelativeReference(target.name(), codeLocationAfterBranchOffset)));
-				}
-				*/
-			};
-		});
+		branchInfo.ifPresent(branchInfo -> branchInfo.appendChecked(codeSeq, diagnosticHandler));
+	}
 
+	public void appendAfterBranchOrigin(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	{
+		// Branches are relative to after the branch data.
+		// So, the text (if present) is the only part of an instruction which comes after the branch origin.
 		text.ifPresent(text -> appendZString(codeSeq, text, version));
 	}
 
 	private void checkOpcodeNumberMask(Opcode opcode, int mask, OpcodeForm form)
 	{
 		if((opcode.opcodeNumber & mask) != opcode.opcodeNumber)
-			throw new IllegalArgumentException("Opcode " + opcode
+			defaultError("Opcode " + opcode
 					+ " should be assembled as " + form + ", but has an opcode number greater than 0x"
 					+ Integer.toHexString(mask) + ": " + opcode.opcodeNumber);
 	}
@@ -251,38 +214,5 @@ public final class AssembledInstruction implements CodeLocation
 			codeSeq.writeNextWord(operandTypesEncoded);
 		else
 			codeSeq.writeNextByte(operandTypesEncoded);
-	}
-
-	private void appendEncodedBranchOffset(SequentialMemoryWriteAccess codeSeq, int branchOffsetEncodedOrZero, BranchInfo info)
-	{
-		boolean isValueShort = isBranchOffsetShort(branchOffsetEncodedOrZero);
-		boolean isShort;
-		if(info.branchLengthOverride().isEmpty())
-			isShort = isValueShort;
-		else
-			isShort = switch(info.branchLengthOverride().get())
-			{
-				case LONGBRANCH -> false;
-				case SHORTBRANCH ->
-				{
-					if(!isValueShort)
-						yield throwShortOverrideButNotShort(branchOffsetEncodedOrZero);
-					yield true;
-				}
-			};
-
-		codeSeq.writeNextByte(0
-				// branch-on-condition-false: bit 7; on false is 0, on true is 1.
-				| ((info.branchOnConditionFalse() ? 0 : 1) << 7)
-				// branch offset encoding: bit 6; long is 0, short is 1.
-				| ((isShort ? 1 : 0) << 6)
-				| (branchOffsetEncodedOrZero >> (isShort ? 0 : 8)));
-		if(!isShort)
-			codeSeq.writeNextByte(branchOffsetEncodedOrZero & 0xff);
-	}
-
-	private static boolean isBranchOffsetShort(int value)
-	{
-		return value == (value & ((1 << 6) - 1));
 	}
 }

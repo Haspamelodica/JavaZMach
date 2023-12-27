@@ -2,6 +2,7 @@ package net.haspamelodica.javazmach.assembler.model;
 
 public enum BranchLength
 {
-	LONGBRANCH,
-	SHORTBRANCH;
+	// don't reorder - AssembledRegularBranchTarget depends on this being sorted in ascending length
+	SHORTBRANCH,
+	LONGBRANCH;
 }

@@ -1,5 +1,8 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,17 +27,19 @@ import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssemblerUtils
 {
-	public static BigInteger integralValue(IntegralValue value, LabelResolver labelResolver)
+	public static BigInteger integralValueOrNull(IntegralValue value, LocationResolver locationResolver)
 	{
 		return switch(value)
 		{
 			case NumberLiteral literal -> literal.value();
 			case CharLiteral literal -> BigInteger.valueOf(literal.value());
-			case LabelReference labelRef -> BigInteger.valueOf(labelResolver.labelValue(labelRef.name()));
+			case LabelReference labelRef -> locationResolver.locationAbsoluteAddressOrNull(new LabelLocation(labelRef.name()));
 			case BinaryExpression expr ->
 			{
-				BigInteger lhs = integralValue(expr.lhs(), labelResolver);
-				BigInteger rhs = integralValue(expr.rhs(), labelResolver);
+				BigInteger lhs = integralValueOrNull(expr.lhs(), locationResolver);
+				BigInteger rhs = integralValueOrNull(expr.rhs(), locationResolver);
+				if(lhs == null || rhs == null)
+					yield null;
 				yield switch(expr.op())
 				{
 					case BITWISE_OR -> lhs.or(rhs);
@@ -51,7 +56,9 @@ public class ZAssemblerUtils
 			}
 			case UnaryExpression expr ->
 			{
-				BigInteger operand = integralValue(expr.operand(), labelResolver);
+				BigInteger operand = integralValueOrNull(expr.operand(), locationResolver);
+				if(operand == null)
+					yield null;
 				yield switch(expr.op())
 				{
 					case NEGATE -> operand.negate();
@@ -69,8 +76,8 @@ public class ZAssemblerUtils
 			case LocalVariable var ->
 			{
 				if(var.index() < 0 || var.index() > 0x0f)
-					throw new IllegalArgumentException("Local variable out of range: " + var.index());
-				System.err.println("WARNING: local variable indices not yet checked against routine");
+					yield defaultError("Local variable out of range: " + var.index());
+				defaultWarning("local variable indices not yet checked against routine");
 				//TODO check against current routine once those are implemented
 				//TODO update routine once implemented
 				yield var.index() + 0x1;
@@ -79,16 +86,10 @@ public class ZAssemblerUtils
 			{
 				//TODO check against global variable table length
 				if(var.index() < 0 || var.index() > 0xef)
-					throw new IllegalArgumentException("Global variable out of range: " + var.index());
+					yield defaultError("Global variable out of range: " + var.index());
 				yield var.index() + 0x10;
 			}
 		};
-	}
-
-	public static <R> R throwShortOverrideButNotShort(int branchOffsetEncodedOrZero)
-	{
-		throw new IllegalArgumentException("Branch target length is overridden to be short, "
-				+ "but actual encoded value can't be assembled in short form: " + branchOffsetEncodedOrZero);
 	}
 
 	public static void appendZString(SequentialMemoryWriteAccess target, ZString text, int version)
@@ -123,7 +124,7 @@ public class ZAssemblerUtils
 					.peek(cp ->
 					{
 						if(cp == '\r')
-							System.err.println("WARNING: \\r in ZSCII text will be ignored; use \\n for linebreaks instead.");
+							defaultWarning("\\r in ZSCII text will be ignored; use \\n for linebreaks instead.");
 					})
 					.filter(cp -> cp != '\r')
 					.map(UnicodeZSCIIConverterNoSpecialChars::unicodeToZsciiNoCR)
@@ -153,7 +154,7 @@ public class ZAssemblerUtils
 	public static void checkBigintMaxBitCount(int maxBits, BigInteger bigint, Function<BigInteger, String> errorMessage)
 	{
 		if(!hasBigintMaxBitCount(maxBits, bigint))
-			throw new IllegalArgumentException(errorMessage.apply(bigint));
+			defaultError(errorMessage.apply(bigint));
 	}
 
 	public static boolean hasBigintMaxBitCountAndIsPositive(int maxBits, BigInteger bigint)
@@ -163,9 +164,9 @@ public class ZAssemblerUtils
 
 	public static boolean hasBigintMaxBitCount(int maxBits, BigInteger bigint)
 	{
-		// We want to explicitly allow positive constants which would be negative if interpreted as two's complement.
+		// We want to explicitly allow positive values which would be negative if interpreted as two's complement.
 		// We do this by checking bitLength against maxBits, not maxBits-1.
-		// Note that this also allows negative constants which would be positive in two's complement.
+		// Note that this also allows negative values which would be positive in two's complement.
 		return bigint.bitLength() <= maxBits;
 	}
 

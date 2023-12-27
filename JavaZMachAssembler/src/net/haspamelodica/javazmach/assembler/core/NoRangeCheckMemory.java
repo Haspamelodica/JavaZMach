@@ -10,7 +10,7 @@ public class NoRangeCheckMemory implements WritableMemory
 
 	public NoRangeCheckMemory()
 	{
-		this.data = new byte[0];
+		clear();
 	}
 
 	@Override
@@ -31,6 +31,11 @@ public class NoRangeCheckMemory implements WritableMemory
 		if(byteAddr >= data.length)
 			data = Arrays.copyOf(data, byteAddr + 1);
 		data[byteAddr] = (byte) val;
+	}
+
+	public void clear()
+	{
+		data = new byte[0];
 	}
 
 	public void insertByte(int relAddr, int val)

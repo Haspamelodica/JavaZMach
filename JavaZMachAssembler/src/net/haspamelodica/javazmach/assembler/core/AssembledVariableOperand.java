@@ -8,7 +8,11 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 public record AssembledVariableOperand(Variable variable) implements AssembledOperand
 {
 	@Override
-	public boolean typeEncodeableOneBit(LabelResolver labelResolver)
+	public void updateResolvedValue(LocationResolver locationResolver)
+	{}
+
+	@Override
+	public boolean typeEncodeableOneBit()
 	{
 		return true;
 	}
@@ -16,25 +20,17 @@ public record AssembledVariableOperand(Variable variable) implements AssembledOp
 	@Override
 	public int encodeTypeOneBitAssumePossible()
 	{
-		// TODO Auto-generated method stub
-		return 0;
+		return 1;
 	}
 
 	@Override
 	public int encodeTypeTwoBits()
 	{
-		// TODO Auto-generated method stub
-		return 0;
+		return 0b10;
 	}
 
 	@Override
-	public int sizeEstimate()
-	{
-		return 1;
-	}
-
-	@Override
-	public void append(SequentialMemoryWriteAccess codeSeq, LabelResolver labelResolver)
+	public void append(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
 	{
 		codeSeq.writeNextByte(varnumByteAndUpdateRoutine(variable));
 	}
