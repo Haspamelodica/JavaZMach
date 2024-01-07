@@ -29,6 +29,7 @@ import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
+import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.assembler.model.StringLiteral;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
@@ -98,6 +99,7 @@ public class ZAssembler
 			case HeaderEntry headerEntry -> add(headerEntry);
 			case LabelDeclaration labelDeclaration -> add(labelDeclaration);
 			case ZAssemblerInstruction instruction -> add(instruction);
+			case Routine routine -> System.err.println("Uh-oh");
 		}
 	}
 

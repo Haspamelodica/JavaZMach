@@ -11,11 +11,19 @@ FileEntries
 
 FileEntry
  -> HeaderEntry      { fileEntry[-1] = headerEntry[0]; }
+  | Routine          { fileEntry[-1] = routine[0]; }
   | LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
   | Instruction      { fileEntry[-1] = instruction[0]; } ;
 
 HeaderEntry
  -> '.' 'zheader' 'ident' HeaderValue { headerEntry[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
+
+Routine
+ -> '.' 'routine' 'ident' RoutineLocals { routine[-1] = Routine(str([2]), routineLocals[3]); } ;
+
+RoutineLocals
+ -> { routineLocals[-1] = emptyRLList(); }
+  | RoutineLocals '.' 'ident' IntegralValue { routineLocals[-1] = appendRLList(routineLocals[0], RoutineLocal(str([2]), value[3])); } ;
 
 HeaderValue
  -> IntegralValue                        { headerValue[-1] = value[0]; }
