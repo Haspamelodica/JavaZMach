@@ -6,7 +6,7 @@ import net.haspamelodica.javazmach.assembler.model.BranchLength;
 
 public interface AssembledBranchTarget
 {
-	public void updateResolvedEncodedOffset(LocationAndLabelResolver locationResolver);
+	public void updateResolvedEncodedOffset(LocationResolver locationResolver);
 	public BranchLength targetLength();
 	public BigInteger getEncodedOffsetChecked(DiagnosticHandler diagnosticHandler);
 }

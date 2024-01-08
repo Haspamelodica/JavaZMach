@@ -23,7 +23,7 @@ public class AssembledIntegralRegularHeaderField implements AssembledIntegralHea
 	}
 
 	@Override
-	public void assemble(WritableMemory header, LocationAndLabelResolver locationResolver)
+	public void assemble(WritableMemory header, LocationResolver locationResolver)
 	{
 		BigInteger resolvedValue = integralValueOrNull(value, locationResolver);
 		byte[] valueBytes = bigintBytesChecked(field.len * 8, resolvedValue, bigint -> "header field value out of range: "

@@ -41,7 +41,7 @@ public class AssembledRegularBranchTarget implements AssembledBranchTarget
 	}
 
 	@Override
-	public void updateResolvedEncodedOffset(LocationAndLabelResolver locationResolver)
+	public void updateResolvedEncodedOffset(LocationResolver locationResolver)
 	{
 		encodedOffsetAssembler.update(locationResolver);
 	}

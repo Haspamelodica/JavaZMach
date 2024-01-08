@@ -3,7 +3,6 @@ package net.haspamelodica.javazmach.assembler.core;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultInfo;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
-import static net.haspamelodica.javazmach.assembler.core.RegularLocation.AssembledEntryPart.AFTER;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.versionRangeString;
 import static net.haspamelodica.javazmach.core.header.HeaderField.AbbrevTableLoc;
@@ -21,7 +20,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +61,6 @@ public class ZAssembler
 	private final List<AssembledEntry>			assembledEntries;
 	private final NoRangeCheckMemory			mem;
 	private final SequentialMemoryWriteAccess	memSeq;
-	private final Map<String, Location>			labelLocations;
 
 	public ZAssembler(int version)
 	{
@@ -83,7 +80,6 @@ public class ZAssembler
 		this.memSeq = new SequentialMemoryWriteAccess(mem);
 		this.setFields = new HashSet<>();
 		this.partiallySetBitfields = new HashSet<>();
-		this.labelLocations = new HashMap<>();
 	}
 
 	public void add(ZAssemblerFile file)
@@ -197,7 +193,7 @@ public class ZAssembler
 
 	public void add(LabelDeclaration labelDeclaration)
 	{
-		defineLabelCodeHere(labelDeclaration.name());
+		assembledEntries.add(new LabelEntry(labelDeclaration.name()));
 	}
 
 	public void add(ZAssemblerInstruction instruction)
@@ -214,7 +210,7 @@ public class ZAssembler
 		int codeStart = headerEnd;
 
 		// Try resolving references until sizes and code locations stop changing.
-		ConvergingEntriesAssembler codeAssembler = new ConvergingEntriesAssembler(assembledEntries, mem, memSeq, this::resolveLabelToLocation, codeStart);
+		ConvergingEntriesAssembler codeAssembler = new ConvergingEntriesAssembler(assembledEntries, mem, memSeq, codeStart);
 		Map<Location, BigInteger> locations = codeAssembler.assembleUntilConvergence();
 
 		// Assembling converged; code size is known!
@@ -235,22 +231,13 @@ public class ZAssembler
 		// From here on, sizes and code locations are known and frozen.
 
 		// Now that all sizes and locations are known, we can assemble the header.
-		assembleHeader(LocationAndLabelResolver.of(locations::get, this::resolveLabelToLocation), storyfileSize / storyfileSizeDivisor);
+		assembleHeader(locations::get, storyfileSize / storyfileSizeDivisor);
 
 		byte[] result = new byte[storyfileSize];
 		System.arraycopy(header.data(), 0, result, headerStart, header.currentSize());
 		System.arraycopy(mem.data(), 0, result, codeStart, mem.currentSize());
 		// No need to care for padding: If storyfile is padded, the padding bytes will already be 0.
 		return result;
-	}
-
-	private Location resolveLabelToLocation(String label)
-	{
-		Location resolvedLocation = labelLocations.get(label);
-		if(resolvedLocation == null)
-			// no need to go through custom DiagnosticHandler: won't change in later iterations
-			DiagnosticHandler.defaultError("Label " + label + " is not defined");
-		return resolvedLocation;
 	}
 
 	private void preAssembleHeader()
@@ -266,7 +253,7 @@ public class ZAssembler
 			header.writeByte(0x3f, 0x00);
 	}
 
-	private void assembleHeader(LocationAndLabelResolver locationResolver, int predividedStoryfileSize)
+	private void assembleHeader(LocationResolver locationResolver, int predividedStoryfileSize)
 	{
 		for(AssembledIntegralHeaderField assembledField : assembledHeaderFields)
 			assembledField.assemble(header, locationResolver);
@@ -319,7 +306,7 @@ public class ZAssembler
 			defaultInfo("The following non-Rst header fields have no explicit value and will default to 0: " + unsetHeaderFieldsStr);
 	}
 
-	private void storeSectionAddressInField(WritableMemory header, HeaderField field, Section section, LocationAndLabelResolver resolver)
+	private void storeSectionAddressInField(WritableMemory header, HeaderField field, Section section, LocationResolver resolver)
 	{
 		BigInteger resolvedValue = resolver.resolveAbsoluteOrNull(section);
 		if(resolvedValue == null)
@@ -329,26 +316,6 @@ public class ZAssembler
 		int val = bigintIntChecked(field.len * 8, resolvedValue, bigint -> "section address too large for field of " + field.len + "bytes: "
 				+ bigint);
 		HeaderParser.setFieldUnchecked(header, field, val);
-	}
-
-	private void defineLabelCodeHere(String label)
-	{
-		defineLabel(label, codeLocationHere());
-	}
-
-	private void defineLabel(String label, Location location)
-	{
-		Location old = labelLocations.put(label, location);
-		if(old != null)
-			defaultError("Duplicate label: " + label);
-	}
-
-	private Location codeLocationHere()
-	{
-		if(assembledEntries.isEmpty())
-			return Section.CODE;
-		else
-			return new RegularLocation(assembledEntries.get(assembledEntries.size() - 1), AFTER);
 	}
 
 	public static byte[] assemble(ZAssemblerFile file, int externallyGivenVersion, String externallyGivenVersionSourceName)

@@ -12,22 +12,19 @@ import java.util.Map;
 
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-//TODO separation of concerns between this and ZAssembler is a bit weird - maybe move entire managing of entries, mem, memSeq here?
+// TODO separation of concerns between this and ZAssembler is a bit weird - maybe move entire managing of entries, mem, memSeq here?
 public class ConvergingEntriesAssembler
 {
 	private final List<AssembledEntry>			entries;
 	private final NoRangeCheckMemory			mem;
 	private final SequentialMemoryWriteAccess	memSeq;
-	private final LabelResolver					labelResolver;
 	private final int							codeStart;
 
-	public ConvergingEntriesAssembler(List<AssembledEntry> entries, NoRangeCheckMemory codeMem, SequentialMemoryWriteAccess codeSeq,
-			LabelResolver labelResolver, int codeStart)
+	public ConvergingEntriesAssembler(List<AssembledEntry> entries, NoRangeCheckMemory codeMem, SequentialMemoryWriteAccess codeSeq, int codeStart)
 	{
 		this.entries = entries;
 		this.mem = codeMem;
 		this.memSeq = codeSeq;
-		this.labelResolver = labelResolver;
 		this.codeStart = codeStart;
 	}
 
@@ -41,7 +38,6 @@ public class ConvergingEntriesAssembler
 			DiagnosticHandler diagnosticHandler = diagnostics::add;
 			LocationManagerImpl locationManager = new LocationManagerImpl(locations,
 					() -> BigInteger.valueOf(codeStart + memSeq.getAddress()), isFirst);
-			LocationAndLabelResolver locationsAndLabels = LocationAndLabelResolver.of(locationManager, labelResolver);
 
 			// Yes, do this every iteration - they might have changed.
 			// Also, the way in which locations are updated in LocationManagerImpl means that after two iterations,
@@ -52,7 +48,7 @@ public class ConvergingEntriesAssembler
 				// first update start location: updateResolvedValues might depend on it,
 				// and in that case this makes it converge a bit faster (and possibly even to a better encoding).
 				locationManager.emitLocationHere(new RegularLocation(entry, START));
-				entry.updateResolvedValues(locationsAndLabels);
+				entry.updateResolvedValues(locationManager);
 				entry.append(locationManager, memSeq, diagnosticHandler);
 				locationManager.emitLocationHere(new RegularLocation(entry, AFTER));
 			}

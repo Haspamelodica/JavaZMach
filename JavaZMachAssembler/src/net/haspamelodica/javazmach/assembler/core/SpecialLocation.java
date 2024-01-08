@@ -1,4 +1,4 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-public sealed interface SpecialLocation extends Location permits BranchOriginLocation
+public sealed interface SpecialLocation extends Location permits BranchOriginLocation, LabelLocation
 {}
