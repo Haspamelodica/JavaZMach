@@ -49,8 +49,10 @@ public class ConvergingEntriesAssembler
 			putSectionLocations(locations);
 			for(AssembledEntry entry : entries)
 			{
-				entry.updateResolvedValues(locationsAndLabels);
+				// first update start location: updateResolvedValues might depend on it,
+				// and in that case this makes it converge a bit faster (and possibly even to a better encoding).
 				locationManager.emitLocationHere(new RegularLocation(entry, START));
+				entry.updateResolvedValues(locationsAndLabels);
 				entry.append(locationManager, memSeq, diagnosticHandler);
 				locationManager.emitLocationHere(new RegularLocation(entry, AFTER));
 			}
