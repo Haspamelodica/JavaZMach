@@ -111,4 +111,11 @@ public class CodeAssembler implements LocationResolver
 			}
 		};
 	}
+
+	@Override
+	public void emitLocationHere(Location location)
+	{
+		//TODO
+		throw new UnsupportedOperationException("not implemented yet");
+	}
 }

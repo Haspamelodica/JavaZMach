@@ -27,7 +27,7 @@ import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public final class AssembledInstruction
+public final class AssembledInstruction implements AssembledEntry
 {
 	private final int version;
 
@@ -102,10 +102,18 @@ public final class AssembledInstruction
 		this.text = instruction.text();
 	}
 
+	@Override
 	public void updateResolvedValues(LocationResolver locationResolver)
 	{
 		operands.forEach(operand -> operand.updateResolvedValue(locationResolver));
 		branchInfo.ifPresent(branchInfo -> branchInfo.updateResolvedTarget(locationResolver));
+	}
+
+	@Override
+	public void append(SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
+	{
+		//TODO
+		throw new UnsupportedOperationException("not implemented yet - difficult because branch origin location");
 	}
 
 	public void appendUntilBranchOrigin(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)

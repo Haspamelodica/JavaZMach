@@ -53,13 +53,14 @@ public class ZAssembler
 	private final int					version;
 	private final Map<String, Opcode>	opcodesByNameLowercase;
 
+	//TODO make this an AssembledEntry
 	private final NoRangeCheckMemory					header;
 	private final List<AssembledIntegralHeaderField>	assembledHeaderFields;
 
 	private final Set<HeaderField>	setFields;
 	private final Set<HeaderField>	partiallySetBitfields;
 
-	private final List<AssembledInstruction>	code;
+	private final List<AssembledEntry>			assembledEntries;
 	private final NoRangeCheckMemory			codeMem;
 	private final SequentialMemoryWriteAccess	codeSeq;
 	private final Map<String, Location>			labelLocations;
@@ -77,7 +78,7 @@ public class ZAssembler
 
 		this.header = new NoRangeCheckMemory();
 		this.assembledHeaderFields = new ArrayList<>();
-		this.code = new ArrayList<>();
+		this.assembledEntries = new ArrayList<>();
 		this.codeMem = new NoRangeCheckMemory();
 		this.codeSeq = new SequentialMemoryWriteAccess(codeMem);
 		this.setFields = new HashSet<>();
@@ -201,7 +202,7 @@ public class ZAssembler
 
 	public void add(ZAssemblerInstruction instruction)
 	{
-		code.add(new AssembledInstruction(instruction, version, opcodesByNameLowercase));
+		assembledEntries.add(new AssembledInstruction(instruction, version, opcodesByNameLowercase));
 	}
 
 	public byte[] assemble()
@@ -213,7 +214,10 @@ public class ZAssembler
 		int codeStart = headerEnd;
 
 		// Try resolving references until sizes and code locations stop changing.
-		CodeAssembler codeAssembler = new CodeAssembler(code, codeMem, codeSeq, labelLocations, codeStart);
+		//TODO
+		if(1 == 1)
+			throw new UnsupportedOperationException("not implemented yet");
+		CodeAssembler codeAssembler = null; //new CodeAssembler(assembledEntries, codeMem, codeSeq, labelLocations, codeStart);
 		codeAssembler.assembleUntilConvergence();
 
 		// Assembling converged; code size is known!
@@ -335,10 +339,12 @@ public class ZAssembler
 
 	private Location codeLocationHere()
 	{
-		if(code.isEmpty())
+		if(assembledEntries.isEmpty())
 			return SimpleLocation.CODE_START;
 		else
-			return new CodeLocation(code.get(code.size() - 1), InstructionPart.AFTER);
+			//			return new CodeLocation(assembledEntries.get(assembledEntries.size() - 1), InstructionPart.AFTER);
+			//TODO
+			throw new UnsupportedOperationException("not implemented yet");
 	}
 
 	public static byte[] assemble(ZAssemblerFile file, int externallyGivenVersion, String externallyGivenVersionSourceName)
