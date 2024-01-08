@@ -183,9 +183,8 @@ public final class AssembledInstruction implements AssembledEntry
 		operands.forEach(operand -> operand.append(codeSeq, diagnosticHandler));
 		storeTarget.ifPresent(storeTarget -> codeSeq.writeNextByte(varnumByteAndUpdateRoutine(storeTarget)));
 		branchInfo.ifPresent(branchInfo -> branchInfo.appendChecked(codeSeq, diagnosticHandler));
-		locationEmitter.emitLocationHere(new BranchOriginLocation(this));
 		// Branches are relative to after the branch data.
-		// So, the text (if present) is the only part of an instruction which comes after the branch origin.
+		locationEmitter.emitLocationHere(new BranchOriginLocation(this));
 		text.ifPresent(text -> appendZString(codeSeq, text, version));
 	}
 
