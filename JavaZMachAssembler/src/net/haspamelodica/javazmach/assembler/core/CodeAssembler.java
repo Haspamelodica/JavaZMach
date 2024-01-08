@@ -16,12 +16,12 @@ public class CodeAssembler implements LocationResolver
 	private final NoRangeCheckMemory			codeMem;
 	private final SequentialMemoryWriteAccess	codeSeq;
 	private final Map<String, Location>			labelLocations;
-
+	private final Map<Section, BigInteger>	sectionLocations;
 	private final int codeStart;
 
 	private final Map<AssembledInstruction, BigInteger>	instructionBranchOriginLocations;
 	private final Map<AssembledInstruction, BigInteger>	instructionEndLocations;
-
+	
 	public CodeAssembler(List<AssembledInstruction> code, NoRangeCheckMemory codeMem, SequentialMemoryWriteAccess codeSeq,
 			Map<String, Location> labelLocations, int codeStart)
 	{
@@ -30,7 +30,8 @@ public class CodeAssembler implements LocationResolver
 		this.codeSeq = codeSeq;
 		this.labelLocations = labelLocations;
 		this.codeStart = codeStart;
-
+		
+		this.sectionLocations = new HashMap<>();
 		this.instructionBranchOriginLocations = new HashMap<>();
 		this.instructionEndLocations = new HashMap<>();
 	}
@@ -92,6 +93,9 @@ public class CodeAssembler implements LocationResolver
 			{
 				case CODE_START -> BigInteger.valueOf(codeStart);
 			};
+			case Section section -> {
+				yield sectionLocations.get(section);
+			}
 			case CodeLocation codeLocation -> switch(codeLocation.targetPart())
 			{
 				case BRANCH_ORIGIN -> instructionBranchOriginLocations.get(codeLocation.instruction());

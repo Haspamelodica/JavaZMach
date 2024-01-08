@@ -8,6 +8,12 @@ import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.version
 import static net.haspamelodica.javazmach.core.header.HeaderField.AlphabetTableLoc;
 import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
 import static net.haspamelodica.javazmach.core.header.HeaderField.Version;
+import static net.haspamelodica.javazmach.core.header.HeaderField.HighMemoryBase;
+import static net.haspamelodica.javazmach.core.header.HeaderField.DictionaryLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.ObjTableLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.GlobalVarTableLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.StaticMemBase;
+import static net.haspamelodica.javazmach.core.header.HeaderField.AbbrevTableLoc;
 import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
 
 import java.math.BigInteger;
@@ -38,6 +44,7 @@ import net.haspamelodica.javazmach.core.header.HeaderField;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
+import net.haspamelodica.javazmach.core.memory.WritableMemory;
 
 public class ZAssembler
 {
@@ -266,6 +273,12 @@ public class ZAssembler
 					case AlphabetTableLoc -> HeaderParser.setFieldUnchecked(header, AlphabetTableLoc, 0);
 					default -> defaultError("Field " + automaticField
 							+ " is supposedly auto, but is not handled by the assembler!? This is an assembler bug.");
+					case HighMemoryBase -> storeSectionAddressInField(header, HighMemoryBase, Section.CODE, locationResolver);
+					case DictionaryLoc -> storeSectionAddressInField(header, DictionaryLoc, Section.DICTIONARY, locationResolver);
+					case ObjTableLoc -> storeSectionAddressInField(header, ObjTableLoc, Section.OBJ_TABLE, locationResolver);
+					case GlobalVarTableLoc -> storeSectionAddressInField(header, GlobalVarTableLoc, Section.GLOBAL_VAR_TABLE, locationResolver);
+					case StaticMemBase -> storeSectionAddressInField(header, StaticMemBase, Section.STATIC_MEM, locationResolver);
+					case AbbrevTableLoc -> storeSectionAddressInField(header, AbbrevTableLoc, Section.ABBREV_TABLE, locationResolver);
 				}
 
 		List<HeaderField> unsetHeaderFields = Arrays.stream(HeaderField.values())
@@ -294,6 +307,18 @@ public class ZAssembler
 
 		if(!unsetHeaderFieldsStr.isEmpty())
 			defaultInfo("The following non-Rst header fields have no explicit value and will default to 0: " + unsetHeaderFieldsStr);
+	}
+
+	private void storeSectionAddressInField(WritableMemory header, HeaderField field, Section section, LocationResolver resolver)
+	{
+		BigInteger resolvedValue = resolver.locationAbsoluteAddressOrNull(section);
+		if(resolvedValue == null)
+		{
+			defaultError("Section " + section + " not defined!");
+		}
+		int val = bigintIntChecked(field.len * 8, resolvedValue, bigint -> "section address too large for field of " + field.len + "bytes: "
+				+ bigint);
+		HeaderParser.setFieldUnchecked(header, field, val);
 	}
 
 	private void defineLabelCodeHere(String label)
