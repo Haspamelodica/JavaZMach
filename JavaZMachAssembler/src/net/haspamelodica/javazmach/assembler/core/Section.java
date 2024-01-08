@@ -1,5 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+//TODO merge with SimpleLocation
 public enum Section implements Location
 {
 	CODE,
