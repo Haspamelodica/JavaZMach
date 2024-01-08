@@ -38,6 +38,7 @@ import net.haspamelodica.javazmach.assembler.model.StringLiteral;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
+import net.haspamelodica.javazmach.assembler.model.ZObjectTable;
 import net.haspamelodica.javazmach.core.header.HeaderField;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
@@ -104,6 +105,7 @@ public class ZAssembler
 			case LabelDeclaration labelDeclaration -> add(labelDeclaration);
 			case ZAssemblerInstruction instruction -> add(instruction);
 			case Routine routine -> System.err.println("Uh-oh");
+			case ZObjectTable table -> System.err.println("Uh-oh");
 		}
 	}
 

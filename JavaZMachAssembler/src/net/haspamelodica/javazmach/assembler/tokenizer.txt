@@ -6,6 +6,10 @@ var = var|VAR ;
 zversion = zversion|ZVERSION ;
 zheader = zheader|ZHEADER ;
 routine = routine|ROUTINE ;
+objects = objects|OBJECTS ;
+object = object|OBJECT ;
+property = property|PROPERTY ;
+attribute = attribute|ATTRIBUTE ;
 
 : = : ;
 
@@ -37,6 +41,8 @@ shortbranch = shortbranch|SHORTBRANCH ;
 % = % ;
 ( = \\( ;
 ) = \\) ;
+{ = { ;
+} = } ;
 
 pos_number_dec = [0-9]([0-9ac-fAC-F][0-9a-fA-F]*|) ;
 pos_number_hex_0x = 0[xX][0-9a-fA-F]* ;

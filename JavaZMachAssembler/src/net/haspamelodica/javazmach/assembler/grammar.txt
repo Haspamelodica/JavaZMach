@@ -12,6 +12,7 @@ FileEntries
 FileEntry
  -> HeaderEntry      { fileEntry[-1] = headerEntry[0]; }
   | Routine          { fileEntry[-1] = routine[0]; }
+  | ObjectTable      { fileEntry[-1] = table[0]; }
   | LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
   | Instruction      { fileEntry[-1] = instruction[0]; } ;
 
@@ -20,6 +21,36 @@ HeaderEntry
 
 Routine
  -> '.' 'routine' 'ident' RoutineLocals { routine[-1] = Routine(str([2]), routineLocals[3]); } ;
+
+ObjectTable
+ -> '.' 'objects' Properties Objects { table[-1] = ZObjectTable(properties[2], objects[3]); };
+
+Properties
+ -> Properties Property { properties[-1] = appendPropList(properties[0], property[1]); }
+ | { properties[-1] = emptyPropList(); };
+
+Property
+ -> '.' 'property' IntegralValue ByteSequence { property[-1] = Property(value[2], sequence[3]); };
+
+Objects
+ -> Objects Object { objects[-1] = appendObjList(objects[0], object[1]); }
+ | { objects[-1] = emptyObjList(); };
+
+Object
+ -> '.' 'object' ZStringElements '{' ObjectEntries '}' { object[-1] = ZObject(ZString(elements[2]), elements[4]); };
+
+// Could also track the inner elements in separate lists but that seems painful
+ObjectEntries
+ -> ObjectEntries ObjectEntry { elements[-1] = appendOEList(elements[0], element[1]); }
+ | { elements[-1] = emptyOEList(); };
+
+ObjectEntry
+ -> Object { element[-1] = object[0]; }
+ |  Attribute { element[-1] = attribute[0]; }
+ |  Property { element[-1] = property[0]; };
+
+Attribute
+ -> '.' 'attribute' IntegralValue { attribute[-1] = ZAttribute(value[2]); };
 
 RoutineLocals
  -> { routineLocals[-1] = emptyRLList(); }
@@ -101,9 +132,9 @@ ZStringElements
 ZStringElement
  -> 'text' { element[-1] = ZStringElement(parseText([0])); } ;
 
-//ByteSequence
-// -> ByteSequenceElement { sequence[-1] = ByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
-//  | ByteSequenceMin2    { sequence[-1] = sequence[0]; } ;
+ByteSequence
+ -> ByteSequenceElement { sequence[-1] = ByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
+  | ByteSequenceMin2    { sequence[-1] = sequence[0]; } ;
 
 ByteSequenceMin2 -> ByteSequenceEndingComma ByteSequenceElement
   { sequence[-1] = ByteSequence(appendByteSequenceList(elements[0], element[1])); } ;
