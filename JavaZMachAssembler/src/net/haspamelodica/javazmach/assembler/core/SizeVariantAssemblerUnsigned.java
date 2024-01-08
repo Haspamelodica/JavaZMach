@@ -17,7 +17,7 @@ import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 // TODO better name
 public final class SizeVariantAssemblerUnsigned<SIZE>
 {
-	private final Function<LocationResolver, BigInteger> value;
+	private final Function<LocationAndLabelResolver, BigInteger> value;
 
 	private final List<SIZE>	allSizes;
 	private final boolean		sizeOverridden;
@@ -34,7 +34,7 @@ public final class SizeVariantAssemblerUnsigned<SIZE>
 	{
 		this(locationResolver -> integralValueOrNull(value, locationResolver), allSizes, sizeOverride, sizeToBitcount, sizeToSignedness);
 	}
-	public SizeVariantAssemblerUnsigned(Function<LocationResolver, BigInteger> value, List<SIZE> allSizes,
+	public SizeVariantAssemblerUnsigned(Function<LocationAndLabelResolver, BigInteger> value, List<SIZE> allSizes,
 			Optional<SIZE> sizeOverride, ToIntFunction<SIZE> sizeToBitcount, Predicate<SIZE> sizeToSignedness)
 	{
 		this.value = value;
@@ -47,7 +47,7 @@ public final class SizeVariantAssemblerUnsigned<SIZE>
 		this.targetSize = sizeOverride.orElse(allSizes.get(0));
 	}
 
-	public void update(LocationResolver locationResolver)
+	public void update(LocationAndLabelResolver locationResolver)
 	{
 		resolvedValue = value.apply(locationResolver);
 		if(resolvedValue == null)

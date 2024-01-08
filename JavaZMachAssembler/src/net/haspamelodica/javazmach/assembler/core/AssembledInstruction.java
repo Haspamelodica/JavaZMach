@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import net.haspamelodica.javazmach.assembler.core.CodeLocation.InstructionPart;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.Operand;
 import net.haspamelodica.javazmach.assembler.model.Variable;
@@ -97,26 +96,19 @@ public final class AssembledInstruction implements AssembledEntry
 			case Variable variable -> new AssembledVariableOperand(variable);
 		}).toList();
 		this.storeTarget = instruction.storeTarget();
-		Location branchOriginLocation = new CodeLocation(this, InstructionPart.BRANCH_ORIGIN);
-		this.branchInfo = instruction.branchInfo().map(branchInfo -> new AssembledBranchInfo(branchInfo, branchOriginLocation));
+		this.branchInfo = instruction.branchInfo().map(branchInfo -> new AssembledBranchInfo(branchInfo, new BranchOriginLocation(this)));
 		this.text = instruction.text();
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(LocationAndLabelResolver locationsAndLabels)
 	{
-		operands.forEach(operand -> operand.updateResolvedValue(locationResolver));
-		branchInfo.ifPresent(branchInfo -> branchInfo.updateResolvedTarget(locationResolver));
+		operands.forEach(operand -> operand.updateResolvedValue(locationsAndLabels));
+		branchInfo.ifPresent(branchInfo -> branchInfo.updateResolvedTarget(locationsAndLabels));
 	}
 
 	@Override
-	public void append(SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
-	{
-		//TODO
-		throw new UnsupportedOperationException("not implemented yet - difficult because branch origin location");
-	}
-
-	public void appendUntilBranchOrigin(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
 	{
 		OpcodeForm form = switch(opcode.range)
 		{
@@ -191,10 +183,7 @@ public final class AssembledInstruction implements AssembledEntry
 		operands.forEach(operand -> operand.append(codeSeq, diagnosticHandler));
 		storeTarget.ifPresent(storeTarget -> codeSeq.writeNextByte(varnumByteAndUpdateRoutine(storeTarget)));
 		branchInfo.ifPresent(branchInfo -> branchInfo.appendChecked(codeSeq, diagnosticHandler));
-	}
-
-	public void appendAfterBranchOrigin(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
-	{
+		locationEmitter.emitLocationHere(new BranchOriginLocation(this));
 		// Branches are relative to after the branch data.
 		// So, the text (if present) is the only part of an instruction which comes after the branch origin.
 		text.ifPresent(text -> appendZString(codeSeq, text, version));

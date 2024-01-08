@@ -1,4 +1,4 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-public sealed interface Location permits SimpleLocation, Section, CodeLocation, LabelLocation
+public sealed interface Location permits Section, RegularLocation, SpecialLocation
 {}

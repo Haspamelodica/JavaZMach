@@ -22,7 +22,7 @@ public class AssembledIntegralBitfieldHeaderField implements AssembledIntegralHe
 	}
 
 	@Override
-	public void assemble(WritableMemory header, LocationResolver locationResolver)
+	public void assemble(WritableMemory header, LocationAndLabelResolver locationResolver)
 	{
 		BigInteger resolvedValue = integralValueOrNull(value, locationResolver);
 		if(resolvedValue.signum() != 0 && !resolvedValue.equals(BigInteger.ONE))

@@ -8,7 +8,7 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 public record AssembledVariableOperand(Variable variable) implements AssembledOperand
 {
 	@Override
-	public void updateResolvedValue(LocationResolver locationResolver)
+	public void updateResolvedValue(LocationAndLabelResolver locationResolver)
 	{}
 
 	@Override

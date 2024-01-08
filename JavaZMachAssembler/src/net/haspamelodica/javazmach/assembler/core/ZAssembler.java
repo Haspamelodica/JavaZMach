@@ -3,17 +3,18 @@ package net.haspamelodica.javazmach.assembler.core;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultInfo;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
+import static net.haspamelodica.javazmach.assembler.core.RegularLocation.AssembledEntryPart.AFTER;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.versionRangeString;
-import static net.haspamelodica.javazmach.core.header.HeaderField.AlphabetTableLoc;
-import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
-import static net.haspamelodica.javazmach.core.header.HeaderField.Version;
-import static net.haspamelodica.javazmach.core.header.HeaderField.HighMemoryBase;
-import static net.haspamelodica.javazmach.core.header.HeaderField.DictionaryLoc;
-import static net.haspamelodica.javazmach.core.header.HeaderField.ObjTableLoc;
-import static net.haspamelodica.javazmach.core.header.HeaderField.GlobalVarTableLoc;
-import static net.haspamelodica.javazmach.core.header.HeaderField.StaticMemBase;
 import static net.haspamelodica.javazmach.core.header.HeaderField.AbbrevTableLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.AlphabetTableLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.DictionaryLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
+import static net.haspamelodica.javazmach.core.header.HeaderField.GlobalVarTableLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.HighMemoryBase;
+import static net.haspamelodica.javazmach.core.header.HeaderField.ObjTableLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.StaticMemBase;
+import static net.haspamelodica.javazmach.core.header.HeaderField.Version;
 import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
 
 import java.math.BigInteger;
@@ -27,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import net.haspamelodica.javazmach.assembler.core.CodeLocation.InstructionPart;
 import net.haspamelodica.javazmach.assembler.model.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.CharLiteral;
@@ -61,8 +61,8 @@ public class ZAssembler
 	private final Set<HeaderField>	partiallySetBitfields;
 
 	private final List<AssembledEntry>			assembledEntries;
-	private final NoRangeCheckMemory			codeMem;
-	private final SequentialMemoryWriteAccess	codeSeq;
+	private final NoRangeCheckMemory			mem;
+	private final SequentialMemoryWriteAccess	memSeq;
 	private final Map<String, Location>			labelLocations;
 
 	public ZAssembler(int version)
@@ -79,8 +79,8 @@ public class ZAssembler
 		this.header = new NoRangeCheckMemory();
 		this.assembledHeaderFields = new ArrayList<>();
 		this.assembledEntries = new ArrayList<>();
-		this.codeMem = new NoRangeCheckMemory();
-		this.codeSeq = new SequentialMemoryWriteAccess(codeMem);
+		this.mem = new NoRangeCheckMemory();
+		this.memSeq = new SequentialMemoryWriteAccess(mem);
 		this.setFields = new HashSet<>();
 		this.partiallySetBitfields = new HashSet<>();
 		this.labelLocations = new HashMap<>();
@@ -214,14 +214,11 @@ public class ZAssembler
 		int codeStart = headerEnd;
 
 		// Try resolving references until sizes and code locations stop changing.
-		//TODO
-		if(1 == 1)
-			throw new UnsupportedOperationException("not implemented yet");
-		CodeAssembler codeAssembler = null; //new CodeAssembler(assembledEntries, codeMem, codeSeq, labelLocations, codeStart);
-		codeAssembler.assembleUntilConvergence();
+		ConvergingEntriesAssembler codeAssembler = new ConvergingEntriesAssembler(assembledEntries, mem, memSeq, this::resolveLabelToLocation, codeStart);
+		Map<Location, BigInteger> locations = codeAssembler.assembleUntilConvergence();
 
 		// Assembling converged; code size is known!
-		int codeEnd = codeStart + codeMem.currentSize();
+		int codeEnd = codeStart + mem.currentSize();
 		// Compute entire storyfile size; maybe pad
 		int storyfileSizeDivisor = switch(version)
 		{
@@ -238,13 +235,22 @@ public class ZAssembler
 		// From here on, sizes and code locations are known and frozen.
 
 		// Now that all sizes and locations are known, we can assemble the header.
-		assembleHeader(codeAssembler, storyfileSize / storyfileSizeDivisor);
+		assembleHeader(LocationAndLabelResolver.of(locations::get, this::resolveLabelToLocation), storyfileSize / storyfileSizeDivisor);
 
 		byte[] result = new byte[storyfileSize];
 		System.arraycopy(header.data(), 0, result, headerStart, header.currentSize());
-		System.arraycopy(codeMem.data(), 0, result, codeStart, codeMem.currentSize());
+		System.arraycopy(mem.data(), 0, result, codeStart, mem.currentSize());
 		// No need to care for padding: If storyfile is padded, the padding bytes will already be 0.
 		return result;
+	}
+
+	private Location resolveLabelToLocation(String label)
+	{
+		Location resolvedLocation = labelLocations.get(label);
+		if(resolvedLocation == null)
+			// no need to go through custom DiagnosticHandler: won't change in later iterations
+			DiagnosticHandler.defaultError("Label " + label + " is not defined");
+		return resolvedLocation;
 	}
 
 	private void preAssembleHeader()
@@ -260,7 +266,7 @@ public class ZAssembler
 			header.writeByte(0x3f, 0x00);
 	}
 
-	private void assembleHeader(LocationResolver locationResolver, int predividedStoryfileSize)
+	private void assembleHeader(LocationAndLabelResolver locationResolver, int predividedStoryfileSize)
 	{
 		for(AssembledIntegralHeaderField assembledField : assembledHeaderFields)
 			assembledField.assemble(header, locationResolver);
@@ -313,9 +319,9 @@ public class ZAssembler
 			defaultInfo("The following non-Rst header fields have no explicit value and will default to 0: " + unsetHeaderFieldsStr);
 	}
 
-	private void storeSectionAddressInField(WritableMemory header, HeaderField field, Section section, LocationResolver resolver)
+	private void storeSectionAddressInField(WritableMemory header, HeaderField field, Section section, LocationAndLabelResolver resolver)
 	{
-		BigInteger resolvedValue = resolver.locationAbsoluteAddressOrNull(section);
+		BigInteger resolvedValue = resolver.resolveAbsoluteOrNull(section);
 		if(resolvedValue == null)
 		{
 			defaultError("Section " + section + " not defined!");
@@ -340,11 +346,9 @@ public class ZAssembler
 	private Location codeLocationHere()
 	{
 		if(assembledEntries.isEmpty())
-			return SimpleLocation.CODE_START;
+			return Section.CODE;
 		else
-			//			return new CodeLocation(assembledEntries.get(assembledEntries.size() - 1), InstructionPart.AFTER);
-			//TODO
-			throw new UnsupportedOperationException("not implemented yet");
+			return new RegularLocation(assembledEntries.get(assembledEntries.size() - 1), AFTER);
 	}
 
 	public static byte[] assemble(ZAssemblerFile file, int externallyGivenVersion, String externallyGivenVersionSourceName)

@@ -4,6 +4,6 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public sealed interface AssembledEntry permits AssembledInstruction
 {
-	public void updateResolvedValues(LocationResolver locationResolver);
-	public void append(SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler);
+	public void updateResolvedValues(LocationAndLabelResolver locationsAndLabels);
+	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler);
 }

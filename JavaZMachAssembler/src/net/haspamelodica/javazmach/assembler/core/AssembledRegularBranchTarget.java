@@ -22,7 +22,7 @@ public class AssembledRegularBranchTarget implements AssembledBranchTarget
 					BigInteger resolvedTarget = integralValueOrNull(target, locationResolver);
 					if(resolvedTarget == null)
 						return null;
-					BigInteger resolvedBranchOrigin = locationResolver.locationAbsoluteAddressOrNull(branchOriginLocation);
+					BigInteger resolvedBranchOrigin = locationResolver.resolveAbsoluteOrNull(branchOriginLocation);
 					if(resolvedBranchOrigin == null)
 						return null;
 					return resolvedTarget.subtract(resolvedBranchOrigin).add(TWO);
@@ -41,7 +41,7 @@ public class AssembledRegularBranchTarget implements AssembledBranchTarget
 	}
 
 	@Override
-	public void updateResolvedEncodedOffset(LocationResolver locationResolver)
+	public void updateResolvedEncodedOffset(LocationAndLabelResolver locationResolver)
 	{
 		encodedOffsetAssembler.update(locationResolver);
 	}

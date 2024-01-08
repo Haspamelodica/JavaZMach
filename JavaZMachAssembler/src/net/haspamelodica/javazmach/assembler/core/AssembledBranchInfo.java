@@ -20,7 +20,7 @@ public class AssembledBranchInfo
 		};
 	}
 
-	public void updateResolvedTarget(LocationResolver locationResolver)
+	public void updateResolvedTarget(LocationAndLabelResolver locationResolver)
 	{
 		target.updateResolvedEncodedOffset(locationResolver);
 	}

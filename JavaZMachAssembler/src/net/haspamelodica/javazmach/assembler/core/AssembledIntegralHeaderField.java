@@ -5,6 +5,6 @@ import net.haspamelodica.javazmach.core.memory.WritableMemory;
 
 public interface AssembledIntegralHeaderField
 {
-	public void assemble(WritableMemory header, LocationResolver locationResolver);
+	public void assemble(WritableMemory header, LocationAndLabelResolver locationResolver);
 	public HeaderField getField();
 }

@@ -27,13 +27,13 @@ import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssemblerUtils
 {
-	public static BigInteger integralValueOrNull(IntegralValue value, LocationResolver locationResolver)
+	public static BigInteger integralValueOrNull(IntegralValue value, LocationAndLabelResolver locationResolver)
 	{
 		return switch(value)
 		{
 			case NumberLiteral literal -> literal.value();
 			case CharLiteral literal -> BigInteger.valueOf(literal.value());
-			case LabelReference labelRef -> locationResolver.locationAbsoluteAddressOrNull(new LabelLocation(labelRef.name()));
+			case LabelReference labelRef -> locationResolver.resolveAbsoluteOrNull(labelRef.name());
 			case BinaryExpression expr ->
 			{
 				BigInteger lhs = integralValueOrNull(expr.lhs(), locationResolver);
