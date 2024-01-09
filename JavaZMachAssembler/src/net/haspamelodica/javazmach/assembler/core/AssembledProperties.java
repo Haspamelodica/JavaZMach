@@ -32,19 +32,17 @@ public class AssembledProperties implements AssembledEntry
 		BigInteger lastProp = null;
 		this.properties = new ArrayList<AssembledProperty>();
 		// TODO: fix this weird propIndex that I added out of nowhere
-		int propIndex = 1;
 		for(Property p : sortedProperties)
 		{
-			AssembledProperty assembledProp = new AssembledProperty(p, propIndex, version);
+			AssembledProperty assembledProp = new AssembledProperty(p, version);
 			if(p.index() == lastProp)
 			{
 				// TODO: print object name
-				defaultWarning(String.format("Property with index %d multiply defined. Overwriting...", propIndex));
+				defaultWarning(String.format("Property with index %s multiply defined. Overwriting...", p.index().toString()));
 				this.properties.set(this.properties.size() - 1, assembledProp);
 			} else
 			{
 				this.properties.add(assembledProp);
-				++ propIndex;
 			}
 		}
 		this.properties = Collections.unmodifiableList(this.properties);

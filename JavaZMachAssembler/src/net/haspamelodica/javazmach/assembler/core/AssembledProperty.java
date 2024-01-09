@@ -7,13 +7,14 @@ public class AssembledProperty implements AssembledEntry
 {
 	private static final int	MAX_PROP_LENGTH_V1TO3	= 8;
 	private static final int	MAX_PROP_LENGTH_V4TO6	= 64;
+	private static final int	INDEX_BITS_V1TO3	= 5;
+	private static final int	INDEX_BITS_V4TO6	= 6;
 	private Property			property;
-	private int					index, version;
+	private int					version;
 
-	public AssembledProperty(Property property, int index, int version)
+	public AssembledProperty(Property property, int version)
 	{
 		this.property = property;
-		this.index = index;
 		this.version = version;
 	}
 
@@ -24,6 +25,16 @@ public class AssembledProperty implements AssembledEntry
 	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
 	{
+		int indexBits = switch(version) {
+			case 1, 2, 3 -> INDEX_BITS_V1TO3;
+			case 4, 5, 6 -> INDEX_BITS_V4TO6;
+			default -> {
+				diagnosticHandler.error(String.format("Unknown version %d", version));
+				yield 0;
+			}
+		};
+		
+		int index = ZAssemblerUtils.bigintIntChecked(indexBits, property.index(), (b) -> String.format("Property index %d is too large for version %d. Should occupy at most %d bits", b, version, indexBits));
 		byte propertyBytes[] = ZAssemblerUtils.materializeByteSequence(property.bytes(), (error) -> String.format("Error in property %d: %s", index, error));
 		// See section 12.4
 		if(version >= 1 && version <= 3)
