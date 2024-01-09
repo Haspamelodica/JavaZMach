@@ -31,6 +31,7 @@ public class AssembledProperties implements AssembledEntry
 		}).toList();
 		BigInteger lastProp = null;
 		this.properties = new ArrayList<AssembledProperty>();
+		// TODO: fix this weird propIndex that I added out of nowhere
 		int propIndex = 1;
 		for(Property p : sortedProperties)
 		{
