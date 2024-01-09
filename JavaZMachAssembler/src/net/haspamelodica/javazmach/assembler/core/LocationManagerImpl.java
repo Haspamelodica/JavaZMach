@@ -44,7 +44,7 @@ public class LocationManagerImpl implements LocationManager
 
 		// No need to go through a custom DiagnosticHandler:
 		// Only in the first iteration is this possible, and there permitUndefinedLocations is set.
-		return DiagnosticHandler.defaultError("Undefined location - this is probably an assembler bug: " + location);
+		return DiagnosticHandler.defaultError("Undefined location: " + location);
 	}
 
 	@Override
@@ -54,7 +54,7 @@ public class LocationManagerImpl implements LocationManager
 
 		BigInteger oldNewlySetResolved = newlySetLocations.put(location, newResolved);
 		if(oldNewlySetResolved != null)
-			DiagnosticHandler.defaultError("Location defined twice in one iteration - this is an assembler bug: " + location);
+			DiagnosticHandler.defaultError("Location defined twice in one iteration: " + location);
 
 		// This also handles the case where the given location didn't exist in backingLocations:
 		// get will return null, and thus equals will return false.
