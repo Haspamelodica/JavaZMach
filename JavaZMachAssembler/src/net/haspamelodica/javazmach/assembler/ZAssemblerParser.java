@@ -31,7 +31,9 @@ import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
+import net.haspamelodica.javazmach.assembler.model.ZObjectTable;
 import net.haspamelodica.javazmach.assembler.model.Operand;
+import net.haspamelodica.javazmach.assembler.model.Property;
 import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.assembler.model.RoutineLocal;
 import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
@@ -42,6 +44,9 @@ import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
+import net.haspamelodica.javazmach.assembler.model.ZAttribute;
+import net.haspamelodica.javazmach.assembler.model.ZObject;
+import net.haspamelodica.javazmach.assembler.model.ZObjectEntry;
 import net.haspamelodica.javazmach.assembler.model.ZString;
 import net.haspamelodica.javazmach.assembler.model.ZStringElement;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
@@ -77,6 +82,9 @@ public class ZAssemblerParser
 		ParameterizedType T_ListByteSequenceElement = new ParameterizedTypeImpl(null, List.class, ByteSequenceElement.class);
 		ParameterizedType T_ListZStringElement = new ParameterizedTypeImpl(null, List.class, ZStringElement.class);
 		ParameterizedType T_ListRoutineLocal = new ParameterizedTypeImpl(null, List.class, RoutineLocal.class);
+		ParameterizedType T_ListProperty = new ParameterizedTypeImpl(null, List.class, Property.class);
+		ParameterizedType T_ListObject = new ParameterizedTypeImpl(null, List.class, ZObject.class);
+		ParameterizedType T_ListObjectEntry = new ParameterizedTypeImpl(null, List.class, ZObjectEntry.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptBranchInfo = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
@@ -91,6 +99,10 @@ public class ZAssemblerParser
 		functionsByName.put("HeaderEntry", TypedFunction.build(HeaderEntry::new, HeaderEntry.class, String.class, HeaderValue.class));
 		functionsByName.put("Routine", TypedFunction.buildT(Routine::new, Routine.class, String.class, T_ListRoutineLocal));
 		functionsByName.put("RoutineLocal", TypedFunction.build(RoutineLocal::new, RoutineLocal.class, String.class, IntegralValue.class));
+		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, BigInteger.class, ByteSequence.class));
+		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
+		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, ZString.class, T_ListObjectEntry));
+		functionsByName.put("ZAttribute", TypedFunction.build(ZAttribute::new, ZAttribute.class, BigInteger.class));
 		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, String.class));
 		functionsByName.put("AssemblerZMachInstruction", TypedFunction.buildT(ZAssemblerInstruction::new,
 				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptVariable, T_OptBranchInfo, T_OptZString));
@@ -141,6 +153,15 @@ public class ZAssemblerParser
 		functionsByName.put("emptyRLList", TypedFunction.buildT(ArrayList::new, T_ListRoutineLocal));
 		functionsByName.put("appendRLList", TypedFunction.buildT(ZAssemblerParser::<RoutineLocal> appendList,
 				T_ListRoutineLocal, T_ListRoutineLocal, RoutineLocal.class));
+		functionsByName.put("emptyPropList", TypedFunction.buildT(ArrayList::new, T_ListProperty));
+		functionsByName.put("appendPropList", TypedFunction.buildT(ZAssemblerParser::<Property> appendList,
+				T_ListProperty, T_ListProperty, Property.class));
+		functionsByName.put("emptyObjList", TypedFunction.buildT(ArrayList::new, T_ListObject));
+		functionsByName.put("appendObjList", TypedFunction.buildT(ZAssemblerParser::<ZObject> appendList,
+				T_ListObject, T_ListObject, ZObject.class));
+		functionsByName.put("emptyOEList", TypedFunction.buildT(ArrayList::new, T_ListObjectEntry));
+		functionsByName.put("appendOEList", TypedFunction.buildT(ZAssemblerParser::<ZObjectEntry> appendList,
+				T_ListObjectEntry, T_ListObjectEntry, ZObjectEntry.class));
 		functionsByName.put("emptyOperandList", TypedFunction.buildT(ArrayList::new, T_ListOperand));
 		functionsByName.put("appendOperandList", TypedFunction.buildT(ZAssemblerParser::<Operand> appendList,
 				T_ListOperand, T_ListOperand, Operand.class));

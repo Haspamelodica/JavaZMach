@@ -4,6 +4,7 @@ import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defau
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultInfo;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.materializeByteSequence;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.versionRangeString;
 import static net.haspamelodica.javazmach.core.header.HeaderField.AbbrevTableLoc;
 import static net.haspamelodica.javazmach.core.header.HeaderField.AlphabetTableLoc;
@@ -17,7 +18,6 @@ import static net.haspamelodica.javazmach.core.header.HeaderField.Version;
 import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
 
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -27,17 +27,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.haspamelodica.javazmach.assembler.model.ByteSequence;
-import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
-import net.haspamelodica.javazmach.assembler.model.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
-import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.Routine;
-import net.haspamelodica.javazmach.assembler.model.StringLiteral;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
+import net.haspamelodica.javazmach.assembler.model.ZObjectTable;
 import net.haspamelodica.javazmach.core.header.HeaderField;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
@@ -104,6 +101,7 @@ public class ZAssembler
 			case LabelDeclaration labelDeclaration -> add(labelDeclaration);
 			case ZAssemblerInstruction instruction -> add(instruction);
 			case Routine routine -> System.err.println("Uh-oh");
+			case ZObjectTable table -> add(table);
 		}
 	}
 
@@ -144,36 +142,7 @@ public class ZAssembler
 					: new AssembledIntegralRegularHeaderField(field, value));
 			case ByteSequence byteSequence ->
 			{
-				int length = byteSequence
-						.elements()
-						.stream()
-						.mapToInt(e -> switch(e)
-						{
-							case NumberLiteral elementInteger -> 1;
-							case StringLiteral elementString -> elementString.value().length();
-							case CharLiteral elementChar -> 1;
-						})
-						.sum();
-				byte[] value = new byte[length];
-				int i = 0;
-				for(ByteSequenceElement elementUncasted : byteSequence.elements())
-					switch(elementUncasted)
-					{
-						case NumberLiteral element -> value[i ++] = (byte) bigintIntChecked(8,
-								element.value(), bigint -> "byte literal out of range: " + bigint + " for field " + field);
-						case StringLiteral element ->
-						{
-							System.arraycopy(element.value().getBytes(StandardCharsets.US_ASCII), 0, value, 0, element.value().length());
-							i += element.value().length();
-						}
-						case CharLiteral element ->
-						{
-							if((element.value() & ~0x7f) != 0)
-								defaultError("char literal out of range (not ASCII): " + element.value()
-										+ " for field " + field);
-							value[i ++] = (byte) element.value();
-						}
-					};
+				byte[] value = materializeByteSequence(byteSequence, (error) -> "Error in field " + field + ": " + error);
 
 				if(isBitfieldEntry)
 					defaultError("Setting a bitfield entry to a byte sequence "
@@ -199,6 +168,11 @@ public class ZAssembler
 	public void add(ZAssemblerInstruction instruction)
 	{
 		assembledEntries.add(new AssembledInstruction(instruction, version, opcodesByNameLowercase));
+	}
+
+	public void add(ZObjectTable table)
+	{
+		assembledEntries.add(new AssembledZObjectTable(table, version));
 	}
 
 	public byte[] assemble()
@@ -270,12 +244,12 @@ public class ZAssembler
 					case AlphabetTableLoc -> HeaderParser.setFieldUnchecked(header, AlphabetTableLoc, 0);
 					default -> defaultError("Field " + automaticField
 							+ " is supposedly auto, but is not handled by the assembler!? This is an assembler bug.");
-					case HighMemoryBase -> storeSectionAddressInField(header, HighMemoryBase, Section.CODE, locationResolver);
-					case DictionaryLoc -> storeSectionAddressInField(header, DictionaryLoc, Section.DICTIONARY, locationResolver);
-					case ObjTableLoc -> storeSectionAddressInField(header, ObjTableLoc, Section.OBJ_TABLE, locationResolver);
-					case GlobalVarTableLoc -> storeSectionAddressInField(header, GlobalVarTableLoc, Section.GLOBAL_VAR_TABLE, locationResolver);
-					case StaticMemBase -> storeSectionAddressInField(header, StaticMemBase, Section.STATIC_MEM, locationResolver);
-					case AbbrevTableLoc -> storeSectionAddressInField(header, AbbrevTableLoc, Section.ABBREV_TABLE, locationResolver);
+					case HighMemoryBase -> storeLocationInField(header, HighMemoryBase, Section.HIGH_MEM_BASE, locationResolver);
+					case DictionaryLoc -> storeLocationInField(header, DictionaryLoc, SpecialDataStructureLocation.DICTIONARY, locationResolver);
+					case ObjTableLoc -> storeLocationInField(header, ObjTableLoc, SpecialDataStructureLocation.OBJ_TABLE, locationResolver);
+					case GlobalVarTableLoc -> storeLocationInField(header, GlobalVarTableLoc, SpecialDataStructureLocation.GLOBAL_VAR_TABLE, locationResolver);
+					case StaticMemBase -> storeLocationInField(header, StaticMemBase, Section.STATIC_MEM_BASE, locationResolver);
+					case AbbrevTableLoc -> storeLocationInField(header, AbbrevTableLoc, SpecialDataStructureLocation.ABBREV_TABLE, locationResolver);
 				}
 
 		List<HeaderField> unsetHeaderFields = Arrays.stream(HeaderField.values())
@@ -306,12 +280,12 @@ public class ZAssembler
 			defaultInfo("The following non-Rst header fields have no explicit value and will default to 0: " + unsetHeaderFieldsStr);
 	}
 
-	private void storeSectionAddressInField(WritableMemory header, HeaderField field, Section section, LocationResolver resolver)
+	private void storeLocationInField(WritableMemory header, HeaderField field, Location location, LocationResolver resolver)
 	{
-		BigInteger resolvedValue = resolver.resolveAbsoluteOrNull(section);
+		BigInteger resolvedValue = resolver.resolveAbsoluteOrNull(location);
 		if(resolvedValue == null)
 		{
-			defaultError("Section " + section + " not defined!");
+			defaultError("Location " + location + " not defined!");
 		}
 		int val = bigintIntChecked(field.len * 8, resolvedValue, bigint -> "section address too large for field of " + field.len + "bytes: "
 				+ bigint);

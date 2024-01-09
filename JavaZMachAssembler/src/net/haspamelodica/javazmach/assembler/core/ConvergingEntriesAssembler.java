@@ -73,14 +73,9 @@ public class ConvergingEntriesAssembler
 		for(Section section : Section.values())
 			locations.put(section, switch(section)
 			{
-				case CODE -> BigInteger.valueOf(codeStart);
+				case HIGH_MEM_BASE -> BigInteger.valueOf(codeStart);
 				// Unfortunately we can't throw an UnsupportedOperationException here.
-				case DICTIONARY -> null;
-				case OBJ_TABLE -> null;
-				case GLOBAL_VAR_TABLE -> null;
-				case STATIC_MEM -> null;
-				case ABBREV_TABLE -> null;
-				case FILE_END -> null;
+				case STATIC_MEM_BASE -> null;
 			});
 	}
 }
