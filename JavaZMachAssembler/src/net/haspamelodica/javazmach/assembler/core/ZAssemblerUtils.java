@@ -196,7 +196,7 @@ public class ZAssemblerUtils
 	public static int bigintIntChecked(int maxBits, BigInteger bigint, Function<BigInteger, String> errorMessage)
 	{
 		checkBigintMaxBitCount(maxBits, bigint, errorMessage);
-		return bigint.intValue() & ((1 << maxBits) - 1);
+		return bigint.intValue() & (-1 >>> (32 - maxBits));
 	}
 
 	public static byte[] bigintBytesChecked(int maxBits, BigInteger bigint, Function<BigInteger, String> errorMessage)
