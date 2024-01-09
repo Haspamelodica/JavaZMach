@@ -47,7 +47,7 @@ public class ConvergingEntriesAssembler
 				entry.append(locationManager, memSeq, diagnosticHandler);
 			}
 
-			if(!locationManager.anyLocationChanged())
+			if(!locationManager.nextIterationNecessary())
 				break;
 
 			// If we get here, we haven't converged yet.

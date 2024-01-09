@@ -12,7 +12,7 @@ public class LocationManagerImpl implements LocationManager
 	private final Supplier<BigInteger>		currentResolvedLocationSupplier;
 	private final boolean					permitUndefinedLocations;
 
-	private boolean anyLocationChanged;
+	private boolean nextIterationNecessary;
 
 	public LocationManagerImpl(Map<Location, BigInteger> backingLocations, Supplier<BigInteger> currentResolvedLocationSupplier,
 			boolean permitUndefinedLocations)
@@ -22,7 +22,7 @@ public class LocationManagerImpl implements LocationManager
 		this.currentResolvedLocationSupplier = currentResolvedLocationSupplier;
 		this.permitUndefinedLocations = permitUndefinedLocations;
 
-		this.anyLocationChanged = false;
+		this.nextIterationNecessary = false;
 	}
 
 	@Override
@@ -37,7 +37,10 @@ public class LocationManagerImpl implements LocationManager
 			return backingResolved;
 
 		if(permitUndefinedLocations)
+		{
+			nextIterationNecessary = true;
 			return null;
+		}
 
 		// No need to go through a custom DiagnosticHandler:
 		// Only in the first iteration is this possible, and there permitUndefinedLocations is set.
@@ -55,12 +58,12 @@ public class LocationManagerImpl implements LocationManager
 
 		// This also handles the case where the given location didn't exist in backingLocations:
 		// get will return null, and thus equals will return false.
-		anyLocationChanged |= !newResolved.equals(backingLocations.get(location));
+		nextIterationNecessary |= !newResolved.equals(backingLocations.get(location));
 	}
 
-	public boolean anyLocationChanged()
+	public boolean nextIterationNecessary()
 	{
-		return anyLocationChanged;
+		return nextIterationNecessary;
 	}
 
 	public Map<Location, BigInteger> getNewlySetLocations()
