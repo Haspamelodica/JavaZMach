@@ -6,8 +6,24 @@
 .ZHEADER ReleaseNumber 0x42
 .ZHEADER SerialNum "421337"
 .ZHEADER CompilerVer 0x1337
-
 .ZHEADER InitialPC15 entry
+
+.OBJECTS
+.PROPERTY 1  0, 0
+.PROPERTY 15 255, 128
+.OBJECT "HELLO" {
+	.ATTRIBUTE 0
+	.ATTRIBUTE 4
+	
+	.PROPERTY 1 "Hello"
+	.OBJECT "WORLD" {
+		.PROPERTY 1 "World"
+	}
+	.OBJECT "!" {
+		.PROPERTY 1 "!"
+	}
+}
+
 entry:
 print "Hello World!"
 print "Hello World!"
