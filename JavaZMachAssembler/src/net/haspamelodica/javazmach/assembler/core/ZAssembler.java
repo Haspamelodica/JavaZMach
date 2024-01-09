@@ -43,7 +43,7 @@ import net.haspamelodica.javazmach.core.memory.WritableMemory;
 
 public class ZAssembler
 {
-	private static final Set<HeaderField> AUTO_FIELDS = Set.of(FileLength, Version, AlphabetTableLoc);
+	private static final Set<HeaderField> AUTO_FIELDS = Set.of(FileLength, Version, AlphabetTableLoc, HighMemoryBase, ObjTableLoc);
 
 	private final int					version;
 	private final Map<String, Opcode>	opcodesByNameLowercase;
