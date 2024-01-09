@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.assembler.model;
 
-public record ZAttribute(IntegralValue index) implements ZObjectEntry
-{
+import java.math.BigInteger;
 
-}
+public record ZAttribute(BigInteger index) implements ZObjectEntry
+{}

@@ -1,4 +1,6 @@
 package net.haspamelodica.javazmach.assembler.model;
 
-public record Property(IntegralValue index, ByteSequence bytes) implements ZObjectEntry
+import java.math.BigInteger;
+
+public record Property(BigInteger index, ByteSequence bytes) implements ZObjectEntry
 {}

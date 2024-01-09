@@ -4,11 +4,14 @@ import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defau
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 import net.haspamelodica.javazmach.assembler.model.BinaryExpression;
+import net.haspamelodica.javazmach.assembler.model.ByteSequence;
+import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
@@ -16,6 +19,7 @@ import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
+import net.haspamelodica.javazmach.assembler.model.StringLiteral;
 import net.haspamelodica.javazmach.assembler.model.UnaryExpression;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZString;
@@ -66,6 +70,40 @@ public class ZAssemblerUtils
 				};
 			}
 		};
+	}
+	
+	public static byte[] materializeByteSequence(ByteSequence byteSequence, Function<String, String> errorMessage) {
+		int length = byteSequence
+				.elements()
+				.stream()
+				.mapToInt(e -> switch(e)
+				{
+					case NumberLiteral elementInteger -> 1;
+					case StringLiteral elementString -> elementString.value().length();
+					case CharLiteral elementChar -> 1;
+				})
+				.sum();
+		byte[] value = new byte[length];
+		int i = 0;
+		for(ByteSequenceElement elementUncasted : byteSequence.elements()) {
+			switch(elementUncasted)
+			{
+				case NumberLiteral element -> value[i ++] = (byte) bigintIntChecked(8,
+						element.value(), bigint -> errorMessage.apply("byte literal out of range: " + bigint));
+				case StringLiteral element ->
+				{
+					System.arraycopy(element.value().getBytes(StandardCharsets.US_ASCII), 0, value, 0, element.value().length());
+					i += element.value().length();
+				}
+				case CharLiteral element ->
+				{
+					if((element.value() & ~0x7f) != 0)
+						defaultError(errorMessage.apply("char literal out of range (not ASCII): " + element.value()));
+					value[i ++] = (byte) element.value();
+				}
+			};
+		}
+		return value;
 	}
 
 	public static int varnumByteAndUpdateRoutine(Variable variable)
