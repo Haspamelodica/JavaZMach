@@ -50,11 +50,11 @@ public class AssembledDefaultProperties implements AssembledEntry
 				{
 					defaultError(String.format("Default property %d values must have at most 2 bytes. Got %d bytes", index, value.length));
 				}
-				if(this.defaultProperties.get(index).isPresent())
+				if(this.defaultProperties.get(index - MIN_PROPERTY).isPresent())
 				{
 					defaultWarning(String.format("Default property %d is multiply defined. Overwriting it...", index));
 				}
-				this.defaultProperties.set(index, Optional.of(value));
+				this.defaultProperties.set(index - MIN_PROPERTY, Optional.of(value));
 
 			} else
 			{
@@ -65,10 +65,7 @@ public class AssembledDefaultProperties implements AssembledEntry
 
 	@Override
 	public void updateResolvedValues(LocationResolver locationsAndLabels)
-	{
-		// TODO Auto-generated method stub
-
-	}
+	{}
 
 	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
