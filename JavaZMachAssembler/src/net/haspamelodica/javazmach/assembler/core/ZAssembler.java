@@ -244,12 +244,12 @@ public class ZAssembler
 					case AlphabetTableLoc -> HeaderParser.setFieldUnchecked(header, AlphabetTableLoc, 0);
 					default -> defaultError("Field " + automaticField
 							+ " is supposedly auto, but is not handled by the assembler!? This is an assembler bug.");
-					case HighMemoryBase -> storeSectionAddressInField(header, HighMemoryBase, Section.CODE, locationResolver);
-					case DictionaryLoc -> storeSectionAddressInField(header, DictionaryLoc, Section.DICTIONARY, locationResolver);
-					case ObjTableLoc -> storeSectionAddressInField(header, ObjTableLoc, Section.OBJ_TABLE, locationResolver);
-					case GlobalVarTableLoc -> storeSectionAddressInField(header, GlobalVarTableLoc, Section.GLOBAL_VAR_TABLE, locationResolver);
-					case StaticMemBase -> storeSectionAddressInField(header, StaticMemBase, Section.STATIC_MEM, locationResolver);
-					case AbbrevTableLoc -> storeSectionAddressInField(header, AbbrevTableLoc, Section.ABBREV_TABLE, locationResolver);
+					case HighMemoryBase -> storeLocationInField(header, HighMemoryBase, Section.HIGH_MEM_BASE, locationResolver);
+					case DictionaryLoc -> storeLocationInField(header, DictionaryLoc, SpecialDataStructureLocation.DICTIONARY, locationResolver);
+					case ObjTableLoc -> storeLocationInField(header, ObjTableLoc, SpecialDataStructureLocation.OBJ_TABLE, locationResolver);
+					case GlobalVarTableLoc -> storeLocationInField(header, GlobalVarTableLoc, SpecialDataStructureLocation.GLOBAL_VAR_TABLE, locationResolver);
+					case StaticMemBase -> storeLocationInField(header, StaticMemBase, Section.STATIC_MEM_BASE, locationResolver);
+					case AbbrevTableLoc -> storeLocationInField(header, AbbrevTableLoc, SpecialDataStructureLocation.ABBREV_TABLE, locationResolver);
 				}
 
 		List<HeaderField> unsetHeaderFields = Arrays.stream(HeaderField.values())
@@ -280,12 +280,12 @@ public class ZAssembler
 			defaultInfo("The following non-Rst header fields have no explicit value and will default to 0: " + unsetHeaderFieldsStr);
 	}
 
-	private void storeSectionAddressInField(WritableMemory header, HeaderField field, Section section, LocationResolver resolver)
+	private void storeLocationInField(WritableMemory header, HeaderField field, Location location, LocationResolver resolver)
 	{
-		BigInteger resolvedValue = resolver.resolveAbsoluteOrNull(section);
+		BigInteger resolvedValue = resolver.resolveAbsoluteOrNull(location);
 		if(resolvedValue == null)
 		{
-			defaultError("Section " + section + " not defined!");
+			defaultError("Location " + location + " not defined!");
 		}
 		int val = bigintIntChecked(field.len * 8, resolvedValue, bigint -> "section address too large for field of " + field.len + "bytes: "
 				+ bigint);
