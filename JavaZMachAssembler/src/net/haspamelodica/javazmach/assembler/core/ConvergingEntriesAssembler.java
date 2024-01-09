@@ -1,8 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core;
 
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultEmit;
-import static net.haspamelodica.javazmach.assembler.core.RegularLocation.AssembledEntryPart.AFTER;
-import static net.haspamelodica.javazmach.assembler.core.RegularLocation.AssembledEntryPart.START;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -45,12 +43,8 @@ public class ConvergingEntriesAssembler
 			putSectionLocations(locations);
 			for(AssembledEntry entry : entries)
 			{
-				// first update start location: updateResolvedValues might depend on it,
-				// and in that case this makes it converge a bit faster (and possibly even to a better encoding).
-				locationManager.emitLocationHere(new RegularLocation(entry, START));
 				entry.updateResolvedValues(locationManager);
 				entry.append(locationManager, memSeq, diagnosticHandler);
-				locationManager.emitLocationHere(new RegularLocation(entry, AFTER));
 			}
 
 			if(!locationManager.anyLocationChanged())
