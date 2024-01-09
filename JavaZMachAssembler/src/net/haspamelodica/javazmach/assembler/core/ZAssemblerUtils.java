@@ -94,9 +94,19 @@ public class ZAssemblerUtils
 
 	public static void appendZString(SequentialMemoryWriteAccess target, ZString text, int version)
 	{
-		List<Byte> zchars = toZChars(text, version);
-		while(zchars.size() % 3 != 0)
-			zchars.add((byte) 5);
+		appendZChars(target, toZChars(text, version));
+	}
+
+	public static void appendZChars(SequentialMemoryWriteAccess target, List<Byte> zchars)
+	{
+		if(zchars.size() % 3 != 0)
+		{
+			zchars = new ArrayList<>(zchars);
+			do
+				zchars.add((byte) 5);
+			while(zchars.size() % 3 != 0);
+		}
+
 		for(int i = 0; i < zchars.size(); i += 3)
 			target.writeNextWord(0
 					// at end: bit 15; 0 means no, 1 means yes
@@ -109,12 +119,18 @@ public class ZAssemblerUtils
 					| ((zchars.get(i + 2) & 0x1f) << 0));
 	}
 
-	private static List<Byte> toZChars(ZString text, int version)
+	public static int zStringLength(List<Byte> zchars)
+	{
+		// +2 to round up
+		return (zchars.size() + 2) / 3;
+	}
+
+	public static List<Byte> toZChars(ZString text, int version)
 	{
 		// TODO what about custom alphabets?
 		ZSCIICharZCharConverter converter = new ZSCIICharZCharConverter(version, new ZCharsAlphabetTableDefault(version));
 
-		List<Byte> result = new ArrayList<>();
+		List<Byte> zchars = new ArrayList<>();
 		for(ZStringElement element : text.elements())
 		{
 			// TODO abbreviation handling, once implemented
@@ -128,10 +144,10 @@ public class ZAssemblerUtils
 					})
 					.filter(cp -> cp != '\r')
 					.map(UnicodeZSCIIConverterNoSpecialChars::unicodeToZsciiNoCR)
-					.forEach(zsciiChar -> converter.translateZSCIIToZChars(zsciiChar, result::add));
+					.forEach(zsciiChar -> converter.translateZSCIIToZChars(zsciiChar, zchars::add));
 		}
 
-		return result;
+		return List.copyOf(zchars);
 	}
 
 	public static String versionRangeString(int minVersion, int maxVersion)
