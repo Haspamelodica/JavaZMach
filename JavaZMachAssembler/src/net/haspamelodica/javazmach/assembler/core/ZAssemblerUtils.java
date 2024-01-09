@@ -119,7 +119,7 @@ public class ZAssemblerUtils
 					| ((zchars.get(i + 2) & 0x1f) << 0));
 	}
 
-	public static int zStringLength(List<Byte> zchars)
+	public static int zStringWordLength(List<Byte> zchars)
 	{
 		// +2 to round up
 		return (zchars.size() + 2) / 3;
