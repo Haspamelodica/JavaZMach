@@ -6,6 +6,7 @@ import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defau
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -71,8 +72,9 @@ public class ZAssemblerUtils
 			}
 		};
 	}
-	
-	public static byte[] materializeByteSequence(ByteSequence byteSequence, Function<String, String> errorMessage) {
+
+	public static byte[] materializeByteSequence(ByteSequence byteSequence, Function<String, String> errorMessage)
+	{
 		int length = byteSequence
 				.elements()
 				.stream()
@@ -85,11 +87,13 @@ public class ZAssemblerUtils
 				.sum();
 		byte[] value = new byte[length];
 		int i = 0;
-		for(ByteSequenceElement elementUncasted : byteSequence.elements()) {
+		for(ByteSequenceElement elementUncasted : byteSequence.elements())
+		{
 			switch(elementUncasted)
 			{
 				case NumberLiteral element -> value[i ++] = (byte) bigintIntChecked(8,
-						element.value(), bigint -> errorMessage.apply("byte literal out of range: " + bigint));
+						// We can use the default diagnostic handler here - we don't have a LocationResolver anyway, so errors can't change
+						element.value(), bigint -> errorMessage.apply("byte literal out of range: " + bigint), DiagnosticHandler.defaultHandler());
 				case StringLiteral element ->
 				{
 					System.arraycopy(element.value().getBytes(StandardCharsets.US_ASCII), 0, value, 0, element.value().length());
@@ -193,22 +197,27 @@ public class ZAssemblerUtils
 		return "V" + minVersion + (maxVersion <= 0 ? "+" : maxVersion != minVersion ? "-" + maxVersion : "");
 	}
 
-	public static int bigintIntChecked(int maxBits, BigInteger bigint, Function<BigInteger, String> errorMessage)
+	public static int bigintIntChecked(int maxBits, BigInteger bigint, Function<BigInteger, String> errorMessage, DiagnosticHandler diagnosticHandler)
 	{
-		checkBigintMaxBitCount(maxBits, bigint, errorMessage);
+		checkBigintMaxBitCount(maxBits, bigint, errorMessage, diagnosticHandler);
 		return bigint.intValue() & (-1 >>> (32 - maxBits));
 	}
 
-	public static byte[] bigintBytesChecked(int maxBits, BigInteger bigint, Function<BigInteger, String> errorMessage)
+	public static byte[] bigintBytesChecked(int maxBits, BigInteger bigint, Function<BigInteger, String> errorMessage, DiagnosticHandler diagnosticHandler)
 	{
-		checkBigintMaxBitCount(maxBits, bigint, errorMessage);
+		if(!hasBigintMaxBitCount(maxBits, bigint))
+		{
+			diagnosticHandler.error(errorMessage.apply(bigint));
+			return Arrays.copyOf(bigint.toByteArray(), (maxBits + 7) / 8);
+		}
 		return bigint.toByteArray();
 	}
 
-	public static void checkBigintMaxBitCount(int maxBits, BigInteger bigint, Function<BigInteger, String> errorMessage)
+	public static void checkBigintMaxBitCount(int maxBits, BigInteger bigint,
+			Function<BigInteger, String> errorMessage, DiagnosticHandler diagnosticHandler)
 	{
 		if(!hasBigintMaxBitCount(maxBits, bigint))
-			defaultError(errorMessage.apply(bigint));
+			diagnosticHandler.error(errorMessage.apply(bigint));
 	}
 
 	public static boolean hasBigintMaxBitCountAndIsPositive(int maxBits, BigInteger bigint)

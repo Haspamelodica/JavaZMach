@@ -4,4 +4,5 @@ public enum Section implements Location
 {
 	STATIC_MEM_BASE,
 	HIGH_MEM_BASE,
+	FILE_END;
 }

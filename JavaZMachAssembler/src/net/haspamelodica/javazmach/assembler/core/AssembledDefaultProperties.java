@@ -43,7 +43,7 @@ public class AssembledDefaultProperties
 		{
 			// Not a very precise error message, but
 			// that index is unreasonably large.
-			final int index = ZAssemblerUtils.bigintIntChecked(32, p.index(), (bigIndex) -> "Property index " + bigIndex + " too large");
+			final int index = ZAssemblerUtils.bigintIntChecked(32, p.index(), (bigIndex) -> "Property index " + bigIndex + " too large", DiagnosticHandler.defaultHandler());
 			if(index >= MIN_PROPERTY && index < MIN_PROPERTY + defaultPropertyCount)
 			{
 				byte[] value = materializeByteSequence(p.bytes(), (error) -> "Error in default property " + index + ": ");

@@ -1,26 +1,23 @@
 package net.haspamelodica.javazmach.assembler.core;
 
 import static java.math.BigInteger.ZERO;
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.integralValueOrNull;
 
 import java.math.BigInteger;
 
-import net.haspamelodica.javazmach.assembler.model.IntegralValue;
-
 public class ResolvableIntegralValue
 {
-	private final IntegralValue integralValue;
+	private final AssemblerIntegralValue integralValue;
 
 	private BigInteger resolvedValue;
 
-	public ResolvableIntegralValue(IntegralValue integralValue)
+	public ResolvableIntegralValue(AssemblerIntegralValue integralValue)
 	{
 		this.integralValue = integralValue;
 	}
 
 	public void updateResolvedValue(LocationResolver locationResolver)
 	{
-		resolvedValue = integralValueOrNull(integralValue, locationResolver);
+		resolvedValue = integralValue.resolve(locationResolver);
 	}
 
 	public BigInteger resolvedValueOrNull()

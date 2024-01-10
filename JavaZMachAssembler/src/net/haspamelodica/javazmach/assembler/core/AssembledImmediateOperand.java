@@ -1,5 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intVal;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -12,7 +14,7 @@ public final class AssembledImmediateOperand implements AssembledOperand
 
 	public AssembledImmediateOperand(IntegralValue value, boolean forcedSmallBecauseLONGForm)
 	{
-		this.value = new SizeVariantAssemblerUnsigned<>(value, List.of(true, false),
+		this.value = new SizeVariantAssemblerUnsigned<>(intVal(value), List.of(true, false),
 				forcedSmallBecauseLONGForm ? Optional.of(true) : Optional.empty(),
 				// The semantics of a small immediate are "a value from 0-255".
 				// So, the small size has to be unsigned to exclude "negative" immediates:

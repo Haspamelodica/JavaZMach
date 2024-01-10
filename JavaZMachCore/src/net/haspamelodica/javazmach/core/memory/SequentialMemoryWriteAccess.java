@@ -28,6 +28,12 @@ public class SequentialMemoryWriteAccess
 		mem.writeWord(addr, value);
 		addr += 2;
 	}
+	public void writeNextBytes(byte[] data)
+	{
+		mem.writeNBytes(addr, data);
+		addr += data.length;
+	}
+
 	/**
 	 * This method can "jump" backwards if a negative offset is supplied.
 	 */
@@ -50,6 +56,7 @@ public class SequentialMemoryWriteAccess
 	}
 	public void alignToBytes(int bytes, int padValue)
 	{
+		// Conecptually VERY inefficient, but in practice probably not too bad, considering how small alignments are in practice.
 		while(addr % bytes != 0)
 			writeNextByte(padValue);
 	}

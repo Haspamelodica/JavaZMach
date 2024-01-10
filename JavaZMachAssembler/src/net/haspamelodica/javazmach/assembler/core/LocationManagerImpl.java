@@ -48,17 +48,21 @@ public class LocationManagerImpl implements LocationManager
 	}
 
 	@Override
-	public void emitLocationHere(Function<BigInteger, BigInteger> addrToLocationValue, Location location)
+	public void emitLocation(Location location, BigInteger value)
 	{
-		BigInteger newResolved = addrToLocationValue.apply(currentAddrSupplier.get());
-
-		BigInteger oldNewlySetResolved = newlySetLocations.put(location, newResolved);
+		BigInteger oldNewlySetResolved = newlySetLocations.put(location, value);
 		if(oldNewlySetResolved != null)
 			DiagnosticHandler.defaultError("Location defined twice in one iteration: " + location);
 
 		// This also handles the case where the given location didn't exist in backingLocations:
 		// get will return null, and thus equals will return false.
-		nextIterationNecessary |= !newResolved.equals(backingLocations.get(location));
+		nextIterationNecessary |= !value.equals(backingLocations.get(location));
+	}
+
+	@Override
+	public void emitLocationHere(Location location, Function<BigInteger, BigInteger> addrToLocationValue)
+	{
+		emitLocation(location, addrToLocationValue.apply(currentAddrSupplier.get()));
 	}
 
 	public boolean nextIterationNecessary()
@@ -66,7 +70,7 @@ public class LocationManagerImpl implements LocationManager
 		return nextIterationNecessary;
 	}
 
-	public Map<Location, BigInteger> getNewlySetLocations()
+	public Map<Location, BigInteger> getNewlySetLocationsModifiable()
 	{
 		return newlySetLocations;
 	}

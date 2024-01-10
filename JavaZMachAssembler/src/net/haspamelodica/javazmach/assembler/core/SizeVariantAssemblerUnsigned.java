@@ -3,7 +3,6 @@ package net.haspamelodica.javazmach.assembler.core;
 import static java.math.BigInteger.ZERO;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.hasBigintMaxBitCount;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.hasBigintMaxBitCountAndIsPositive;
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.integralValueOrNull;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -12,12 +11,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
-import net.haspamelodica.javazmach.assembler.model.IntegralValue;
-
 // TODO better name
 public final class SizeVariantAssemblerUnsigned<SIZE>
 {
-	private final Function<LocationResolver, BigInteger> value;
+	private final AssemblerIntegralValue value;
 
 	private final List<SIZE>	allSizes;
 	private final boolean		sizeOverridden;
@@ -29,12 +26,7 @@ public final class SizeVariantAssemblerUnsigned<SIZE>
 	private SIZE		targetSize;
 	private SIZE		currentSize;
 
-	public SizeVariantAssemblerUnsigned(IntegralValue value, List<SIZE> allSizes,
-			Optional<SIZE> sizeOverride, ToIntFunction<SIZE> sizeToBitcount, Predicate<SIZE> sizeToSignedness)
-	{
-		this(locationResolver -> integralValueOrNull(value, locationResolver), allSizes, sizeOverride, sizeToBitcount, sizeToSignedness);
-	}
-	public SizeVariantAssemblerUnsigned(Function<LocationResolver, BigInteger> value, List<SIZE> allSizes,
+	public SizeVariantAssemblerUnsigned(AssemblerIntegralValue value, List<SIZE> allSizes,
 			Optional<SIZE> sizeOverride, ToIntFunction<SIZE> sizeToBitcount, Predicate<SIZE> sizeToSignedness)
 	{
 		this.value = value;
@@ -49,7 +41,7 @@ public final class SizeVariantAssemblerUnsigned<SIZE>
 
 	public void update(LocationResolver locationResolver)
 	{
-		resolvedValue = value.apply(locationResolver);
+		resolvedValue = value.resolve(locationResolver);
 		if(resolvedValue == null)
 			// nothing about value known yet - continue assuming it is the smallest size / the overridden size.
 			return;

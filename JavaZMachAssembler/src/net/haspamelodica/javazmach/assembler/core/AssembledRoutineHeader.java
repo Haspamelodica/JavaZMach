@@ -1,12 +1,12 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-import static java.math.BigInteger.ZERO;
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intConst;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 
 import java.math.BigInteger;
 import java.util.List;
 
-import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
@@ -42,7 +42,8 @@ public final class AssembledRoutineHeader implements AssembledEntry
 		};
 		this.name = routine.name();
 		this.locals = routine.locals().stream()
-				.map(l -> new AssembledLocalVariable(l.name(), new ResolvableIntegralValue(l.initialValue().orElse(new NumberLiteral(ZERO)))))
+				.map(l -> new AssembledLocalVariable(l.name(), new ResolvableIntegralValue(
+						l.initialValue().map(AssemblerIntegralValue::intVal).orElse(intConst(0)))))
 				.toList();
 	}
 
@@ -56,15 +57,15 @@ public final class AssembledRoutineHeader implements AssembledEntry
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		memSeq.alignToBytes(1 << alignmentBitCount);
-		locationEmitter.emitLocationHere(a -> a.shiftRight(alignmentBitCount), new LabelLocation(name));
+		locationEmitter.emitLocationHere(new LabelLocation(name), a -> a.shiftRight(alignmentBitCount));
 		// no need to check whether this fits into a byte - locals count is checked in the constructor.
 		memSeq.writeNextByte(locals.size());
 		for(AssembledLocalVariable local : locals)
 		{
 			BigInteger initialValue = local.initialValue().resolvedValueOrZero();
 			if(writeInitialValues)
-				memSeq.writeNextWord(ZAssemblerUtils.bigintIntChecked(16, initialValue,
-						i -> "Initial value for local variable " + local.name() + " too large: " + i));
+				memSeq.writeNextWord(bigintIntChecked(16, initialValue,
+						i -> "Initial value for local variable " + local.name() + " too large: " + i, diagnosticHandler));
 			else if(initialValue.signum() != 0)
 				diagnosticHandler.error("Initial value for local variable " + local.name() + " is not 0: " + initialValue);
 		}

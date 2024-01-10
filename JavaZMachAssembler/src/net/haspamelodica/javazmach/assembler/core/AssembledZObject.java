@@ -41,7 +41,8 @@ public class AssembledZObject
 			memSeq.writeNextWord(0);
 		} else
 		{
-			memSeq.writeNextWord(bigintIntChecked(16, propAddress, (i) -> String.format("Property location cannot be more than 2 bytes but is: %s", i.toString())));
+			memSeq.writeNextWord(bigintIntChecked(16, propAddress,
+					i -> String.format("Property location cannot be more than 2 bytes but is: %s", i.toString()), diagnosticHandler));
 		}
 	}
 }

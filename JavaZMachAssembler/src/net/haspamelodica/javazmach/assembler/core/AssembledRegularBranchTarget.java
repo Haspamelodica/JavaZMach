@@ -1,6 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
 import static java.math.BigInteger.TWO;
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intFunc;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.integralValueOrNull;
 
 import java.math.BigInteger;
@@ -17,7 +18,7 @@ public class AssembledRegularBranchTarget implements AssembledBranchTarget
 	public AssembledRegularBranchTarget(IntegralValue target, Location branchOriginLocation, Optional<BranchLength> branchLengthOverride)
 	{
 		this.encodedOffsetAssembler = new SizeVariantAssemblerUnsigned<>(
-				locationResolver ->
+				intFunc(locationResolver ->
 				{
 					BigInteger resolvedTarget = integralValueOrNull(target, locationResolver);
 					if(resolvedTarget == null)
@@ -26,7 +27,7 @@ public class AssembledRegularBranchTarget implements AssembledBranchTarget
 					if(resolvedBranchOrigin == null)
 						return null;
 					return resolvedTarget.subtract(resolvedBranchOrigin).add(TWO);
-				},
+				}),
 				// this depends on BranchLength being sorted in ascending length
 				Arrays.asList(BranchLength.values()),
 				branchLengthOverride, l -> switch(l)

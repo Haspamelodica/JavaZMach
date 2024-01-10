@@ -1,33 +1,37 @@
 package net.haspamelodica.javazmach.assembler.core;
 
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintBytesChecked;
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.integralValueOrNull;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.core.header.HeaderField;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.memory.WritableMemory;
 
 public class AssembledIntegralRegularHeaderField implements AssembledIntegralHeaderField
 {
-	private final HeaderField	field;
-	private final IntegralValue	value;
+	private final HeaderField				field;
+	private final ResolvableIntegralValue	value;
 
-	public AssembledIntegralRegularHeaderField(HeaderField field, IntegralValue value)
+	public AssembledIntegralRegularHeaderField(HeaderField field, AssemblerIntegralValue value)
 	{
 		this.field = field;
-		this.value = value;
+		this.value = new ResolvableIntegralValue(value);
 	}
 
 	@Override
-	public void assemble(WritableMemory header, LocationResolver locationResolver)
+	public void updateResolvedValues(LocationResolver locationResolver)
 	{
-		BigInteger resolvedValue = integralValueOrNull(value, locationResolver);
+		value.updateResolvedValue(locationResolver);
+	}
+
+	@Override
+	public void assemble(WritableMemory header, DiagnosticHandler diagnosticHandler)
+	{
+		BigInteger resolvedValue = value.resolvedValueOrZero();
 		byte[] valueBytes = bigintBytesChecked(field.len * 8, resolvedValue, bigint -> "header field value out of range: "
-				+ bigint + " for field " + field);
+				+ bigint + " for field " + field, diagnosticHandler);
 		int padding = field.len - valueBytes.length;
 		if(padding != 0)
 		{

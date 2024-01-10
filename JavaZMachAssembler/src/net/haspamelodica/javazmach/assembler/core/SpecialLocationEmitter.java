@@ -5,10 +5,10 @@ import java.util.function.Function;
 
 public interface SpecialLocationEmitter
 {
-	public void emitLocationHere(Function<BigInteger, BigInteger> addrToLocationValue, SpecialLocation location);
+	public void emitLocationHere(SpecialLocation location, Function<BigInteger, BigInteger> addrToLocationValue);
 
 	public default void emitLocationHere(SpecialLocation location)
 	{
-		emitLocationHere(Function.identity(), location);
+		emitLocationHere(location, Function.identity());
 	}
 }
