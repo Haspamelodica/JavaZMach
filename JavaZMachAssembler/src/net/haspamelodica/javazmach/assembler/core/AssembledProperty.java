@@ -43,7 +43,7 @@ public class AssembledProperty implements AssembledEntry
 			{
 				diagnosticHandler.error(String.format("Property length %d is too large for version %d. Should be at most %d", propertyBytes.length, version, MAX_PROP_LENGTH_V1TO3));
 			}
-			int sizeByte = index | propertyBytes.length * 32 - 1;
+			int sizeByte = index | (propertyBytes.length - 1) * 32;
 			memSeq.writeNextByte(sizeByte);
 		} else if(version >= 4 && version <= 6)
 		{
@@ -69,8 +69,6 @@ public class AssembledProperty implements AssembledEntry
 				}
 				memSeq.writeNextByte(firstSizeByte);
 			}
-			int sizeByte = index | propertyBytes.length * 32 - 1;
-			memSeq.writeNextByte(sizeByte);
 		}
 		for(byte b : propertyBytes)
 		{
