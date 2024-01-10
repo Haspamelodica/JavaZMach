@@ -247,14 +247,14 @@ public class ZAssembler
 					case Version -> HeaderParser.setFieldUnchecked(header, Version, version);
 					// we don't support custom alphabets (yet), so set this to 0
 					case AlphabetTableLoc -> HeaderParser.setFieldUnchecked(header, AlphabetTableLoc, 0);
-					default -> defaultError("Field " + automaticField
-							+ " is supposedly auto, but is not handled by the assembler!? This is an assembler bug.");
 					case HighMemoryBase -> storeLocationInField(header, HighMemoryBase, Section.HIGH_MEM_BASE, locationResolver);
 					case DictionaryLoc -> storeLocationInField(header, DictionaryLoc, SpecialDataStructureLocation.DICTIONARY, locationResolver);
 					case ObjTableLoc -> storeLocationInField(header, ObjTableLoc, SpecialDataStructureLocation.OBJ_TABLE, locationResolver);
 					case GlobalVarTableLoc -> storeLocationInField(header, GlobalVarTableLoc, SpecialDataStructureLocation.GLOBAL_VAR_TABLE, locationResolver);
 					case StaticMemBase -> storeLocationInField(header, StaticMemBase, Section.STATIC_MEM_BASE, locationResolver);
 					case AbbrevTableLoc -> storeLocationInField(header, AbbrevTableLoc, SpecialDataStructureLocation.ABBREV_TABLE, locationResolver);
+					default -> defaultError("Field " + automaticField
+							+ " is supposedly auto, but is not handled by the assembler!? This is an assembler bug.");
 				}
 
 		List<HeaderField> unsetHeaderFields = Arrays.stream(HeaderField.values())

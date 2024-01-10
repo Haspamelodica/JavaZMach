@@ -13,6 +13,7 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 public class AssembledRoutineHeader implements AssembledEntry
 {
 	private final boolean	writeInitialValues;
+	private final int		alignmentBitCount;
 	private final String	name;
 
 	private static record AssembledLocalVariable(String name, ResolvableIntegralValue initialValue)
@@ -30,6 +31,15 @@ public class AssembledRoutineHeader implements AssembledEntry
 			case 5, 6, 7, 8 -> false;
 			default -> throw new IllegalArgumentException("Unknown version: " + version);
 		};
+		// z1point1 §1.2.3
+		this.alignmentBitCount = switch(version)
+		{
+			case 1, 2, 3 -> 1; // alignment 2
+			case 4, 5 -> 2; // alignment 4
+			case 6, 7 -> 2; // also alignment 4, although packed addresss are different here
+			case 8 -> 3; // alignment 8
+			default -> throw new IllegalArgumentException("Unknown version: " + version);
+		};
 		this.name = routine.name();
 		this.locals = routine.locals().stream()
 				.map(l -> new AssembledLocalVariable(l.name(), new ResolvableIntegralValue(l.initialValue().orElse(new NumberLiteral(ZERO)))))
@@ -45,8 +55,8 @@ public class AssembledRoutineHeader implements AssembledEntry
 	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
-		memSeq.alignToBytes(2);
-		locationEmitter.emitLocationHere(a -> a.shiftRight(1), new LabelLocation(name));
+		memSeq.alignToBytes(1 << alignmentBitCount);
+		locationEmitter.emitLocationHere(a -> a.shiftRight(alignmentBitCount), new LabelLocation(name));
 		// no need to check whether this fits into a byte - locals count is checked in the constructor.
 		memSeq.writeNextByte(locals.size());
 		for(AssembledLocalVariable local : locals)
