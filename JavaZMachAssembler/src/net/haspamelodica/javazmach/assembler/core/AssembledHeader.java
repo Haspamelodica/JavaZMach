@@ -7,22 +7,14 @@ import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defau
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultInfo;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 import static net.haspamelodica.javazmach.assembler.core.Section.FILE_END;
-import static net.haspamelodica.javazmach.assembler.core.Section.HIGH_MEM_BASE;
-import static net.haspamelodica.javazmach.assembler.core.Section.STATIC_MEM_BASE;
-import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.ABBREV_TABLE;
-import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.DICTIONARY;
 import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.GLOBAL_VAR_TABLE;
 import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.OBJ_TABLE;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.materializeByteSequence;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.versionRangeString;
-import static net.haspamelodica.javazmach.core.header.HeaderField.AbbrevTableLoc;
 import static net.haspamelodica.javazmach.core.header.HeaderField.AlphabetTableLoc;
-import static net.haspamelodica.javazmach.core.header.HeaderField.DictionaryLoc;
 import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
 import static net.haspamelodica.javazmach.core.header.HeaderField.GlobalVarTableLoc;
-import static net.haspamelodica.javazmach.core.header.HeaderField.HighMemoryBase;
 import static net.haspamelodica.javazmach.core.header.HeaderField.ObjTableLoc;
-import static net.haspamelodica.javazmach.core.header.HeaderField.StaticMemBase;
 import static net.haspamelodica.javazmach.core.header.HeaderField.Version;
 
 import java.util.ArrayList;
@@ -67,12 +59,12 @@ public final class AssembledHeader implements AssembledEntry
 		autoFields.put(Version, intConst(version));
 		// we don't support custom alphabets (yet), so set this to 0
 		autoFields.put(AlphabetTableLoc, intConst(0));
-		autoFields.put(HighMemoryBase, intLoc(HIGH_MEM_BASE));
-		autoFields.put(DictionaryLoc, intLoc(DICTIONARY));
+		//autoFields.put(HighMemoryBase, intLoc(HIGH_MEM_BASE));
+		//autoFields.put(DictionaryLoc, intLoc(DICTIONARY));
 		autoFields.put(ObjTableLoc, intLoc(OBJ_TABLE));
 		autoFields.put(GlobalVarTableLoc, intLoc(GLOBAL_VAR_TABLE));
-		autoFields.put(StaticMemBase, intLoc(STATIC_MEM_BASE));
-		autoFields.put(AbbrevTableLoc, intLoc(ABBREV_TABLE));
+		//autoFields.put(StaticMemBase, intLoc(STATIC_MEM_BASE));
+		//autoFields.put(AbbrevTableLoc, intLoc(ABBREV_TABLE));
 
 		this.activeAutoFields = autoFields.entrySet().stream().collect(Collectors.toMap(Entry::getKey,
 				e -> new AssembledIntegralRegularHeaderField(e.getKey(), e.getValue()),

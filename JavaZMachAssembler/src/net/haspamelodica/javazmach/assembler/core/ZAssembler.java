@@ -40,6 +40,7 @@ public class ZAssembler
 
 		this.header = new AssembledHeader(version);
 		this.assembler = new ConvergingEntriesAssembler(version);
+		assembler.addEntry(header);
 	}
 
 	public void add(ZAssemblerFile file)

@@ -70,10 +70,11 @@ public class ConvergingEntriesAssembler
 	{
 		for(AssembledEntry entry : entries)
 		{
-			// these are needed by ZAssembler for the auto fields HighMemoryBase and StaticMemBase
+			// these are needed for the auto fields HighMemoryBase and StaticMemBase
 			locationManager.emitLocationHere(new EntryStartLocation(entry));
 			entry.updateResolvedValues(locationManager);
 			entry.append(locationManager, memSeq, diagnosticHandler);
+			locationManager.emitLocationHere(new EntryEndLocation(entry));
 		}
 
 		memSeq.alignToBytes(storyfileSizeDivisor, 0);
@@ -88,24 +89,25 @@ public class ConvergingEntriesAssembler
 			STATIC,
 			HIGH;
 		}
-		record SectionTypeHint(BigInteger addr, SectionType type)
+		record SectionTypeHint(BigInteger start, BigInteger end, SectionType type)
 		{}
 		record BigIntegerSummary(BigInteger min, BigInteger max)
 		{}
 		Map<SectionType, BigIntegerSummary> sectionTypeSummaries = entries
 				.stream()
-				.map(e -> new SectionTypeHint(locationManager.resolveAbsoluteOrNull(new EntryStartLocation(e)), switch(e)
-				{
-					case AssembledHeader entry -> SectionType.DYNAMIC;
-					case AssembledInstruction entry -> SectionType.HIGH;
-					case AssembledRoutineHeader entry -> SectionType.HIGH;
-					// a label by itself doesn't do anything
-					case LabelEntry entry -> null;
-					case AssembledZObjectTable entry -> SectionType.DYNAMIC;
-					case AssembledGlobals entry -> SectionType.DYNAMIC;
-				}))
+				.map(e -> new SectionTypeHint(locationManager.resolveAbsoluteOrNull(new EntryStartLocation(e)),
+						locationManager.resolveAbsoluteOrNull(new EntryEndLocation(e)), switch(e)
+						{
+							case AssembledHeader entry -> SectionType.DYNAMIC;
+							case AssembledInstruction entry -> SectionType.HIGH;
+							case AssembledRoutineHeader entry -> SectionType.HIGH;
+							// a label by itself doesn't do anything
+							case LabelEntry entry -> null;
+							case AssembledZObjectTable entry -> SectionType.DYNAMIC;
+							case AssembledGlobals entry -> SectionType.DYNAMIC;
+						}))
 				.filter(h -> h.type() != null)
-				.collect(Collectors.groupingBy(SectionTypeHint::type, Collectors.mapping(h -> new BigIntegerSummary(h.addr(), h.addr()),
+				.collect(Collectors.groupingBy(SectionTypeHint::type, Collectors.mapping(h -> new BigIntegerSummary(h.start(), h.end()),
 						Collectors.collectingAndThen(
 								Collectors.reducing((s1, s2) -> new BigIntegerSummary(s1.min().min(s2.min()), s2.max().max(s2.max()))),
 								Optional::get))));
