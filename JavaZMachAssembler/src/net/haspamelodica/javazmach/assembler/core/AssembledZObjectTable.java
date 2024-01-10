@@ -15,6 +15,7 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public class AssembledZObjectTable implements AssembledEntry
 {
+	private static final int MIN_OBJECT_INDEX = 1;
 	AssembledDefaultProperties	defaultProperties;
 	List<AssembledZObject>		objects;
 	List<AssembledProperties>	properties;
@@ -66,16 +67,18 @@ public class AssembledZObjectTable implements AssembledEntry
 				case ZAttribute attribute -> localAttributes.add(attribute);
 			}
 		}
-		int index = objects.size();
+		// object indices are always offset by 1
+		int realIndex = objects.size();
+		int objectIndex = realIndex + MIN_OBJECT_INDEX;
 		objects.add(null);
 		properties.add(null);
-		int firstChildIndex = children.isEmpty() ? 0 : index + 1;
+		int firstChildIndex = children.isEmpty() ? 0 : objectIndex + 1;
 
-		linearizeObjects(children, index, objects, properties, version);
+		linearizeObjects(children, objectIndex, objects, properties, version);
 
-		int siblingIndex = hasSibling ? objects.size() : 0;
-		objects.set(index, new AssembledZObject(localAttributes, index, parentIndex, siblingIndex, firstChildIndex, version));
-		properties.set(index, new AssembledProperties(localProperties, root.name(), index, version));
+		int siblingIndex = hasSibling ? objects.size() + MIN_OBJECT_INDEX : 0;
+		objects.set(realIndex, new AssembledZObject(localAttributes, objectIndex, parentIndex, siblingIndex, firstChildIndex, version));
+		properties.set(realIndex, new AssembledProperties(localProperties, root.name(), objectIndex, version));
 	}
 
 	@Override
