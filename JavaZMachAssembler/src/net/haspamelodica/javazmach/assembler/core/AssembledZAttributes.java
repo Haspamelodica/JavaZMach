@@ -9,9 +9,9 @@ import java.util.List;
 import net.haspamelodica.javazmach.assembler.model.ZAttribute;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public class AssembledZAttributes implements AssembledEntry
+public class AssembledZAttributes
 {
-	byte flags[];
+	private final byte flags[];
 
 	public AssembledZAttributes(List<ZAttribute> attributes, int version)
 	{
@@ -49,11 +49,6 @@ public class AssembledZAttributes implements AssembledEntry
 		}
 	}
 
-	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
-	{}
-
-	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		for(byte b : flags)

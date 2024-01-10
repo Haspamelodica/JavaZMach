@@ -43,6 +43,8 @@ public class ConvergingEntriesAssembler
 			putSectionLocations(locations);
 			for(AssembledEntry entry : entries)
 			{
+				// these are needed by ZAssembler for the auto fields HighMemoryBase and StaticMemBase
+				locationManager.emitLocationHere(new EntryStartLocation(entry));
 				entry.updateResolvedValues(locationManager);
 				entry.append(locationManager, memSeq, diagnosticHandler);
 			}

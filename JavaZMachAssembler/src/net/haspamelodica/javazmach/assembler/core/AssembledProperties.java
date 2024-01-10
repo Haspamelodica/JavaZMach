@@ -14,13 +14,14 @@ import net.haspamelodica.javazmach.assembler.model.Property;
 import net.haspamelodica.javazmach.assembler.model.ZString;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public class AssembledProperties implements AssembledEntry
+public class AssembledProperties
 {
 	private static final int MAX_SHORT_NAME_LEN = 765;
-	private List<AssembledProperty>	properties;
-	private int						objIndex;
-	private List<Byte>              nameZChars;
-	private int                     nameLength;
+
+	private final List<AssembledProperty>	properties;
+	private final int						objIndex;
+	private final List<Byte>				nameZChars;
+	private final int						nameLength;
 
 	public AssembledProperties(List<Property> properties, ZString name, int objIndex, int version)
 	{
@@ -30,7 +31,7 @@ public class AssembledProperties implements AssembledEntry
 			return p2.index().compareTo(p1.index());
 		}).toList();
 		BigInteger lastProp = null;
-		this.properties = new ArrayList<AssembledProperty>();
+		List<AssembledProperty> assembledProperties = new ArrayList<AssembledProperty>();
 		// TODO: fix this weird propIndex that I added out of nowhere
 		for(Property p : sortedProperties)
 		{
@@ -39,35 +40,29 @@ public class AssembledProperties implements AssembledEntry
 			{
 				// TODO: print object name
 				defaultWarning(String.format("Property with index %s multiply defined. Overwriting...", p.index().toString()));
-				this.properties.set(this.properties.size() - 1, assembledProp);
+				assembledProperties.set(assembledProperties.size() - 1, assembledProp);
 			} else
 			{
-				this.properties.add(assembledProp);
+				assembledProperties.add(assembledProp);
 			}
 		}
-		this.properties = Collections.unmodifiableList(this.properties);
+		this.properties = Collections.unmodifiableList(assembledProperties);
 		this.objIndex = objIndex;
 		nameZChars = toZChars(name, version);
 		nameLength = zStringWordLength(nameZChars);
-		if(nameLength > MAX_SHORT_NAME_LEN) {
+		if(nameLength > MAX_SHORT_NAME_LEN)
+		{
 			defaultError(String.format("Object short name is restricted to %d zchars, got %d", MAX_SHORT_NAME_LEN, nameLength));
 		}
 	}
 
-	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
-	{
-		properties.forEach(p -> p.updateResolvedValues(locationResolver));
-	}
-
-	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		locationEmitter.emitLocationHere(new PropertiesLocation(objIndex));
-		
+
 		memSeq.writeNextByte(nameLength);
 		ZAssemblerUtils.appendZChars(memSeq, nameZChars);
-		
+
 		for(AssembledProperty property : properties)
 		{
 			property.append(locationEmitter, memSeq, diagnosticHandler);

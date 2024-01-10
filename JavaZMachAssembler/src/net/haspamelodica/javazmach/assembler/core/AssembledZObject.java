@@ -8,11 +8,11 @@ import java.util.List;
 import net.haspamelodica.javazmach.assembler.model.ZAttribute;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public class AssembledZObject implements AssembledEntry
+public class AssembledZObject
 {
 	private AssembledZAttributes	attributes;
 	private int						index, parentIndex, siblingIndex, childIndex;
-	private BigInteger 				propAddress;
+	private BigInteger				propAddress;
 
 	public AssembledZObject(List<ZAttribute> attributes, int index, int parentIndex, int siblingIndex, int childIndex, int version)
 	{
@@ -24,14 +24,11 @@ public class AssembledZObject implements AssembledEntry
 		this.propAddress = null;
 	}
 
-	@Override
 	public void updateResolvedValues(LocationResolver locationResolver)
 	{
 		propAddress = locationResolver.resolveAbsoluteOrNull(new PropertiesLocation(index));
-		attributes.updateResolvedValues(locationResolver);
 	}
 
-	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		attributes.append(locationEmitter, memSeq, diagnosticHandler);

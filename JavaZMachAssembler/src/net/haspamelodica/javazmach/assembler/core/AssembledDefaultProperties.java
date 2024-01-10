@@ -11,11 +11,12 @@ import java.util.Optional;
 import net.haspamelodica.javazmach.assembler.model.Property;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public class AssembledDefaultProperties implements AssembledEntry
+public class AssembledDefaultProperties
 {
 	// property indices start at 1 (for some reason)
-	private final static int				MIN_PROPERTY	= 1;
-	private final List<Optional<byte[]>>	defaultProperties;
+	private final static int MIN_PROPERTY = 1;
+
+	private final List<Optional<byte[]>> defaultProperties;
 
 	public AssembledDefaultProperties(List<Property> defaultProperties, int version)
 	{
@@ -63,11 +64,6 @@ public class AssembledDefaultProperties implements AssembledEntry
 		}
 	}
 
-	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
-	{}
-
-	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		for(Optional<byte[]> p : defaultProperties)

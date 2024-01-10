@@ -3,14 +3,15 @@ package net.haspamelodica.javazmach.assembler.core;
 import net.haspamelodica.javazmach.assembler.model.Property;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public class AssembledProperty implements AssembledEntry
+public class AssembledProperty
 {
 	private static final int	MAX_PROP_LENGTH_V1TO3	= 8;
 	private static final int	MAX_PROP_LENGTH_V4TO6	= 64;
-	private static final int	INDEX_BITS_V1TO3	= 5;
-	private static final int	INDEX_BITS_V4TO6	= 6;
-	private Property			property;
-	private int					version;
+	private static final int	INDEX_BITS_V1TO3		= 5;
+	private static final int	INDEX_BITS_V4TO6		= 6;
+
+	private final Property	property;
+	private final int		version;
 
 	public AssembledProperty(Property property, int version)
 	{
@@ -18,22 +19,19 @@ public class AssembledProperty implements AssembledEntry
 		this.version = version;
 	}
 
-	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
-	{}
-
-	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
-		int indexBits = switch(version) {
+		int indexBits = switch(version)
+		{
 			case 1, 2, 3 -> INDEX_BITS_V1TO3;
 			case 4, 5, 6 -> INDEX_BITS_V4TO6;
-			default -> {
+			default ->
+			{
 				diagnosticHandler.error(String.format("Unknown version %d", version));
 				yield 0;
 			}
 		};
-		
+
 		int index = ZAssemblerUtils.bigintIntChecked(indexBits, property.index(), (b) -> String.format("Property index %d is too large for version %d. Should occupy at most %d bits", b, version, indexBits));
 		byte propertyBytes[] = ZAssemblerUtils.materializeByteSequence(property.bytes(), (error) -> String.format("Error in property %d: %s", index, error));
 		// See section 12.4

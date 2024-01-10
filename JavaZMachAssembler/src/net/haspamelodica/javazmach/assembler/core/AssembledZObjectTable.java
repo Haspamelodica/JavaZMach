@@ -13,20 +13,21 @@ import net.haspamelodica.javazmach.assembler.model.ZObjectEntry;
 import net.haspamelodica.javazmach.assembler.model.ZObjectTable;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public class AssembledZObjectTable implements AssembledEntry
+public final class AssembledZObjectTable implements AssembledEntry
 {
 	private static final int MIN_OBJECT_INDEX = 1;
-	AssembledDefaultProperties	defaultProperties;
-	List<AssembledZObject>		objects;
-	List<AssembledProperties>	properties;
+
+	private final AssembledDefaultProperties	defaultProperties;
+	private final List<AssembledZObject>		objects;
+	private final List<AssembledProperties>		properties;
 
 	public AssembledZObjectTable(ZObjectTable table, int version)
 	{
 		defaultProperties = new AssembledDefaultProperties(table.defaultProperties(), version);
-		objects = new ArrayList<AssembledZObject>();
+		List<AssembledZObject> objects = new ArrayList<AssembledZObject>();
 		properties = new ArrayList<AssembledProperties>();
 		linearizeObjects(table.objects(), 0, objects, properties, version);
-		objects = Collections.unmodifiableList(objects);
+		this.objects = Collections.unmodifiableList(objects);
 		if(version >= 1 && version <= 3)
 		{
 			if(objects.size() > 255)
@@ -84,9 +85,7 @@ public class AssembledZObjectTable implements AssembledEntry
 	@Override
 	public void updateResolvedValues(LocationResolver locationResolver)
 	{
-		defaultProperties.updateResolvedValues(locationResolver);
 		objects.forEach(o -> o.updateResolvedValues(locationResolver));
-		properties.forEach(o -> o.updateResolvedValues(locationResolver));
 	}
 
 	@Override

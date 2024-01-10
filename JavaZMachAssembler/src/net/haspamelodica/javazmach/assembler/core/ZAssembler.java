@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -236,6 +237,26 @@ public class ZAssembler
 	{
 		for(AssembledIntegralHeaderField assembledField : assembledHeaderFields)
 			assembledField.assemble(header, locationResolver);
+
+		enum SectionType
+		{
+			DYNAMIC,
+			STATIC,
+			HIGH;
+		}
+		record SectionTypeHint(Location location, SectionType type)
+		{}
+		assembledEntries
+				.stream()
+				.map(e -> new SectionTypeHint(new EntryStartLocation(e), switch(e)
+				{
+					case AssembledInstruction entry -> SectionType.HIGH;
+					case AssembledRoutineHeader entry -> SectionType.HIGH;
+					case LabelEntry entry -> null;
+					case AssembledZObjectTable entry -> SectionType.DYNAMIC;
+				}))
+				.filter(Objects::nonNull);
+		//TODO do something with this stream.
 
 		for(HeaderField automaticField : AUTO_FIELDS)
 			if(!setFields.contains(automaticField))

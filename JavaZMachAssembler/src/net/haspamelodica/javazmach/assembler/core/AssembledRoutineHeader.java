@@ -10,7 +10,7 @@ import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public class AssembledRoutineHeader implements AssembledEntry
+public final class AssembledRoutineHeader implements AssembledEntry
 {
 	private final boolean	writeInitialValues;
 	private final int		alignmentBitCount;
