@@ -6,6 +6,7 @@ var = var|VAR ;
 zversion = zversion|ZVERSION ;
 zheader = zheader|ZHEADER ;
 routine = routine|ROUTINE ;
+local = local|LOCAL ;
 objects = objects|OBJECTS ;
 object = object|OBJECT ;
 property = property|PROPERTY ;

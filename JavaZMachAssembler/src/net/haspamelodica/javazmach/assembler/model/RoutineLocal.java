@@ -1,4 +1,6 @@
 package net.haspamelodica.javazmach.assembler.model;
 
-public record RoutineLocal(String name, IntegralValue initialValue)
+import java.util.Optional;
+
+public record RoutineLocal(String name, Optional<IntegralValue> initialValue)
 {}

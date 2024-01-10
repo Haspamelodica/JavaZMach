@@ -100,7 +100,7 @@ public class ZAssembler
 			case HeaderEntry headerEntry -> add(headerEntry);
 			case LabelDeclaration labelDeclaration -> add(labelDeclaration);
 			case ZAssemblerInstruction instruction -> add(instruction);
-			case Routine routine -> System.err.println("Uh-oh");
+			case Routine routine -> add(routine);
 			case ZObjectTable table -> add(table);
 		}
 	}
@@ -168,6 +168,11 @@ public class ZAssembler
 	public void add(ZAssemblerInstruction instruction)
 	{
 		assembledEntries.add(new AssembledInstruction(instruction, version, opcodesByNameLowercase));
+	}
+
+	public void add(Routine routine)
+	{
+		assembledEntries.add(new AssembledRoutineHeader(routine, version));
 	}
 
 	public void add(ZObjectTable table)

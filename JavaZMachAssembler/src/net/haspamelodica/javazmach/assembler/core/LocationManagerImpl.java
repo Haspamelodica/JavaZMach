@@ -3,23 +3,23 @@ package net.haspamelodica.javazmach.assembler.core;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class LocationManagerImpl implements LocationManager
 {
 	private final Map<Location, BigInteger>	backingLocations;
 	private final Map<Location, BigInteger>	newlySetLocations;
-	private final Supplier<BigInteger>		currentResolvedLocationSupplier;
+	private final Supplier<BigInteger>		currentAddrSupplier;
 	private final boolean					permitUndefinedLocations;
 
 	private boolean nextIterationNecessary;
 
-	public LocationManagerImpl(Map<Location, BigInteger> backingLocations, Supplier<BigInteger> currentResolvedLocationSupplier,
-			boolean permitUndefinedLocations)
+	public LocationManagerImpl(Map<Location, BigInteger> backingLocations, Supplier<BigInteger> currentAddrSupplier, boolean permitUndefinedLocations)
 	{
 		this.backingLocations = Map.copyOf(backingLocations);
 		this.newlySetLocations = new HashMap<>();
-		this.currentResolvedLocationSupplier = currentResolvedLocationSupplier;
+		this.currentAddrSupplier = currentAddrSupplier;
 		this.permitUndefinedLocations = permitUndefinedLocations;
 
 		this.nextIterationNecessary = false;
@@ -48,9 +48,9 @@ public class LocationManagerImpl implements LocationManager
 	}
 
 	@Override
-	public void emitLocationHere(Location location)
+	public void emitLocationHere(Function<BigInteger, BigInteger> addrToLocationValue, Location location)
 	{
-		BigInteger newResolved = currentResolvedLocationSupplier.get();
+		BigInteger newResolved = addrToLocationValue.apply(currentAddrSupplier.get());
 
 		BigInteger oldNewlySetResolved = newlySetLocations.put(location, newResolved);
 		if(oldNewlySetResolved != null)

@@ -30,8 +30,8 @@ public record AssembledVariableOperand(Variable variable) implements AssembledOp
 	}
 
 	@Override
-	public void append(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
-		codeSeq.writeNextByte(varnumByteAndUpdateRoutine(variable));
+		memSeq.writeNextByte(varnumByteAndUpdateRoutine(variable));
 	}
 }

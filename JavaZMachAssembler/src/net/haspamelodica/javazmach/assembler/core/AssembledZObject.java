@@ -25,26 +25,26 @@ public class AssembledZObject implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationsAndLabels)
+	public void updateResolvedValues(LocationResolver locationResolver)
 	{
-		propAddress = locationsAndLabels.resolveAbsoluteOrNull(new PropertiesLocation(index));
-		attributes.updateResolvedValues(locationsAndLabels);
+		propAddress = locationResolver.resolveAbsoluteOrNull(new PropertiesLocation(index));
+		attributes.updateResolvedValues(locationResolver);
 	}
 
 	@Override
-	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
-		attributes.append(locationEmitter, codeSeq, diagnosticHandler);
-		codeSeq.writeNextByte(parentIndex);
-		codeSeq.writeNextByte(siblingIndex);
-		codeSeq.writeNextByte(childIndex);
+		attributes.append(locationEmitter, memSeq, diagnosticHandler);
+		memSeq.writeNextByte(parentIndex);
+		memSeq.writeNextByte(siblingIndex);
+		memSeq.writeNextByte(childIndex);
 		if(propAddress == null)
 		{
 			diagnosticHandler.error(String.format("Properties for object %d not found", index));
-			codeSeq.writeNextWord(0);
+			memSeq.writeNextWord(0);
 		} else
 		{
-			codeSeq.writeNextWord(bigintIntChecked(16, propAddress, (i) -> String.format("Property location cannot be more than 2 bytes but is: %s", i.toString())));
+			memSeq.writeNextWord(bigintIntChecked(16, propAddress, (i) -> String.format("Property location cannot be more than 2 bytes but is: %s", i.toString())));
 		}
 	}
 }

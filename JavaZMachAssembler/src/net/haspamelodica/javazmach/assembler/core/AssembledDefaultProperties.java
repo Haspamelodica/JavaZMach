@@ -64,11 +64,11 @@ public class AssembledDefaultProperties implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationsAndLabels)
+	public void updateResolvedValues(LocationResolver locationResolver)
 	{}
 
 	@Override
-	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		for(Optional<byte[]> p : defaultProperties)
 		{
@@ -76,11 +76,11 @@ public class AssembledDefaultProperties implements AssembledEntry
 			{
 				for(byte b : bytes)
 				{
-					codeSeq.writeNextByte(b);
+					memSeq.writeNextByte(b);
 				}
 			}, () ->
 			{
-				codeSeq.writeNextWord(0);
+				memSeq.writeNextWord(0);
 			});
 		}
 	}

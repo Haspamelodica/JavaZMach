@@ -18,11 +18,11 @@ public class ConvergingEntriesAssembler
 	private final SequentialMemoryWriteAccess	memSeq;
 	private final int							codeStart;
 
-	public ConvergingEntriesAssembler(List<AssembledEntry> entries, NoRangeCheckMemory codeMem, SequentialMemoryWriteAccess codeSeq, int codeStart)
+	public ConvergingEntriesAssembler(List<AssembledEntry> entries, NoRangeCheckMemory mem, SequentialMemoryWriteAccess memSeq, int codeStart)
 	{
 		this.entries = entries;
-		this.mem = codeMem;
-		this.memSeq = codeSeq;
+		this.mem = mem;
+		this.memSeq = memSeq;
 		this.codeStart = codeStart;
 	}
 
@@ -52,7 +52,7 @@ public class ConvergingEntriesAssembler
 
 			// If we get here, we haven't converged yet.
 			// Implicitly discard all diagnostics; even errors might disappear later.
-			// But don't forget to update locations, codeMem and codeSeq.
+			// But don't forget to update locations, memSeq and mem.
 			locations = locationManager.getNewlySetLocations();
 			memSeq.setAddress(0);
 			mem.clear();

@@ -53,8 +53,12 @@ Attribute
  -> '.' 'attribute' NumberLiteral { attribute[-1] = ZAttribute(bigint[2]); };
 
 RoutineLocals
- -> { routineLocals[-1] = emptyRLList(); }
-  | RoutineLocals '.' 'ident' IntegralValue { routineLocals[-1] = appendRLList(routineLocals[0], RoutineLocal(str([2]), value[3])); } ;
+ ->                                                      { routineLocals[-1] = emptyRLList(); }
+  | RoutineLocals '.' 'local' 'ident' MaybeIntegralValue { routineLocals[-1] = appendRLList(routineLocals[0], RoutineLocal(str([3]), valueOpt[4])); } ;
+
+MaybeIntegralValue
+ ->               { valueOpt[-1] = optIntegralValueEmpty(); }
+  | IntegralValue { valueOpt[-1] = optIntegralValueOf(value[0]); } ;
 
 HeaderValue
  -> IntegralValue                        { headerValue[-1] = value[0]; }

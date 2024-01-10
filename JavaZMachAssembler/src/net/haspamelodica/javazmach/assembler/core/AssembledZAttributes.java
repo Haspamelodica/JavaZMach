@@ -50,15 +50,15 @@ public class AssembledZAttributes implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationsAndLabels)
+	public void updateResolvedValues(LocationResolver locationResolver)
 	{}
 
 	@Override
-	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		for(byte b : flags)
 		{
-			codeSeq.writeNextByte(b);
+			memSeq.writeNextByte(b);
 		}
 	}
 

@@ -55,25 +55,25 @@ public class AssembledProperties implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationsAndLabels)
+	public void updateResolvedValues(LocationResolver locationResolver)
 	{
-		properties.forEach(p -> p.updateResolvedValues(locationsAndLabels));
+		properties.forEach(p -> p.updateResolvedValues(locationResolver));
 	}
 
 	@Override
-	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		locationEmitter.emitLocationHere(new PropertiesLocation(objIndex));
 		
-		codeSeq.writeNextByte(nameLength);
-		ZAssemblerUtils.appendZChars(codeSeq, nameZChars);
+		memSeq.writeNextByte(nameLength);
+		ZAssemblerUtils.appendZChars(memSeq, nameZChars);
 		
 		for(AssembledProperty property : properties)
 		{
-			property.append(locationEmitter, codeSeq, diagnosticHandler);
+			property.append(locationEmitter, memSeq, diagnosticHandler);
 		}
 		// Terminate list of properties
-		codeSeq.writeNextByte(0);
+		memSeq.writeNextByte(0);
 	}
 
 }

@@ -48,12 +48,12 @@ public final class AssembledImmediateOperand implements AssembledOperand
 	}
 
 	@Override
-	public void append(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		if(targetingSmallSize())
-			codeSeq.writeNextByte(valueChecked(diagnosticHandler));
+			memSeq.writeNextByte(valueChecked(diagnosticHandler));
 		else
-			codeSeq.writeNextWord(valueChecked(diagnosticHandler));
+			memSeq.writeNextWord(valueChecked(diagnosticHandler));
 	}
 
 	private int valueChecked(DiagnosticHandler diagnosticHandler)

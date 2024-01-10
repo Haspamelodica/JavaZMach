@@ -79,21 +79,21 @@ public class AssembledZObjectTable implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationsAndLabels)
+	public void updateResolvedValues(LocationResolver locationResolver)
 	{
-		defaultProperties.updateResolvedValues(locationsAndLabels);
-		objects.forEach(o -> o.updateResolvedValues(locationsAndLabels));
-		properties.forEach(o -> o.updateResolvedValues(locationsAndLabels));
+		defaultProperties.updateResolvedValues(locationResolver);
+		objects.forEach(o -> o.updateResolvedValues(locationResolver));
+		properties.forEach(o -> o.updateResolvedValues(locationResolver));
 	}
 
 	@Override
-	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		locationEmitter.emitLocationHere(SpecialDataStructureLocation.OBJ_TABLE);
-		defaultProperties.append(locationEmitter, codeSeq, diagnosticHandler);
+		defaultProperties.append(locationEmitter, memSeq, diagnosticHandler);
 		// Seemingly, it is not required to mark the end of the object table
-		objects.forEach(o -> o.append(locationEmitter, codeSeq, diagnosticHandler));
-		properties.forEach(p -> p.append(locationEmitter, codeSeq, diagnosticHandler));
+		objects.forEach(o -> o.append(locationEmitter, memSeq, diagnosticHandler));
+		properties.forEach(p -> p.append(locationEmitter, memSeq, diagnosticHandler));
 	}
 
 }

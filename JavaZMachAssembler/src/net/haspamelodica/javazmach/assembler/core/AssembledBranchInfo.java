@@ -25,7 +25,7 @@ public class AssembledBranchInfo
 		target.updateResolvedEncodedOffset(locationResolver);
 	}
 
-	public void appendChecked(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void appendChecked(SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		int encodedOffset = target.getEncodedOffsetChecked(diagnosticHandler).intValue();
 		boolean isShort = switch(target.targetLength())
@@ -34,7 +34,7 @@ public class AssembledBranchInfo
 			case LONGBRANCH -> false;
 		};
 
-		codeSeq.writeNextByte(0
+		memSeq.writeNextByte(0
 				// branch-on-condition-false: bit 7; on false is 0, on true is 1.
 				| ((branchOnConditionFalse ? 0 : 1) << 7)
 				// branch offset encoding: bit 6; long is 0, short is 1.
@@ -42,6 +42,6 @@ public class AssembledBranchInfo
 				// offset / upper byte of offset: bits 5-0
 				| (encodedOffset >> (isShort ? 0 : 8)));
 		if(!isShort)
-			codeSeq.writeNextByte(encodedOffset & 0xff);
+			memSeq.writeNextByte(encodedOffset & 0xff);
 	}
 }

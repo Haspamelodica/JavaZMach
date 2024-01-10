@@ -19,11 +19,11 @@ public class AssembledProperty implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationsAndLabels)
+	public void updateResolvedValues(LocationResolver locationResolver)
 	{}
 
 	@Override
-	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		int indexBits = switch(version) {
 			case 1, 2, 3 -> INDEX_BITS_V1TO3;
@@ -44,7 +44,7 @@ public class AssembledProperty implements AssembledEntry
 				diagnosticHandler.error(String.format("Property length %d is too large for version %d. Should be at most %d", propertyBytes.length, version, MAX_PROP_LENGTH_V1TO3));
 			}
 			int sizeByte = index | propertyBytes.length * 32 - 1;
-			codeSeq.writeNextByte(sizeByte);
+			memSeq.writeNextByte(sizeByte);
 		} else if(version >= 4 && version <= 6)
 		{
 			if(propertyBytes.length > MAX_PROP_LENGTH_V4TO6)
@@ -59,22 +59,22 @@ public class AssembledProperty implements AssembledEntry
 				// all bits (except the MSB) will be zero for size 64
 				int secondSizeByte = propertyBytes.length & 0b00111111;
 				secondSizeByte |= 0b1000000;
-				codeSeq.writeNextByte(firstSizeByte);
-				codeSeq.writeNextByte(secondSizeByte);
+				memSeq.writeNextByte(firstSizeByte);
+				memSeq.writeNextByte(secondSizeByte);
 			} else
 			{
 				if(propertyBytes.length == 2)
 				{
 					firstSizeByte |= 0b01000000;
 				}
-				codeSeq.writeNextByte(firstSizeByte);
+				memSeq.writeNextByte(firstSizeByte);
 			}
 			int sizeByte = index | propertyBytes.length * 32 - 1;
-			codeSeq.writeNextByte(sizeByte);
+			memSeq.writeNextByte(sizeByte);
 		}
 		for(byte b : propertyBytes)
 		{
-			codeSeq.writeNextByte(b);
+			memSeq.writeNextByte(b);
 		}
 	}
 

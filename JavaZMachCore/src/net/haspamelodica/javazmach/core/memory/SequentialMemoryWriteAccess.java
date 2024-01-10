@@ -42,4 +42,15 @@ public class SequentialMemoryWriteAccess
 	{
 		addr += wordsOff << 1;
 	}
+
+	public void alignToBytes(int bytes)
+	{
+		//TODO which default pad byte?
+		alignToBytes(bytes, 0x00);
+	}
+	public void alignToBytes(int bytes, int padValue)
+	{
+		while(addr % bytes != 0)
+			writeNextByte(padValue);
+	}
 }

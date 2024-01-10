@@ -86,8 +86,9 @@ public class ZAssemblerParser
 		ParameterizedType T_ListObject = new ParameterizedTypeImpl(null, List.class, ZObject.class);
 		ParameterizedType T_ListObjectEntry = new ParameterizedTypeImpl(null, List.class, ZObjectEntry.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
-		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
-		ParameterizedType T_OptBranchInfo = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
+		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, Variable.class);
+		ParameterizedType T_OptIntegralValue = new ParameterizedTypeImpl(null, Optional.class, IntegralValue.class);
+		ParameterizedType T_OptBranchInfo = new ParameterizedTypeImpl(null, Optional.class, BranchInfo.class);
 		ParameterizedType T_OptBLO = new ParameterizedTypeImpl(null, Optional.class, BranchLength.class);
 		ParameterizedType T_OptZString = new ParameterizedTypeImpl(null, Optional.class, ZString.class);
 
@@ -98,7 +99,7 @@ public class ZAssemblerParser
 				ZAssemblerFile.class, OptionalInt.class, T_ListZAssemblyFileEntry));
 		functionsByName.put("HeaderEntry", TypedFunction.build(HeaderEntry::new, HeaderEntry.class, String.class, HeaderValue.class));
 		functionsByName.put("Routine", TypedFunction.buildT(Routine::new, Routine.class, String.class, T_ListRoutineLocal));
-		functionsByName.put("RoutineLocal", TypedFunction.build(RoutineLocal::new, RoutineLocal.class, String.class, IntegralValue.class));
+		functionsByName.put("RoutineLocal", TypedFunction.buildT(RoutineLocal::new, RoutineLocal.class, String.class, T_OptIntegralValue));
 		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, BigInteger.class, ByteSequence.class));
 		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
 		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, ZString.class, T_ListObjectEntry));
@@ -177,6 +178,8 @@ public class ZAssemblerParser
 		functionsByName.put("optFormOf", TypedFunction.buildT(Optional::of, T_OptForm, OpcodeForm.class));
 		functionsByName.put("optVariableEmpty", TypedFunction.buildT(Optional::empty, T_OptVariable));
 		functionsByName.put("optVariableOf", TypedFunction.buildT(Optional::of, T_OptVariable, Variable.class));
+		functionsByName.put("optIntegralValueEmpty", TypedFunction.buildT(Optional::empty, T_OptIntegralValue));
+		functionsByName.put("optIntegralValueOf", TypedFunction.buildT(Optional::of, T_OptIntegralValue, IntegralValue.class));
 		functionsByName.put("optBranchInfoEmpty", TypedFunction.buildT(Optional::empty, T_OptBranchInfo));
 		functionsByName.put("optBranchInfoOf", TypedFunction.buildT(Optional::of, T_OptBranchInfo, BranchInfo.class));
 		functionsByName.put("optBranchLengthEmpty", TypedFunction.buildT(Optional::empty, T_OptBLO));

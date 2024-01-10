@@ -101,14 +101,14 @@ public final class AssembledInstruction implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationsAndLabels)
+	public void updateResolvedValues(LocationResolver locationResolver)
 	{
-		operands.forEach(operand -> operand.updateResolvedValue(locationsAndLabels));
-		branchInfo.ifPresent(branchInfo -> branchInfo.updateResolvedTarget(locationsAndLabels));
+		operands.forEach(operand -> operand.updateResolvedValue(locationResolver));
+		branchInfo.ifPresent(branchInfo -> branchInfo.updateResolvedTarget(locationResolver));
 	}
 
 	@Override
-	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler)
+	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		OpcodeForm form = switch(opcode.range)
 		{
@@ -141,7 +141,7 @@ public final class AssembledInstruction implements AssembledEntry
 
 		switch(form)
 		{
-			case LONG -> codeSeq.writeNextByte(0
+			case LONG -> memSeq.writeNextByte(0
 					// form LONG: bit 7 is 0.
 					| (0 << 7)
 					// kind: implicitly OP2.
@@ -151,7 +151,7 @@ public final class AssembledInstruction implements AssembledEntry
 					| (operands.get(1).encodeTypeOneBitAssumePossible() << 5)
 					// opcode: bits 4-0.
 					| (opcode.opcodeNumber << 0));
-			case SHORT -> codeSeq.writeNextByte(0
+			case SHORT -> memSeq.writeNextByte(0
 					// form SHORT: bits 7-6 are 0b10.
 					| (0b10 << 6)
 					// kind: implicitly OP0 / OP1, depending on operand type: omitted means OP0.
@@ -163,29 +163,29 @@ public final class AssembledInstruction implements AssembledEntry
 			case EXTENDED ->
 			{
 				// EXTENDED form only exists in V5+, but let's rely on the Opcode enum being sane and declaring all EXT opcodes as V5+.
-				codeSeq.writeNextByte(0xbe);
-				codeSeq.writeNextByte(opcode.opcodeNumber);
-				appendEncodedOperandTypesVar(codeSeq);
+				memSeq.writeNextByte(0xbe);
+				memSeq.writeNextByte(opcode.opcodeNumber);
+				appendEncodedOperandTypesVar(memSeq);
 			}
 			case VARIABLE ->
 			{
-				codeSeq.writeNextByte(0
+				memSeq.writeNextByte(0
 						// form VARIABLE: bits 7-6 are 0b11.
 						| (0b11 << 6)
 						// kind: bit 5; OP2 is 0, VAR is 1.
 						| ((opcode.range == VAR ? 1 : 0) << 5)
 						// opcode: bits 4-0.
 						| (opcode.opcodeNumber << 0));
-				appendEncodedOperandTypesVar(codeSeq);
+				appendEncodedOperandTypesVar(memSeq);
 			}
 		}
 
-		operands.forEach(operand -> operand.append(codeSeq, diagnosticHandler));
-		storeTarget.ifPresent(storeTarget -> codeSeq.writeNextByte(varnumByteAndUpdateRoutine(storeTarget)));
-		branchInfo.ifPresent(branchInfo -> branchInfo.appendChecked(codeSeq, diagnosticHandler));
+		operands.forEach(operand -> operand.append(memSeq, diagnosticHandler));
+		storeTarget.ifPresent(storeTarget -> memSeq.writeNextByte(varnumByteAndUpdateRoutine(storeTarget)));
+		branchInfo.ifPresent(branchInfo -> branchInfo.appendChecked(memSeq, diagnosticHandler));
 		// Branches are relative to after the branch data.
 		locationEmitter.emitLocationHere(new BranchOriginLocation(this));
-		text.ifPresent(text -> appendZString(codeSeq, text, version));
+		text.ifPresent(text -> appendZString(memSeq, text, version));
 	}
 
 	private void checkOpcodeNumberMask(Opcode opcode, int mask, OpcodeForm form)
@@ -196,7 +196,7 @@ public final class AssembledInstruction implements AssembledEntry
 					+ Integer.toHexString(mask) + ": " + opcode.opcodeNumber);
 	}
 
-	private void appendEncodedOperandTypesVar(SequentialMemoryWriteAccess codeSeq)
+	private void appendEncodedOperandTypesVar(SequentialMemoryWriteAccess memSeq)
 	{
 		int operandTypesEncoded = 0;
 		int i;
@@ -207,8 +207,8 @@ public final class AssembledInstruction implements AssembledEntry
 			operandTypesEncoded = (operandTypesEncoded << 2) | 0b11;
 
 		if(opcode.hasTwoOperandTypeBytes)
-			codeSeq.writeNextWord(operandTypesEncoded);
+			memSeq.writeNextWord(operandTypesEncoded);
 		else
-			codeSeq.writeNextByte(operandTypesEncoded);
+			memSeq.writeNextByte(operandTypesEncoded);
 	}
 }

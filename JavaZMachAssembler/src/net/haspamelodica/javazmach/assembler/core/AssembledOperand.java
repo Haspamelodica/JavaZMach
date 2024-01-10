@@ -8,5 +8,5 @@ public sealed interface AssembledOperand permits AssembledImmediateOperand, Asse
 	public boolean typeEncodeableOneBit();
 	public int encodeTypeOneBitAssumePossible();
 	public int encodeTypeTwoBits();
-	public void append(SequentialMemoryWriteAccess codeSeq, DiagnosticHandler diagnosticHandler);
+	public void append(SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler);
 }

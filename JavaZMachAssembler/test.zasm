@@ -28,5 +28,11 @@ entry:
 print "Hello World!"
 print "Hello World!"
 print "Hello World!"
-print "Hello World!"
+print "Hello World!\n"
+call testroutine -> sp
 quit
+
+.ROUTINE testroutine
+.LOCAL asdf
+print "Hello from testroutine!\n"
+rtrue
