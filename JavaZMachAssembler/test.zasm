@@ -9,7 +9,7 @@
 .ZHEADER InitialPC15 entry
 
 .OBJECTS
-.PROPERTY 1  0, 0
+.PROPERTY 1  1, 0
 .PROPERTY 15 255, 128
 .OBJECT "HELLO" {
 	.ATTRIBUTE 0
@@ -23,6 +23,11 @@
 		.PROPERTY 1 "!"
 	}
 }
+
+.GLOBALS
+.GLOBAL bsdf entry
+.GLOBAL csdf 0
+.GLOBAL dsdf
 
 entry:
 print "Hello World!"

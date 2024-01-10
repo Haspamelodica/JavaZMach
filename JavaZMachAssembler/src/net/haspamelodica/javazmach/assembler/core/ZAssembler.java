@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.haspamelodica.javazmach.assembler.model.ByteSequence;
+import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
@@ -44,7 +45,7 @@ import net.haspamelodica.javazmach.core.memory.WritableMemory;
 
 public class ZAssembler
 {
-	private static final Set<HeaderField> AUTO_FIELDS = Set.of(FileLength, Version, AlphabetTableLoc, HighMemoryBase, ObjTableLoc);
+	private static final Set<HeaderField> AUTO_FIELDS = Set.of(FileLength, Version, AlphabetTableLoc, HighMemoryBase, ObjTableLoc, GlobalVarTableLoc);
 
 	private final int					version;
 	private final Map<String, Opcode>	opcodesByNameLowercase;
@@ -103,6 +104,7 @@ public class ZAssembler
 			case ZAssemblerInstruction instruction -> add(instruction);
 			case Routine routine -> add(routine);
 			case ZObjectTable table -> add(table);
+			case GlobalVarTable globals -> add(globals);
 		}
 	}
 
@@ -180,6 +182,11 @@ public class ZAssembler
 	{
 		assembledEntries.add(new AssembledZObjectTable(table, version));
 	}
+	
+	public void add(GlobalVarTable globals)
+	{
+		assembledEntries.add(new AssembledGlobals(globals));
+	}
 
 	public byte[] assemble()
 	{
@@ -254,6 +261,7 @@ public class ZAssembler
 					case AssembledRoutineHeader entry -> SectionType.HIGH;
 					case LabelEntry entry -> null;
 					case AssembledZObjectTable entry -> SectionType.DYNAMIC;
+					case AssembledGlobals entry -> SectionType.DYNAMIC;
 				}))
 				.filter(Objects::nonNull);
 		//TODO do something with this stream.

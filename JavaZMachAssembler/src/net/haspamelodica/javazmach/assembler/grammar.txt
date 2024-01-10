@@ -13,6 +13,7 @@ FileEntry
  -> HeaderEntry      { fileEntry[-1] = headerEntry[0]; }
   | Routine          { fileEntry[-1] = routine[0]; }
   | ObjectTable      { fileEntry[-1] = table[0]; }
+  | GlobalVarTable   { fileEntry[-1] = globals[0]; }
   | LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
   | Instruction      { fileEntry[-1] = instruction[0]; } ;
 
@@ -51,6 +52,13 @@ ObjectEntry
 
 Attribute
  -> '.' 'attribute' NumberLiteral { attribute[-1] = ZAttribute(bigint[2]); };
+
+GlobalVarTable
+ -> '.' 'globals' Globals { globals[-1] = GlobalVarTable(globals[2]); } ;
+
+Globals
+ ->                                                      { globals[-1] = emptyGlList(); }
+  | Globals '.' 'global' 'ident' MaybeIntegralValue      { globals[-1] = appendGlList(globals[0], Global(str([3]), valueOpt[4])); } ;
 
 RoutineLocals
  ->                                                      { routineLocals[-1] = emptyRLList(); }
