@@ -46,7 +46,7 @@ public class AssembledZObjectTable implements AssembledEntry
 		int i = 0;
 		for(ZObject o : objects)
 		{
-			boolean hasSibling = ++ i == objects.size();
+			boolean hasSibling = ++ i != objects.size();
 			linearizeObjects(o, 0, hasSibling, assembledObjects, assembledProperties, version);
 		}
 	}
@@ -73,8 +73,8 @@ public class AssembledZObjectTable implements AssembledEntry
 
 		linearizeObjects(children, index, objects, properties, version);
 
-		int siblingIndex = hasSibling ? 0 : objects.size();
-		objects.set(index, new AssembledZObject(localAttributes, index, parentIndex, firstChildIndex, siblingIndex, version));
+		int siblingIndex = hasSibling ? objects.size() : 0;
+		objects.set(index, new AssembledZObject(localAttributes, index, parentIndex, siblingIndex, firstChildIndex, version));
 		properties.set(index, new AssembledProperties(localProperties, root.name(), index, version));
 	}
 
