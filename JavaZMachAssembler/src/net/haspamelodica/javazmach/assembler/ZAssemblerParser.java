@@ -23,7 +23,9 @@ import net.haspamelodica.javazmach.assembler.model.BranchTarget;
 import net.haspamelodica.javazmach.assembler.model.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.CharLiteral;
+import net.haspamelodica.javazmach.assembler.model.Global;
 import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
+import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.HeaderValue;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
@@ -82,6 +84,7 @@ public class ZAssemblerParser
 		ParameterizedType T_ListByteSequenceElement = new ParameterizedTypeImpl(null, List.class, ByteSequenceElement.class);
 		ParameterizedType T_ListZStringElement = new ParameterizedTypeImpl(null, List.class, ZStringElement.class);
 		ParameterizedType T_ListRoutineLocal = new ParameterizedTypeImpl(null, List.class, RoutineLocal.class);
+		ParameterizedType T_ListGlobal = new ParameterizedTypeImpl(null, List.class, Global.class);
 		ParameterizedType T_ListProperty = new ParameterizedTypeImpl(null, List.class, Property.class);
 		ParameterizedType T_ListObject = new ParameterizedTypeImpl(null, List.class, ZObject.class);
 		ParameterizedType T_ListObjectEntry = new ParameterizedTypeImpl(null, List.class, ZObjectEntry.class);
@@ -98,8 +101,11 @@ public class ZAssemblerParser
 		functionsByName.put("ZAssemblerFile", TypedFunction.buildT(ZAssemblerFile::new,
 				ZAssemblerFile.class, OptionalInt.class, T_ListZAssemblyFileEntry));
 		functionsByName.put("HeaderEntry", TypedFunction.build(HeaderEntry::new, HeaderEntry.class, String.class, HeaderValue.class));
+		functionsByName.put("GlobalVarTable", TypedFunction.buildT(GlobalVarTable::new, GlobalVarTable.class, T_ListGlobal));
+		functionsByName.put("Global", TypedFunction.buildT(Global::new, Global.class, String.class, T_OptIntegralValue));
 		functionsByName.put("Routine", TypedFunction.buildT(Routine::new, Routine.class, String.class, T_ListRoutineLocal));
 		functionsByName.put("RoutineLocal", TypedFunction.buildT(RoutineLocal::new, RoutineLocal.class, String.class, T_OptIntegralValue));
+		functionsByName.put("Global", TypedFunction.buildT(Global::new, Global.class, String.class, T_OptIntegralValue));
 		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, BigInteger.class, ByteSequence.class));
 		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
 		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, ZString.class, T_ListObjectEntry));
@@ -154,6 +160,9 @@ public class ZAssemblerParser
 		functionsByName.put("emptyRLList", TypedFunction.buildT(ArrayList::new, T_ListRoutineLocal));
 		functionsByName.put("appendRLList", TypedFunction.buildT(ZAssemblerParser::<RoutineLocal> appendList,
 				T_ListRoutineLocal, T_ListRoutineLocal, RoutineLocal.class));
+		functionsByName.put("emptyGlList", TypedFunction.buildT(ArrayList::new, T_ListGlobal));
+		functionsByName.put("appendGlList", TypedFunction.buildT(ZAssemblerParser::<Global> appendList,
+				T_ListGlobal, T_ListGlobal, Global.class));
 		functionsByName.put("emptyPropList", TypedFunction.buildT(ArrayList::new, T_ListProperty));
 		functionsByName.put("appendPropList", TypedFunction.buildT(ZAssemblerParser::<Property> appendList,
 				T_ListProperty, T_ListProperty, Property.class));

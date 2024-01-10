@@ -1,7 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-import static java.math.BigInteger.ZERO;
-import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.*;
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultEmit;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
 import static net.haspamelodica.javazmach.assembler.core.Section.FILE_END;
 
@@ -103,6 +102,7 @@ public class ConvergingEntriesAssembler
 					// a label by itself doesn't do anything
 					case LabelEntry entry -> null;
 					case AssembledZObjectTable entry -> SectionType.DYNAMIC;
+					case AssembledGlobals entry -> SectionType.DYNAMIC;
 				}))
 				.filter(h -> h.type() != null)
 				.collect(Collectors.groupingBy(SectionTypeHint::type, Collectors.mapping(h -> new BigIntegerSummary(h.addr(), h.addr()),
