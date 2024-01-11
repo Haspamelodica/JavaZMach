@@ -244,7 +244,7 @@ IExprPrimary
 LabelReference -> 'ident' { label[-1] = LabelReference(str([0])); } ;
 
 // For better error handling, each terminal allows all digits,
-// and errors are catched in the function int().
+// and errors are catched in the function parseBigInt().
 Variable
  -> 'sp'          { variable[-1] = StackPointer(); }
   | 'lvar_dec'    { variable[-1] =  LocalVariable(int(parseBigInt(_1(), _10(), [0]))); }

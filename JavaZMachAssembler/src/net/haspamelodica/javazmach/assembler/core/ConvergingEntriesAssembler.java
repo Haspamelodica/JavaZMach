@@ -98,7 +98,7 @@ public class ConvergingEntriesAssembler
 							case AssembledRoutineHeader entry -> Section.HIGH;
 							case AssembledZObjectTable entry -> Section.DYNAMIC;
 							case AssembledGlobals entry -> Section.DYNAMIC;
-							// labels or section declarations by themselves doesn't do anything
+							// labels or section declarations by themselves don't do anything
 							case AssembledLabelDeclaration entry -> null;
 							case AssembledSectionDeclaration entry -> null;
 						}))
@@ -111,7 +111,7 @@ public class ConvergingEntriesAssembler
 		BigIntegerSummary dynamicSummary = sectionTypeSummaries.get(Section.DYNAMIC);
 		BigIntegerSummary staticSummary = sectionTypeSummaries.get(Section.STATIC);
 		BigIntegerSummary highSummary = sectionTypeSummaries.get(Section.HIGH);
-		//TODO do something with this summary
+		//TODO do something with this summary, together with the explicit section locations. Don't forget that any might be null!
 
 		locationManager.emitLocationHere(FILE_END, addr -> addr.divide(BigInteger.valueOf(storyfileSizeDivisor)));
 	}
