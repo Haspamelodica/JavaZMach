@@ -13,6 +13,10 @@ objects = objects|OBJECTS ;
 object = object|OBJECT ;
 property = property|PROPERTY ;
 attribute = attribute|ATTRIBUTE ;
+section = section|SECTION ;
+dynamic = dynamic|DYNAMIC ;
+static = static|STATIC ;
+high = high|HIGH ;
 
 : = : ;
 

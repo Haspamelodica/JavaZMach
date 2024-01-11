@@ -1,7 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intConst;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue.resolvableIntValOrZero;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 
 import java.math.BigInteger;
@@ -42,8 +42,7 @@ public final class AssembledRoutineHeader implements AssembledEntry
 		};
 		this.name = routine.name();
 		this.locals = routine.locals().stream()
-				.map(l -> new AssembledLocalVariable(l.name(), new ResolvableIntegralValue(
-						l.initialValue().map(AssemblerIntegralValue::intVal).orElse(intConst(0)))))
+				.map(l -> new AssembledLocalVariable(l.name(), resolvableIntValOrZero(l.initialValue())))
 				.toList();
 	}
 

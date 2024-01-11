@@ -2,7 +2,7 @@ package net.haspamelodica.javazmach.assembler.core;
 
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultEmit;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
-import static net.haspamelodica.javazmach.assembler.core.Section.FILE_END;
+import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_END;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.model.Section;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 // TODO separation of concerns between this and ZAssembler is a bit weird - maybe move entire managing of entries, mem, memSeq here?
@@ -83,28 +84,23 @@ public class ConvergingEntriesAssembler
 
 	private void emitSectionLocations(LocationManager locationManager)
 	{
-		enum SectionType
-		{
-			DYNAMIC,
-			STATIC,
-			HIGH;
-		}
-		record SectionTypeHint(BigInteger start, BigInteger end, SectionType type)
+		record SectionTypeHint(BigInteger start, BigInteger end, Section type)
 		{}
 		record BigIntegerSummary(BigInteger min, BigInteger max)
 		{}
-		Map<SectionType, BigIntegerSummary> sectionTypeSummaries = entries
+		Map<Section, BigIntegerSummary> sectionTypeSummaries = entries
 				.stream()
 				.map(e -> new SectionTypeHint(locationManager.resolveAbsoluteOrNull(new EntryStartLocation(e)),
 						locationManager.resolveAbsoluteOrNull(new EntryEndLocation(e)), switch(e)
 						{
-							case AssembledHeader entry -> SectionType.DYNAMIC;
-							case AssembledInstruction entry -> SectionType.HIGH;
-							case AssembledRoutineHeader entry -> SectionType.HIGH;
-							// a label by itself doesn't do anything
-							case LabelEntry entry -> null;
-							case AssembledZObjectTable entry -> SectionType.DYNAMIC;
-							case AssembledGlobals entry -> SectionType.DYNAMIC;
+							case AssembledHeader entry -> Section.DYNAMIC;
+							case AssembledInstruction entry -> Section.HIGH;
+							case AssembledRoutineHeader entry -> Section.HIGH;
+							case AssembledZObjectTable entry -> Section.DYNAMIC;
+							case AssembledGlobals entry -> Section.DYNAMIC;
+							// labels or section declarations by themselves doesn't do anything
+							case AssembledLabelDeclaration entry -> null;
+							case AssembledSectionDeclaration entry -> null;
 						}))
 				.filter(h -> h.type() != null)
 				.collect(Collectors.groupingBy(SectionTypeHint::type, Collectors.mapping(h -> new BigIntegerSummary(h.start(), h.end()),
@@ -112,9 +108,9 @@ public class ConvergingEntriesAssembler
 								Collectors.reducing((s1, s2) -> new BigIntegerSummary(s1.min().min(s2.min()), s2.max().max(s2.max()))),
 								Optional::get))));
 
-		BigIntegerSummary dynamicSummary = sectionTypeSummaries.get(SectionType.DYNAMIC);
-		BigIntegerSummary staticSummary = sectionTypeSummaries.get(SectionType.STATIC);
-		BigIntegerSummary highSummary = sectionTypeSummaries.get(SectionType.HIGH);
+		BigIntegerSummary dynamicSummary = sectionTypeSummaries.get(Section.DYNAMIC);
+		BigIntegerSummary staticSummary = sectionTypeSummaries.get(Section.STATIC);
+		BigIntegerSummary highSummary = sectionTypeSummaries.get(Section.HIGH);
 		//TODO do something with this summary
 
 		locationManager.emitLocationHere(FILE_END, addr -> addr.divide(BigInteger.valueOf(storyfileSizeDivisor)));

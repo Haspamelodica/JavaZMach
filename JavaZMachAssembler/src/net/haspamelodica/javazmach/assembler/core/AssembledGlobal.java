@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intConst;
+import static net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue.resolvableIntValOrZero;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 
 import net.haspamelodica.javazmach.assembler.model.Global;
@@ -12,7 +12,7 @@ public class AssembledGlobal
 
 	public AssembledGlobal(Global global)
 	{
-		this.defaultValue = new ResolvableIntegralValue(global.initialValue().map(AssemblerIntegralValue::intVal).orElse(intConst(0)));
+		this.defaultValue = resolvableIntValOrZero(global.initialValue());
 	}
 
 	public void updateResolvedValues(LocationResolver locationResolver)

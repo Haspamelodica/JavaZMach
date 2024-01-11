@@ -29,6 +29,8 @@
 .GLOBAL csdf 0
 .GLOBAL dsdf
 
+.SECTION static
+
 entry:
 print "Hello World!"
 print "Hello World!"
@@ -37,6 +39,8 @@ print "Hello World!\n"
 call testroutine -> sp
 print_obj 1
 quit
+
+.SECTION high
 
 .ROUTINE testroutine
 .LOCAL asdf

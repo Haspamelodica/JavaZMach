@@ -15,7 +15,8 @@ FileEntry
   | ObjectTable      { fileEntry[-1] = table[0]; }
   | GlobalVarTable   { fileEntry[-1] = globals[0]; }
   | LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
-  | Instruction      { fileEntry[-1] = instruction[0]; } ;
+  | Instruction      { fileEntry[-1] = instruction[0]; }
+  | Section          { fileEntry[-1] = section[0];} ;
 
 HeaderEntry
  -> '.' 'zheader' 'ident' HeaderValue { headerEntry[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
@@ -63,6 +64,13 @@ Globals
 RoutineLocals
  ->                                                      { routineLocals[-1] = emptyRLList(); }
   | RoutineLocals '.' 'local' 'ident' MaybeIntegralValue { routineLocals[-1] = appendRLList(routineLocals[0], RoutineLocal(str([3]), valueOpt[4])); } ;
+
+Section -> '.' 'section' SectionType MaybeIntegralValue { section[-1] = SectionDeclaration(sectionType[2], valueOpt[3]); } ;
+
+SectionType
+ -> 'dynamic' { sectionType[-1] = DYNAMIC(); }
+  | 'static'  { sectionType[-1] = STATIC(); }
+  | 'high'    { sectionType[-1] = HIGH(); } ;
 
 MaybeIntegralValue
  ->               { valueOpt[-1] = optIntegralValueEmpty(); }

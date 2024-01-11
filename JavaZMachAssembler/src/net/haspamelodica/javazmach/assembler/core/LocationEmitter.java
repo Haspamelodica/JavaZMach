@@ -16,6 +16,13 @@ public interface LocationEmitter extends SpecialLocationEmitter
 	// Were this an (abstract) class, then this wouldn't be necessary
 	// because the Location variant would override the SpecialLocation variant.
 	// Oh well.
+
+	@Override
+	public default void emitLocation(SpecialLocation location, BigInteger value)
+	{
+		emitLocation((Location) location, value);
+	}
+
 	@Override
 	public default void emitLocationHere(SpecialLocation location, Function<BigInteger, BigInteger> addrToLocationValue)
 	{

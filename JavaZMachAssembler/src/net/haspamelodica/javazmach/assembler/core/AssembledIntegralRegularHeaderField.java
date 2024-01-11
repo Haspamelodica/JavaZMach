@@ -1,10 +1,12 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intVal;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintBytesChecked;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.core.header.HeaderField;
 import net.haspamelodica.javazmach.core.header.HeaderParser;
 import net.haspamelodica.javazmach.core.memory.WritableMemory;
@@ -14,6 +16,10 @@ public class AssembledIntegralRegularHeaderField implements AssembledIntegralHea
 	private final HeaderField				field;
 	private final ResolvableIntegralValue	value;
 
+	public AssembledIntegralRegularHeaderField(HeaderField field, IntegralValue value)
+	{
+		this(field, intVal(value));
+	}
 	public AssembledIntegralRegularHeaderField(HeaderField field, AssemblerIntegralValue value)
 	{
 		this.field = field;

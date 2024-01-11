@@ -2,7 +2,7 @@ package net.haspamelodica.javazmach.assembler.core;
 
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public record LabelEntry(String label) implements AssembledEntry
+public record AssembledLabelDeclaration(String label) implements AssembledEntry
 {
 	@Override
 	public void updateResolvedValues(LocationResolver locationResolver)

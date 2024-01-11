@@ -12,6 +12,7 @@ import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.Routine;
+import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
@@ -62,11 +63,12 @@ public class ZAssembler
 		switch(entry)
 		{
 			case HeaderEntry headerEntry -> header.addEntry(headerEntry);
-			case LabelDeclaration labelDeclaration -> assembler.addEntry(new LabelEntry(labelDeclaration.name()));
+			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(labelDeclaration.name()));
 			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(instruction, version, opcodesByNameLowercase));
 			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(routine, version));
 			case ZObjectTable table -> assembler.addEntry(new AssembledZObjectTable(table, version));
 			case GlobalVarTable globals -> assembler.addEntry(new AssembledGlobals(globals));
+			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
 		}
 	}
 

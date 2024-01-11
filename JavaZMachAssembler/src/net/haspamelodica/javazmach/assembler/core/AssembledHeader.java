@@ -2,11 +2,10 @@ package net.haspamelodica.javazmach.assembler.core;
 
 import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intConst;
 import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intLoc;
-import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intVal;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultInfo;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
-import static net.haspamelodica.javazmach.assembler.core.Section.FILE_END;
+import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_END;
 import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.GLOBAL_VAR_TABLE;
 import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.OBJ_TABLE;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.materializeByteSequence;
@@ -155,8 +154,8 @@ public final class AssembledHeader implements AssembledEntry
 		switch(headerEntry.value())
 		{
 			case IntegralValue value -> assembledHeaderFields.add(isBitfieldEntry
-					? new AssembledIntegralBitfieldHeaderField(field, intVal(value))
-					: new AssembledIntegralRegularHeaderField(field, intVal(value)));
+					? new AssembledIntegralBitfieldHeaderField(field, value)
+					: new AssembledIntegralRegularHeaderField(field, value));
 			case ByteSequence byteSequence ->
 			{
 				byte[] value = materializeByteSequence(byteSequence, (error) -> "Error in field " + field + ": " + error);

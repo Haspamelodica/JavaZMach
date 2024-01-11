@@ -1,8 +1,13 @@
 package net.haspamelodica.javazmach.assembler.core;
 
 import static java.math.BigInteger.ZERO;
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intConst;
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intVal;
 
 import java.math.BigInteger;
+import java.util.Optional;
+
+import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 
 public class ResolvableIntegralValue
 {
@@ -10,6 +15,10 @@ public class ResolvableIntegralValue
 
 	private BigInteger resolvedValue;
 
+	public ResolvableIntegralValue(IntegralValue integralValue)
+	{
+		this(intVal(integralValue));
+	}
 	public ResolvableIntegralValue(AssemblerIntegralValue integralValue)
 	{
 		this.integralValue = integralValue;
@@ -27,5 +36,10 @@ public class ResolvableIntegralValue
 	public BigInteger resolvedValueOrZero()
 	{
 		return resolvedValue == null ? ZERO : resolvedValue;
+	}
+
+	public static ResolvableIntegralValue resolvableIntValOrZero(Optional<IntegralValue> value)
+	{
+		return new ResolvableIntegralValue(value.map(AssemblerIntegralValue::intVal).orElse(intConst(0)));
 	}
 }
