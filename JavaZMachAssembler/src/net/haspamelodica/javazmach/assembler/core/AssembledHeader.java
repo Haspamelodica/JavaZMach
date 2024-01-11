@@ -78,10 +78,10 @@ public final class AssembledHeader implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		assembledHeaderFields.forEach(f -> f.updateResolvedValues(locationResolver));
-		activeAutoFields.values().forEach(f -> f.updateResolvedValues(locationResolver));
+		assembledHeaderFields.forEach(f -> f.updateResolvedValues(valueReferenceResolver));
+		activeAutoFields.values().forEach(f -> f.updateResolvedValues(valueReferenceResolver));
 	}
 
 	@Override

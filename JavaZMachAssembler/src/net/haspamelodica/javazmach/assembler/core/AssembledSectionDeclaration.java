@@ -16,10 +16,10 @@ public final class AssembledSectionDeclaration implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
 		if(valueOrNull != null)
-			valueOrNull.updateResolvedValue(locationResolver);
+			valueOrNull.updateResolvedValue(valueReferenceResolver);
 	}
 
 	@Override

@@ -7,14 +7,14 @@ import java.util.function.Function;
 
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 
-public record AssemblerIntegralValue(Function<LocationResolver, BigInteger> valueFunction)
+public record AssemblerIntegralValue(Function<ValueReferenceResolver, BigInteger> valueFunction)
 {
-	public BigInteger resolve(LocationResolver locationResolver)
+	public BigInteger resolve(ValueReferenceResolver valueReferenceResolver)
 	{
-		return valueFunction().apply(locationResolver);
+		return valueFunction().apply(valueReferenceResolver);
 	}
 
-	public static AssemblerIntegralValue intFunc(Function<LocationResolver, BigInteger> valueFunction)
+	public static AssemblerIntegralValue intFunc(Function<ValueReferenceResolver, BigInteger> valueFunction)
 	{
 		return new AssemblerIntegralValue(valueFunction);
 	}
@@ -22,7 +22,7 @@ public record AssemblerIntegralValue(Function<LocationResolver, BigInteger> valu
 	{
 		return intFunc(r -> integralValueOrNull(value, r));
 	}
-	public static AssemblerIntegralValue intLoc(Location location)
+	public static AssemblerIntegralValue intLoc(ValueReference location)
 	{
 		return intFunc(r -> r.resolveAbsoluteOrNull(location));
 	}

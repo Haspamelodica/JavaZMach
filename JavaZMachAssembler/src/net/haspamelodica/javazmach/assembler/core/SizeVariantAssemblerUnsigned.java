@@ -39,9 +39,9 @@ public final class SizeVariantAssemblerUnsigned<SIZE>
 		this.targetSize = sizeOverride.orElse(allSizes.get(0));
 	}
 
-	public void update(LocationResolver locationResolver)
+	public void update(ValueReferenceResolver valueReferenceResolver)
 	{
-		resolvedValue = value.resolve(locationResolver);
+		resolvedValue = value.resolve(valueReferenceResolver);
 		if(resolvedValue == null)
 			// nothing about value known yet - continue assuming it is the smallest size / the overridden size.
 			return;

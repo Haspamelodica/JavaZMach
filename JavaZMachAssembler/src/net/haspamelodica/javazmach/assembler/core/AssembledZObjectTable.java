@@ -83,9 +83,9 @@ public final class AssembledZObjectTable implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		objects.forEach(o -> o.updateResolvedValues(locationResolver));
+		objects.forEach(o -> o.updateResolvedValues(valueReferenceResolver));
 	}
 
 	@Override

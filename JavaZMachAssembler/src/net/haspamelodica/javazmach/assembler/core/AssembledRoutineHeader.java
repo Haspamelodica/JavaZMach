@@ -47,9 +47,9 @@ public final class AssembledRoutineHeader implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		locals.forEach(r -> r.initialValue().updateResolvedValue(locationResolver));
+		locals.forEach(r -> r.initialValue().updateResolvedValue(valueReferenceResolver));
 	}
 
 	@Override

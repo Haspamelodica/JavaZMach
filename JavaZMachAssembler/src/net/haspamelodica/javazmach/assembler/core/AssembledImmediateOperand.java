@@ -26,9 +26,9 @@ public final class AssembledImmediateOperand implements AssembledOperand
 	}
 
 	@Override
-	public void updateResolvedValue(LocationResolver locationResolver)
+	public void updateResolvedValue(ValueReferenceResolver valueReferenceResolver)
 	{
-		value.update(locationResolver);
+		value.update(valueReferenceResolver);
 	}
 
 	@Override

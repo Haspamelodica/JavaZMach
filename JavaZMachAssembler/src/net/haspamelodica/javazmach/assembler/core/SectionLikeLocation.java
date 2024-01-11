@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-public enum SectionLikeLocation implements Location
+public enum SectionLikeLocation implements ValueReference
 {
 	STATIC_MEM_BASE,
 	HIGH_MEM_BASE,

@@ -24,9 +24,9 @@ public class AssembledZObject
 		this.propAddress = null;
 	}
 
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		propAddress = locationResolver.resolveAbsoluteOrNull(new PropertiesLocation(index));
+		propAddress = valueReferenceResolver.resolveAbsoluteOrNull(new PropertiesLocation(index));
 	}
 
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
