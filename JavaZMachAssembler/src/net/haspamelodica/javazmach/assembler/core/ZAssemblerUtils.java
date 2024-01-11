@@ -208,9 +208,20 @@ public class ZAssemblerUtils
 		if(!hasBigintMaxBitCount(maxBits, bigint))
 		{
 			diagnosticHandler.error(errorMessage.apply(bigint));
-			return Arrays.copyOf(bigint.toByteArray(), (maxBits + 7) / 8);
 		}
-		return bigint.toByteArray();
+		int requiredLen = (maxBits + 7) / 8;
+		byte bytes[] = bigint.toByteArray();
+		if(requiredLen < bytes.length)
+		{
+			// This case can occur if either the unsigned BigInteger
+			// truly has more bits than maxBits, or if the sign bit
+			// requires additional byte.
+			// This is in line with the definition of hasBigIntMaxBitCount
+			return Arrays.copyOf(bytes, requiredLen);
+		} else
+		{
+			return bytes;
+		}
 	}
 
 	public static void checkBigintMaxBitCount(int maxBits, BigInteger bigint,

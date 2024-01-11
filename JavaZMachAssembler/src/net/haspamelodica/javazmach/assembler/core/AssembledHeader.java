@@ -5,12 +5,14 @@ import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultInfo;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
+import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_CHECKSUM;
 import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_END;
 import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.GLOBAL_VAR_TABLE;
 import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.OBJ_TABLE;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.materializeByteSequence;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.versionRangeString;
 import static net.haspamelodica.javazmach.core.header.HeaderField.AlphabetTableLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.FileChecksum;
 import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
 import static net.haspamelodica.javazmach.core.header.HeaderField.GlobalVarTableLoc;
 import static net.haspamelodica.javazmach.core.header.HeaderField.ObjTableLoc;
@@ -55,6 +57,7 @@ public final class AssembledHeader implements AssembledEntry
 
 		Map<HeaderField, AssemblerIntegralValue> autoFields = new HashMap<>();
 		autoFields.put(FileLength, intLoc(FILE_END));
+		autoFields.put(FileChecksum, intLoc(FILE_CHECKSUM));
 		autoFields.put(Version, intConst(version));
 		// we don't support custom alphabets (yet), so set this to 0
 		autoFields.put(AlphabetTableLoc, intConst(0));
