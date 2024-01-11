@@ -15,15 +15,15 @@ public class AssembledRegularBranchTarget implements AssembledBranchTarget
 {
 	private final SizeVariantAssemblerUnsigned<BranchLength> encodedOffsetAssembler;
 
-	public AssembledRegularBranchTarget(IntegralValue target, Location branchOriginLocation, Optional<BranchLength> branchLengthOverride)
+	public AssembledRegularBranchTarget(IntegralValue target, ValueReference branchOriginLocation, Optional<BranchLength> branchLengthOverride)
 	{
 		this.encodedOffsetAssembler = new SizeVariantAssemblerUnsigned<>(
-				intFunc(locationResolver ->
+				intFunc(valueReferenceResolver ->
 				{
-					BigInteger resolvedTarget = integralValueOrNull(target, locationResolver);
+					BigInteger resolvedTarget = integralValueOrNull(target, valueReferenceResolver);
 					if(resolvedTarget == null)
 						return null;
-					BigInteger resolvedBranchOrigin = locationResolver.resolveAbsoluteOrNull(branchOriginLocation);
+					BigInteger resolvedBranchOrigin = valueReferenceResolver.resolveAbsoluteOrNull(branchOriginLocation);
 					if(resolvedBranchOrigin == null)
 						return null;
 					return resolvedTarget.subtract(resolvedBranchOrigin).add(TWO);
@@ -42,9 +42,9 @@ public class AssembledRegularBranchTarget implements AssembledBranchTarget
 	}
 
 	@Override
-	public void updateResolvedEncodedOffset(LocationResolver locationResolver)
+	public void updateResolvedEncodedOffset(ValueReferenceResolver valueReferenceResolver)
 	{
-		encodedOffsetAssembler.update(locationResolver);
+		encodedOffsetAssembler.update(valueReferenceResolver);
 	}
 
 	@Override

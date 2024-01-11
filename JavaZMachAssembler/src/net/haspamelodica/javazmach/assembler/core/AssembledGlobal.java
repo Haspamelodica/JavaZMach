@@ -15,9 +15,9 @@ public class AssembledGlobal
 		this.defaultValue = resolvableIntValOrZero(global.initialValue());
 	}
 
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		defaultValue.updateResolvedValue(locationResolver);
+		defaultValue.updateResolvedValue(valueReferenceResolver);
 	}
 
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)

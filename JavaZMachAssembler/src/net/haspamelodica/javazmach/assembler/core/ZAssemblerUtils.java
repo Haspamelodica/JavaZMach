@@ -32,17 +32,17 @@ import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssemblerUtils
 {
-	public static BigInteger integralValueOrNull(IntegralValue value, LocationResolver locationResolver)
+	public static BigInteger integralValueOrNull(IntegralValue value, ValueReferenceResolver valueReferenceResolver)
 	{
 		return switch(value)
 		{
 			case NumberLiteral literal -> literal.value();
 			case CharLiteral literal -> BigInteger.valueOf(literal.value());
-			case LabelReference labelRef -> locationResolver.resolveAbsoluteOrNull(new LabelLocation(labelRef.name()));
+			case LabelReference labelRef -> valueReferenceResolver.resolveAbsoluteOrNull(new LabelLocation(labelRef.name()));
 			case BinaryExpression expr ->
 			{
-				BigInteger lhs = integralValueOrNull(expr.lhs(), locationResolver);
-				BigInteger rhs = integralValueOrNull(expr.rhs(), locationResolver);
+				BigInteger lhs = integralValueOrNull(expr.lhs(), valueReferenceResolver);
+				BigInteger rhs = integralValueOrNull(expr.rhs(), valueReferenceResolver);
 				if(lhs == null || rhs == null)
 					yield null;
 				yield switch(expr.op())
@@ -61,7 +61,7 @@ public class ZAssemblerUtils
 			}
 			case UnaryExpression expr ->
 			{
-				BigInteger operand = integralValueOrNull(expr.operand(), locationResolver);
+				BigInteger operand = integralValueOrNull(expr.operand(), valueReferenceResolver);
 				if(operand == null)
 					yield null;
 				yield switch(expr.op())
@@ -208,9 +208,20 @@ public class ZAssemblerUtils
 		if(!hasBigintMaxBitCount(maxBits, bigint))
 		{
 			diagnosticHandler.error(errorMessage.apply(bigint));
-			return Arrays.copyOf(bigint.toByteArray(), (maxBits + 7) / 8);
 		}
-		return bigint.toByteArray();
+		int requiredLen = (maxBits + 7) / 8;
+		byte bytes[] = bigint.toByteArray();
+		if(requiredLen < bytes.length)
+		{
+			// This case can occur if either the unsigned BigInteger
+			// truly has more bits than maxBits, or if the sign bit
+			// requires additional byte.
+			// This is in line with the definition of hasBigIntMaxBitCount
+			return Arrays.copyOf(bytes, requiredLen);
+		} else
+		{
+			return bytes;
+		}
 	}
 
 	public static void checkBigintMaxBitCount(int maxBits, BigInteger bigint,

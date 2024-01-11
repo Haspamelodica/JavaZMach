@@ -3,14 +3,14 @@ package net.haspamelodica.javazmach.assembler.core;
 import java.math.BigInteger;
 import java.util.function.Function;
 
-public interface LocationEmitter extends SpecialLocationEmitter
+public interface ValueReferenceEmitter extends SpecialLocationEmitter
 {
-	public void emitLocation(Location location, BigInteger value);
-	public void emitLocationHere(Location location, Function<BigInteger, BigInteger> addrToLocationValue);
+	public void emitValueReference(ValueReference reference, BigInteger value);
+	public void emitValueReferenceHere(ValueReference reference, Function<BigInteger, BigInteger> addrToReferenceValue);
 
-	public default void emitLocationHere(Location location)
+	public default void emitLocationHere(ValueReference reference)
 	{
-		emitLocationHere(location, Function.identity());
+		emitValueReferenceHere(reference, Function.identity());
 	}
 
 	// Were this an (abstract) class, then this wouldn't be necessary
@@ -20,12 +20,12 @@ public interface LocationEmitter extends SpecialLocationEmitter
 	@Override
 	public default void emitLocation(SpecialLocation location, BigInteger value)
 	{
-		emitLocation((Location) location, value);
+		emitValueReference((ValueReference) location, value);
 	}
 
 	@Override
 	public default void emitLocationHere(SpecialLocation location, Function<BigInteger, BigInteger> addrToLocationValue)
 	{
-		emitLocationHere((Location) location, addrToLocationValue);
+		emitValueReferenceHere((ValueReference) location, addrToLocationValue);
 	}
 }

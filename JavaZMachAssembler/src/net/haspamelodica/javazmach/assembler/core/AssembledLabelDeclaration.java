@@ -5,7 +5,7 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 public record AssembledLabelDeclaration(String label) implements AssembledEntry
 {
 	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
 		// nothing to do
 	}

@@ -23,9 +23,9 @@ public final class AssembledGlobals implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		this.globals.forEach(g -> g.updateResolvedValues(locationResolver));
+		this.globals.forEach(g -> g.updateResolvedValues(valueReferenceResolver));
 	}
 
 	@Override

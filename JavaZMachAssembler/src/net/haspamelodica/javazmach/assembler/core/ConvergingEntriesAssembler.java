@@ -2,7 +2,9 @@ package net.haspamelodica.javazmach.assembler.core;
 
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultEmit;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_CHECKSUM;
 import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_END;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -39,12 +41,12 @@ public class ConvergingEntriesAssembler
 
 	public byte[] assembleUntilConvergence()
 	{
-		Map<Location, BigInteger> locations = new HashMap<>();
+		Map<ValueReference, BigInteger> locations = new HashMap<>();
 		List<Diagnostic> diagnostics;
 		for(boolean isFirst = true;; isFirst = false)
 		{
 			diagnostics = new ArrayList<>();
-			LocationManagerImpl locationManager = new LocationManagerImpl(locations, () -> BigInteger.valueOf(memSeq.getAddress()), isFirst);
+			ValueReferenceManagerImpl locationManager = new ValueReferenceManagerImpl(locations, () -> BigInteger.valueOf(memSeq.getAddress()), isFirst);
 
 			assembleOneIteration(diagnostics::add, locationManager);
 
@@ -67,7 +69,7 @@ public class ConvergingEntriesAssembler
 		return mem.data();
 	}
 
-	public void assembleOneIteration(DiagnosticHandler diagnosticHandler, LocationManagerImpl locationManager)
+	public void assembleOneIteration(DiagnosticHandler diagnosticHandler, ValueReferenceManagerImpl locationManager)
 	{
 		for(AssembledEntry entry : entries)
 		{
@@ -79,10 +81,10 @@ public class ConvergingEntriesAssembler
 		}
 
 		memSeq.alignToBytes(storyfileSizeDivisor, 0);
-		emitSectionLocations(locationManager);
+		emitSectionLocations(locationManager, diagnosticHandler);
 	}
 
-	private void emitSectionLocations(LocationManager locationManager)
+	private void emitSectionLocations(ValueReferenceManager locationManager, DiagnosticHandler diagnosticHandler)
 	{
 		record SectionTypeHint(BigInteger start, BigInteger end, Section type)
 		{}
@@ -113,7 +115,26 @@ public class ConvergingEntriesAssembler
 		BigIntegerSummary highSummary = sectionTypeSummaries.get(Section.HIGH);
 		//TODO do something with this summary, together with the explicit section locations. Don't forget that any might be null!
 
-		locationManager.emitLocationHere(FILE_END, addr -> addr.divide(BigInteger.valueOf(storyfileSizeDivisor)));
+		locationManager.emitValueReference(FILE_CHECKSUM, computeChecksum());
+		locationManager.emitValueReferenceHere(FILE_END, addr -> BigInteger.valueOf(computeFileEnd(bigintIntChecked(32, addr, (b) -> "Address does not fit in 32bit integer. This must be an assembler bug", diagnosticHandler))));
+	}
+
+	private BigInteger computeChecksum()
+	{
+		// effectively, we align fileEnd down to story file size
+		int fileEnd = computeFileEnd(memSeq.getAddress());
+		int checksum = 0;
+		byte[] data = mem.data();
+		for(int i = 0x40; i < fileEnd * storyfileSizeDivisor; i ++)
+		{
+			checksum += data[i];
+		}
+		return BigInteger.valueOf(checksum & 0xffff);
+	}
+
+	private int computeFileEnd(int maxAddress)
+	{
+		return maxAddress / storyfileSizeDivisor;
 	}
 
 	public void addEntry(AssembledEntry entry)

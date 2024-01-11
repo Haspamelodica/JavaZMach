@@ -10,7 +10,7 @@ public class AssembledBranchInfo
 	private final boolean				branchOnConditionFalse;
 	private final AssembledBranchTarget	target;
 
-	public AssembledBranchInfo(BranchInfo branchInfo, Location branchOriginLocation)
+	public AssembledBranchInfo(BranchInfo branchInfo, ValueReference branchOriginLocation)
 	{
 		this.branchOnConditionFalse = branchInfo.branchOnConditionFalse();
 		this.target = switch(branchInfo.target())
@@ -20,9 +20,9 @@ public class AssembledBranchInfo
 		};
 	}
 
-	public void updateResolvedTarget(LocationResolver locationResolver)
+	public void updateResolvedTarget(ValueReferenceResolver valueReferenceResolver)
 	{
-		target.updateResolvedEncodedOffset(locationResolver);
+		target.updateResolvedEncodedOffset(valueReferenceResolver);
 	}
 
 	public void appendChecked(SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)

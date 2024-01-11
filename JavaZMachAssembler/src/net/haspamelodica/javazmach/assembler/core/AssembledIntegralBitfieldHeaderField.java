@@ -19,9 +19,9 @@ public class AssembledIntegralBitfieldHeaderField implements AssembledIntegralHe
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		value.updateResolvedValue(locationResolver);
+		value.updateResolvedValue(valueReferenceResolver);
 	}
 
 	@Override

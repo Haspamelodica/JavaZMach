@@ -101,10 +101,10 @@ public final class AssembledInstruction implements AssembledEntry
 	}
 
 	@Override
-	public void updateResolvedValues(LocationResolver locationResolver)
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		operands.forEach(operand -> operand.updateResolvedValue(locationResolver));
-		branchInfo.ifPresent(branchInfo -> branchInfo.updateResolvedTarget(locationResolver));
+		operands.forEach(operand -> operand.updateResolvedValue(valueReferenceResolver));
+		branchInfo.ifPresent(branchInfo -> branchInfo.updateResolvedTarget(valueReferenceResolver));
 	}
 
 	@Override

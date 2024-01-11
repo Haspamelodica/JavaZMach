@@ -13,7 +13,7 @@ import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 public record AssembledSimpleBranchTarget(SimpleBranchTarget target, Optional<BranchLength> branchLengthOverride) implements AssembledBranchTarget
 {
 	@Override
-	public void updateResolvedEncodedOffset(LocationResolver locationResolver)
+	public void updateResolvedEncodedOffset(ValueReferenceResolver valueReferenceResolver)
 	{}
 
 	@Override

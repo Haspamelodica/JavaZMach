@@ -24,9 +24,9 @@ public class ResolvableIntegralValue
 		this.integralValue = integralValue;
 	}
 
-	public void updateResolvedValue(LocationResolver locationResolver)
+	public void updateResolvedValue(ValueReferenceResolver valueReferenceResolver)
 	{
-		resolvedValue = integralValue.resolve(locationResolver);
+		resolvedValue = integralValue.resolve(valueReferenceResolver);
 	}
 
 	public BigInteger resolvedValueOrNull()
