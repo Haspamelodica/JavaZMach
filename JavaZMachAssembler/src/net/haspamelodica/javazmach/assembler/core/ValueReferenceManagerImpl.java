@@ -10,8 +10,8 @@ public class ValueReferenceManagerImpl implements ValueReferenceManager
 {
 	private final Map<ValueReference, BigInteger>	backingValueReference;
 	private final Map<ValueReference, BigInteger>	newlySetValueReferences;
-	private final Supplier<BigInteger>		currentAddrSupplier;
-	private final boolean					permitUndefinedValueReferences;
+	private final Supplier<BigInteger>				currentAddrSupplier;
+	private final boolean							permitUndefinedValueReferences;
 
 	private boolean nextIterationNecessary;
 
@@ -28,13 +28,9 @@ public class ValueReferenceManagerImpl implements ValueReferenceManager
 	@Override
 	public BigInteger resolveAbsoluteOrNull(ValueReference valueRef)
 	{
-		BigInteger newlySetResolved = newlySetValueReferences.get(valueRef);
-		if(newlySetResolved != null)
-			return newlySetResolved;
-
-		BigInteger backingResolved = backingValueReference.get(valueRef);
-		if(backingResolved != null)
-			return backingResolved;
+		BigInteger result = tryResolveAbsoluteOrNull(valueRef);
+		if(result != null)
+			return result;
 
 		if(permitUndefinedValueReferences)
 		{
@@ -45,6 +41,20 @@ public class ValueReferenceManagerImpl implements ValueReferenceManager
 		// No need to go through a custom DiagnosticHandler:
 		// Only in the first iteration is this possible, and there permitUndefinedLocations is set.
 		return DiagnosticHandler.defaultError("Undefined location: " + valueRef);
+	}
+
+	@Override
+	public BigInteger tryResolveAbsoluteOrNull(ValueReference valueRef)
+	{
+		BigInteger newlySetResolved = newlySetValueReferences.get(valueRef);
+		if(newlySetResolved != null)
+			return newlySetResolved;
+
+		BigInteger backingResolved = backingValueReference.get(valueRef);
+		if(backingResolved != null)
+			return backingResolved;
+
+		return null;
 	}
 
 	@Override

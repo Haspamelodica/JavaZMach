@@ -1,10 +1,16 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static java.math.BigInteger.ZERO;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultEmit;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultInfo;
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_CHECKSUM;
-import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_END;
+import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.*;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
+import static net.haspamelodica.javazmach.assembler.model.Section.DYNAMIC;
+import static net.haspamelodica.javazmach.assembler.model.Section.HIGH;
+import static net.haspamelodica.javazmach.assembler.model.Section.STATIC;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -95,11 +101,11 @@ public class ConvergingEntriesAssembler
 				.map(e -> new SectionTypeHint(locationManager.resolveAbsoluteOrNull(new EntryStartLocation(e)),
 						locationManager.resolveAbsoluteOrNull(new EntryEndLocation(e)), switch(e)
 						{
-							case AssembledHeader entry -> Section.DYNAMIC;
-							case AssembledInstruction entry -> Section.HIGH;
-							case AssembledRoutineHeader entry -> Section.HIGH;
-							case AssembledZObjectTable entry -> Section.DYNAMIC;
-							case AssembledGlobals entry -> Section.DYNAMIC;
+							case AssembledHeader entry -> DYNAMIC;
+							case AssembledInstruction entry -> HIGH;
+							case AssembledRoutineHeader entry -> HIGH;
+							case AssembledZObjectTable entry -> DYNAMIC;
+							case AssembledGlobals entry -> DYNAMIC;
 							// labels or section declarations by themselves don't do anything
 							case AssembledLabelDeclaration entry -> null;
 							case AssembledSectionDeclaration entry -> null;
@@ -110,13 +116,49 @@ public class ConvergingEntriesAssembler
 								Collectors.reducing((s1, s2) -> new BigIntegerSummary(s1.min().min(s2.min()), s2.max().max(s2.max()))),
 								Optional::get))));
 
-		BigIntegerSummary dynamicSummary = sectionTypeSummaries.get(Section.DYNAMIC);
-		BigIntegerSummary staticSummary = sectionTypeSummaries.get(Section.STATIC);
-		BigIntegerSummary highSummary = sectionTypeSummaries.get(Section.HIGH);
-		//TODO do something with this summary, together with the explicit section locations. Don't forget that any might be null!
+		BigIntegerSummary dynamicSummary = sectionTypeSummaries.get(DYNAMIC);
+		BigIntegerSummary staticSummary = sectionTypeSummaries.get(STATIC);
+		BigIntegerSummary highSummary = sectionTypeSummaries.get(HIGH);
+		BigInteger dynamicExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(DYNAMIC));
+		BigInteger staticExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(STATIC));
+		BigInteger highExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(HIGH));
 
-		locationManager.emitValueReference(FILE_CHECKSUM, computeChecksum());
+		if(dynamicExplicitStart != null && dynamicExplicitStart.signum() != 0)
+			defaultWarning("Explicit start of dynamic section wasn't at beginning of file - dynamic memory always starts at beginning of file");
+
+		BigInteger dynamicEntriesEnd = dynamicSummary != null ? dynamicSummary.max() : ZERO;
+
+		BigInteger staticStart;
+		if(staticExplicitStart != null)
+			staticStart = staticExplicitStart;
+		else if(staticSummary != null)
+			staticStart = staticSummary.min();
+		else
+			staticStart = dynamicEntriesEnd;
+
+		// max with staticStart to ensure staticEnd >= staticStart even when staticStart is given explicitly
+		BigInteger staticEntriesEnd = staticSummary != null ? staticSummary.max().max(staticStart) : staticStart;
+
+		BigInteger highStart;
+		if(highExplicitStart != null)
+			highStart = highExplicitStart;
+		else if(highSummary != null)
+			highStart = highSummary.min();
+		else
+			highStart = staticEntriesEnd;
+
+		if(dynamicEntriesEnd.compareTo(staticStart) > 0)
+			defaultInfo("Dynamic entries in static memory");
+		if(dynamicEntriesEnd.compareTo(highStart) > 0)
+			defaultInfo("Dynamic entries in high memory");
+		// Static entries in high memory are fine, so don't emit a warning for that: static mem is allowed to overlap with high mem.
+		if(staticStart.compareTo(highStart) > 0)
+			defaultWarning("High memory overlaps with dynamic memory - this will likely fail");
+
+		locationManager.emitValueReference(STATIC_MEM_BASE, staticStart);
+		locationManager.emitValueReference(HIGH_MEM_BASE, highStart);
 		locationManager.emitValueReferenceHere(FILE_END, addr -> BigInteger.valueOf(computeFileEnd(bigintIntChecked(32, addr, (b) -> "Address does not fit in 32bit integer. This must be an assembler bug", diagnosticHandler))));
+		locationManager.emitValueReference(FILE_CHECKSUM, computeChecksum());
 	}
 
 	private BigInteger computeChecksum()
