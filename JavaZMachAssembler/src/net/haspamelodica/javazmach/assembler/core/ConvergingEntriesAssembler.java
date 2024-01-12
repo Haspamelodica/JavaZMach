@@ -169,7 +169,7 @@ public class ConvergingEntriesAssembler
 		byte[] data = mem.data();
 		for(int i = 0x40; i < fileEnd * storyfileSizeDivisor; i ++)
 		{
-			checksum += data[i];
+			checksum += data[i] & 0xff;
 		}
 		return BigInteger.valueOf(checksum & 0xffff);
 	}
