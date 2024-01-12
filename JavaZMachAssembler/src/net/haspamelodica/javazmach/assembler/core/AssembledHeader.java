@@ -9,11 +9,13 @@ import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FIL
 import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_END;
 import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.HIGH_MEM_BASE;
 import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.STATIC_MEM_BASE;
+import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.DICTIONARY;
 import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.GLOBAL_VAR_TABLE;
 import static net.haspamelodica.javazmach.assembler.core.SpecialDataStructureLocation.OBJ_TABLE;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.materializeByteSequence;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.versionRangeString;
 import static net.haspamelodica.javazmach.core.header.HeaderField.AlphabetTableLoc;
+import static net.haspamelodica.javazmach.core.header.HeaderField.DictionaryLoc;
 import static net.haspamelodica.javazmach.core.header.HeaderField.FileChecksum;
 import static net.haspamelodica.javazmach.core.header.HeaderField.FileLength;
 import static net.haspamelodica.javazmach.core.header.HeaderField.GlobalVarTableLoc;
@@ -66,7 +68,7 @@ public final class AssembledHeader implements AssembledEntry
 		// we don't support custom alphabets (yet), so set this to 0
 		autoFields.put(AlphabetTableLoc, intConst(0));
 		autoFields.put(HighMemoryBase, intLoc(HIGH_MEM_BASE));
-		//autoFields.put(DictionaryLoc, intLoc(DICTIONARY));
+		autoFields.put(DictionaryLoc, intLoc(DICTIONARY));
 		autoFields.put(ObjTableLoc, intLoc(OBJ_TABLE));
 		autoFields.put(GlobalVarTableLoc, intLoc(GLOBAL_VAR_TABLE));
 		autoFields.put(StaticMemBase, intLoc(STATIC_MEM_BASE));

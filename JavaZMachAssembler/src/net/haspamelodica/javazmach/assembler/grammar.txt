@@ -14,6 +14,7 @@ FileEntry
   | Routine          { fileEntry[-1] = routine[0]; }
   | ObjectTable      { fileEntry[-1] = table[0]; }
   | GlobalVarTable   { fileEntry[-1] = globals[0]; }
+  | Dictionary       { fileEntry[-1] = dictionary[0]; }
   | LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
   | Instruction      { fileEntry[-1] = instruction[0]; }
   | Section          { fileEntry[-1] = section[0];} ;
@@ -60,6 +61,24 @@ GlobalVarTable
 Globals
  ->                                                      { globals[-1] = emptyGlList(); }
   | Globals '.' 'global' 'ident' MaybeIntegralValue      { globals[-1] = appendGlList(globals[0], Global(str([3]), valueOpt[4])); } ;
+
+Dictionary
+ -> '.' 'dictionary' DictionaryEntries { dictionary[-1] = Dictionary(entries[2]); } ;
+
+DictionaryEntries
+ -> { entries[-1] = emptyDEList(); }
+  | DictionaryEntries DictionaryEntry { entries[-1] = appendDEList(entries[0], entry[1]); } ;
+
+DictionaryEntry
+ -> '.' 'key' ZStringElements DictionaryData { entry[-1] = DictionaryEntry(ZString(elements[2]), data[3]); } ;
+
+// TODO use something other than HeaderValue (or rename it)
+DictionaryData
+ -> { data[-1] = emptyDDEList(); }
+  | DictionaryData DictionaryDataElement { data[-1] = appendDDEList(data[0], data[1]); };
+
+DictionaryDataElement
+ -> '.' 'data' NumberLiteral 'byte' HeaderValue { data[-1] = DictionaryDataElement(bigint[2], headerValue[4]); } ;
 
 RoutineLocals
  ->                                                      { routineLocals[-1] = emptyRLList(); }

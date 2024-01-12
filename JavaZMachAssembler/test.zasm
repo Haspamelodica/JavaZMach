@@ -31,6 +31,16 @@
 
 .SECTION static
 
+.DICTIONARY
+.KEY "mail"
+.DATA 1 BYTE 00
+.KEY "door"
+.DATA 1 BYTE 00
+.KEY "hit"
+.DATA 1 BYTE 01
+.DATA 2 BYTE testroutine
+
+
 entry:
 print "Hello World!"
 print "Hello World!"

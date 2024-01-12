@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.model.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
@@ -68,6 +69,7 @@ public class ZAssembler
 			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(routine, version));
 			case ZObjectTable table -> assembler.addEntry(new AssembledZObjectTable(table, version));
 			case GlobalVarTable globals -> assembler.addEntry(new AssembledGlobals(globals));
+			case Dictionary dictionary -> assembler.addEntry(new AssembledDictionary(dictionary));
 			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
 		}
 	}

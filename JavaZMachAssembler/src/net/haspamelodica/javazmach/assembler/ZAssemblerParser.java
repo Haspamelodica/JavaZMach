@@ -23,6 +23,9 @@ import net.haspamelodica.javazmach.assembler.model.BranchTarget;
 import net.haspamelodica.javazmach.assembler.model.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.CharLiteral;
+import net.haspamelodica.javazmach.assembler.model.Dictionary;
+import net.haspamelodica.javazmach.assembler.model.DictionaryDataElement;
+import net.haspamelodica.javazmach.assembler.model.DictionaryEntry;
 import net.haspamelodica.javazmach.assembler.model.Global;
 import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
@@ -90,6 +93,8 @@ public class ZAssemblerParser
 		ParameterizedType T_ListProperty = new ParameterizedTypeImpl(null, List.class, Property.class);
 		ParameterizedType T_ListObject = new ParameterizedTypeImpl(null, List.class, ZObject.class);
 		ParameterizedType T_ListObjectEntry = new ParameterizedTypeImpl(null, List.class, ZObjectEntry.class);
+		ParameterizedType T_ListDictionaryEntry = new ParameterizedTypeImpl(null, List.class, DictionaryEntry.class);
+		ParameterizedType T_ListDataEntry = new ParameterizedTypeImpl(null, List.class, DictionaryDataElement.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, Variable.class);
 		ParameterizedType T_OptIntegralValue = new ParameterizedTypeImpl(null, Optional.class, IntegralValue.class);
@@ -111,6 +116,9 @@ public class ZAssemblerParser
 		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, BigInteger.class, ByteSequence.class));
 		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
 		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, ZString.class, T_ListObjectEntry));
+		functionsByName.put("Dictionary", TypedFunction.buildT(Dictionary::new, Dictionary.class, T_ListDictionaryEntry));
+		functionsByName.put("DictionaryEntry", TypedFunction.buildT(DictionaryEntry::new, DictionaryEntry.class, ZString.class, T_ListDataEntry));
+		functionsByName.put("DictionaryDataElement", TypedFunction.build(DictionaryDataElement::new, DictionaryDataElement.class, BigInteger.class, HeaderValue.class));
 		functionsByName.put("SectionDeclaration", TypedFunction.buildT(SectionDeclaration::new, SectionDeclaration.class, Section.class, T_OptIntegralValue));
 		functionsByName.put("ZAttribute", TypedFunction.build(ZAttribute::new, ZAttribute.class, BigInteger.class));
 		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, String.class));
@@ -178,6 +186,12 @@ public class ZAssemblerParser
 		functionsByName.put("emptyOEList", TypedFunction.buildT(ArrayList::new, T_ListObjectEntry));
 		functionsByName.put("appendOEList", TypedFunction.buildT(ZAssemblerParser::<ZObjectEntry> appendList,
 				T_ListObjectEntry, T_ListObjectEntry, ZObjectEntry.class));
+		functionsByName.put("emptyDEList", TypedFunction.buildT(ArrayList::new, T_ListDictionaryEntry));
+		functionsByName.put("appendDEList", TypedFunction.buildT(ZAssemblerParser::<DictionaryEntry> appendList,
+				T_ListDictionaryEntry, T_ListDictionaryEntry, DictionaryEntry.class));
+		functionsByName.put("emptyDDEList", TypedFunction.buildT(ArrayList::new, T_ListDataEntry));
+		functionsByName.put("appendDDEList", TypedFunction.buildT(ZAssemblerParser::<DictionaryDataElement> appendList,
+				T_ListDataEntry, T_ListDataEntry, DictionaryDataElement.class));
 		functionsByName.put("emptyOperandList", TypedFunction.buildT(ArrayList::new, T_ListOperand));
 		functionsByName.put("appendOperandList", TypedFunction.buildT(ZAssemblerParser::<Operand> appendList,
 				T_ListOperand, T_ListOperand, Operand.class));

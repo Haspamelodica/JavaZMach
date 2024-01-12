@@ -106,6 +106,7 @@ public class ConvergingEntriesAssembler
 							case AssembledRoutineHeader entry -> HIGH;
 							case AssembledZObjectTable entry -> DYNAMIC;
 							case AssembledGlobals entry -> DYNAMIC;
+							case AssembledDictionary dictionary -> STATIC;
 							// labels or section declarations by themselves don't do anything
 							case AssembledLabelDeclaration entry -> null;
 							case AssembledSectionDeclaration entry -> null;
