@@ -40,6 +40,8 @@ call testroutine -> sp
 print_obj 1
 quit
 
+// In practice, it's nonsensical why code should be before the high memory mark - this is just for testing.
+// Code before the high memory mark shouldn't cause problems, so no diagnostic is expected.
 .SECTION high
 
 .ROUTINE testroutine
