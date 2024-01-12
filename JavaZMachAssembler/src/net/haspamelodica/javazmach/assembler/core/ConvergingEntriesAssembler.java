@@ -124,7 +124,7 @@ public class ConvergingEntriesAssembler
 		BigInteger highExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(HIGH));
 
 		if(dynamicExplicitStart != null && dynamicExplicitStart.signum() != 0)
-			diagnosticHandler.warning("Explicit start of dynamic section wasn't at beginning of file - dynamic memory always starts at beginning of file");
+			diagnosticHandler.warning("Explicit dynamic section declaration wasn't at beginning of file - dynamic memory always starts there");
 
 		BigInteger dynamicEntriesEnd = dynamicSummary != null ? dynamicSummary.max() : ZERO;
 
@@ -150,6 +150,8 @@ public class ConvergingEntriesAssembler
 		if(dynamicEntriesEnd.compareTo(staticStart) > 0)
 			diagnosticHandler.info("Dynamic entries in static memory");
 		if(dynamicEntriesEnd.compareTo(highStart) > 0)
+			// I think this message can only appear if one of the other two is emitted as well,
+			// but I'm not sure - so leaving it in.
 			diagnosticHandler.info("Dynamic entries in high memory");
 		// Static entries in high memory are fine, so don't emit a warning for that: static mem is allowed to overlap with high mem.
 		if(staticStart.compareTo(highStart) > 0)
