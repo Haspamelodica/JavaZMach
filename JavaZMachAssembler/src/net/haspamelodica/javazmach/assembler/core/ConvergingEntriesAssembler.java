@@ -3,10 +3,10 @@ package net.haspamelodica.javazmach.assembler.core;
 import static java.math.BigInteger.ZERO;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultEmit;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
-import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultInfo;
-import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_CHECKSUM;
-import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.*;
+import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.FILE_END;
+import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.HIGH_MEM_BASE;
+import static net.haspamelodica.javazmach.assembler.core.SectionLikeLocation.STATIC_MEM_BASE;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 import static net.haspamelodica.javazmach.assembler.model.Section.DYNAMIC;
 import static net.haspamelodica.javazmach.assembler.model.Section.HIGH;
@@ -124,7 +124,7 @@ public class ConvergingEntriesAssembler
 		BigInteger highExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(HIGH));
 
 		if(dynamicExplicitStart != null && dynamicExplicitStart.signum() != 0)
-			defaultWarning("Explicit start of dynamic section wasn't at beginning of file - dynamic memory always starts at beginning of file");
+			diagnosticHandler.warning("Explicit start of dynamic section wasn't at beginning of file - dynamic memory always starts at beginning of file");
 
 		BigInteger dynamicEntriesEnd = dynamicSummary != null ? dynamicSummary.max() : ZERO;
 
@@ -148,12 +148,12 @@ public class ConvergingEntriesAssembler
 			highStart = staticEntriesEnd;
 
 		if(dynamicEntriesEnd.compareTo(staticStart) > 0)
-			defaultInfo("Dynamic entries in static memory");
+			diagnosticHandler.info("Dynamic entries in static memory");
 		if(dynamicEntriesEnd.compareTo(highStart) > 0)
-			defaultInfo("Dynamic entries in high memory");
+			diagnosticHandler.info("Dynamic entries in high memory");
 		// Static entries in high memory are fine, so don't emit a warning for that: static mem is allowed to overlap with high mem.
 		if(staticStart.compareTo(highStart) > 0)
-			defaultWarning("High memory overlaps with dynamic memory - this will likely fail");
+			diagnosticHandler.warning("High memory overlaps with dynamic memory - this will likely fail");
 
 		locationManager.emitValueReference(STATIC_MEM_BASE, staticStart);
 		locationManager.emitValueReference(HIGH_MEM_BASE, highStart);
