@@ -215,9 +215,9 @@ public class ZAssemblerUtils
 		{
 			// This case can occur if either the unsigned BigInteger
 			// truly has more bits than maxBits, or if the sign bit
-			// requires additional byte.
+			// requires an additional byte.
 			// This is in line with the definition of hasBigIntMaxBitCount
-			return Arrays.copyOf(bytes, requiredLen);
+			return Arrays.copyOfRange(bytes, bytes.length - requiredLen, bytes.length);
 		} else
 		{
 			return bytes;
