@@ -69,7 +69,7 @@ public class ZAssembler
 			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(routine, version));
 			case ZObjectTable table -> assembler.addEntry(new AssembledZObjectTable(table, version));
 			case GlobalVarTable globals -> assembler.addEntry(new AssembledGlobals(globals));
-			case Dictionary dictionary -> assembler.addEntry(new AssembledDictionary(dictionary));
+			case Dictionary dictionary -> assembler.addEntry(new AssembledDictionary(dictionary, version));
 			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
 		}
 	}

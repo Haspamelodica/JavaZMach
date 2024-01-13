@@ -9,6 +9,8 @@ import net.haspamelodica.javazmach.assembler.core.Diagnostic.Severity;
 @FunctionalInterface
 public interface DiagnosticHandler
 {
+	public final static DiagnosticHandler DEFAULT_HANDLER = (diagnostic) -> defaultEmit(diagnostic);
+
 	public void emit(Diagnostic diagnostic);
 
 	public default void emit(Severity severity, String message)
