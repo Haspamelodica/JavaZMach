@@ -91,8 +91,7 @@ RoutineLocals
 Section -> '.' 'section' SectionType MaybeIntegralValue { section[-1] = SectionDeclaration(sectionType[2], valueOpt[3]); } ;
 
 SectionType
- -> 'dynamic' { sectionType[-1] = DYNAMIC(); }
-  | 'static'  { sectionType[-1] = STATIC(); }
+ -> 'static'  { sectionType[-1] = STATIC(); }
   | 'high'    { sectionType[-1] = HIGH(); } ;
 
 MaybeIntegralValue

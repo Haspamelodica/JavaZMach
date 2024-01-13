@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.model.ExplicitSection;
 import net.haspamelodica.javazmach.assembler.model.Section;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
@@ -120,12 +121,8 @@ public class ConvergingEntriesAssembler
 		BigIntegerSummary dynamicSummary = sectionTypeSummaries.get(DYNAMIC);
 		BigIntegerSummary staticSummary = sectionTypeSummaries.get(STATIC);
 		BigIntegerSummary highSummary = sectionTypeSummaries.get(HIGH);
-		BigInteger dynamicExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(DYNAMIC));
-		BigInteger staticExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(STATIC));
-		BigInteger highExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(HIGH));
-
-		if(dynamicExplicitStart != null && dynamicExplicitStart.signum() != 0)
-			diagnosticHandler.warning("Explicit dynamic section declaration wasn't at beginning of file - dynamic memory always starts there");
+		BigInteger staticExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(ExplicitSection.STATIC));
+		BigInteger highExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(ExplicitSection.HIGH));
 
 		BigInteger dynamicEntriesEnd = dynamicSummary != null ? dynamicSummary.max() : ZERO;
 

@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-import net.haspamelodica.javazmach.assembler.model.Section;
+import net.haspamelodica.javazmach.assembler.model.ExplicitSection;
 
-public record ExplicitSectionLocation(Section section) implements SpecialLocation
+public record ExplicitSectionLocation(ExplicitSection section) implements SpecialLocation
 {}

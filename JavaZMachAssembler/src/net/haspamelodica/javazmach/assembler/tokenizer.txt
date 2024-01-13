@@ -18,7 +18,6 @@ key = key|KEY ;
 data = data|DATA ;
 byte = byte|BYTE ;
 section = section|SECTION ;
-dynamic = dynamic|DYNAMIC ;
 static = static|STATIC ;
 high = high|HIGH ;
 

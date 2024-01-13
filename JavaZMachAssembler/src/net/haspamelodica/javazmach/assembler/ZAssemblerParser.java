@@ -26,6 +26,7 @@ import net.haspamelodica.javazmach.assembler.model.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.DictionaryDataElement;
 import net.haspamelodica.javazmach.assembler.model.DictionaryEntry;
+import net.haspamelodica.javazmach.assembler.model.ExplicitSection;
 import net.haspamelodica.javazmach.assembler.model.Global;
 import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
@@ -40,7 +41,6 @@ import net.haspamelodica.javazmach.assembler.model.Operand;
 import net.haspamelodica.javazmach.assembler.model.Property;
 import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.assembler.model.RoutineLocal;
-import net.haspamelodica.javazmach.assembler.model.Section;
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
 import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
@@ -120,7 +120,7 @@ public class ZAssemblerParser
 		functionsByName.put("Dictionary", TypedFunction.buildT(Dictionary::new, Dictionary.class, T_ListChar, T_ListDictionaryEntry));
 		functionsByName.put("DictionaryEntry", TypedFunction.buildT(DictionaryEntry::new, DictionaryEntry.class, ZString.class, T_ListDataEntry));
 		functionsByName.put("DictionaryDataElement", TypedFunction.build(DictionaryDataElement::new, DictionaryDataElement.class, BigInteger.class, HeaderValue.class));
-		functionsByName.put("SectionDeclaration", TypedFunction.buildT(SectionDeclaration::new, SectionDeclaration.class, Section.class, T_OptIntegralValue));
+		functionsByName.put("SectionDeclaration", TypedFunction.buildT(SectionDeclaration::new, SectionDeclaration.class, ExplicitSection.class, T_OptIntegralValue));
 		functionsByName.put("ZAttribute", TypedFunction.build(ZAttribute::new, ZAttribute.class, BigInteger.class));
 		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, String.class));
 		functionsByName.put("AssemblerZMachInstruction", TypedFunction.buildT(ZAssemblerInstruction::new,
@@ -152,9 +152,8 @@ public class ZAssemblerParser
 		functionsByName.put("SHORT", TypedFunction.build(() -> OpcodeForm.SHORT, OpcodeForm.class));
 		functionsByName.put("EXTENDED", TypedFunction.build(() -> OpcodeForm.EXTENDED, OpcodeForm.class));
 		functionsByName.put("VARIABLE", TypedFunction.build(() -> OpcodeForm.VARIABLE, OpcodeForm.class));
-		functionsByName.put("DYNAMIC", TypedFunction.build(() -> Section.DYNAMIC, Section.class));
-		functionsByName.put("STATIC", TypedFunction.build(() -> Section.STATIC, Section.class));
-		functionsByName.put("HIGH", TypedFunction.build(() -> Section.HIGH, Section.class));
+		functionsByName.put("STATIC", TypedFunction.build(() -> ExplicitSection.STATIC, ExplicitSection.class));
+		functionsByName.put("HIGH", TypedFunction.build(() -> ExplicitSection.HIGH, ExplicitSection.class));
 		functionsByName.put("BITWISE_OR", TypedFunction.build(() -> BinaryExpression.Op.BITWISE_OR, BinaryExpression.Op.class));
 		functionsByName.put("BITWISE_XOR", TypedFunction.build(() -> BinaryExpression.Op.BITWISE_XOR, BinaryExpression.Op.class));
 		functionsByName.put("BITWISE_AND", TypedFunction.build(() -> BinaryExpression.Op.BITWISE_AND, BinaryExpression.Op.class));
