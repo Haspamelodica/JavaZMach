@@ -95,6 +95,7 @@ public class ZAssemblerParser
 		ParameterizedType T_ListObjectEntry = new ParameterizedTypeImpl(null, List.class, ZObjectEntry.class);
 		ParameterizedType T_ListDictionaryEntry = new ParameterizedTypeImpl(null, List.class, DictionaryEntry.class);
 		ParameterizedType T_ListDataEntry = new ParameterizedTypeImpl(null, List.class, DictionaryDataElement.class);
+		ParameterizedType T_ListChar = new ParameterizedTypeImpl(null, List.class, CharLiteral.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, Variable.class);
 		ParameterizedType T_OptIntegralValue = new ParameterizedTypeImpl(null, Optional.class, IntegralValue.class);
@@ -116,7 +117,7 @@ public class ZAssemblerParser
 		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, BigInteger.class, ByteSequence.class));
 		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
 		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, ZString.class, T_ListObjectEntry));
-		functionsByName.put("Dictionary", TypedFunction.buildT(Dictionary::new, Dictionary.class, T_ListDictionaryEntry));
+		functionsByName.put("Dictionary", TypedFunction.buildT(Dictionary::new, Dictionary.class, T_ListChar, T_ListDictionaryEntry));
 		functionsByName.put("DictionaryEntry", TypedFunction.buildT(DictionaryEntry::new, DictionaryEntry.class, ZString.class, T_ListDataEntry));
 		functionsByName.put("DictionaryDataElement", TypedFunction.build(DictionaryDataElement::new, DictionaryDataElement.class, BigInteger.class, HeaderValue.class));
 		functionsByName.put("SectionDeclaration", TypedFunction.buildT(SectionDeclaration::new, SectionDeclaration.class, Section.class, T_OptIntegralValue));
@@ -201,6 +202,9 @@ public class ZAssemblerParser
 		functionsByName.put("emptyZStringElementList", TypedFunction.buildT(ArrayList::new, T_ListZStringElement));
 		functionsByName.put("appendZStringElementList", TypedFunction.buildT(ZAssemblerParser::<ZStringElement> appendList,
 				T_ListZStringElement, T_ListZStringElement, ZStringElement.class));
+		functionsByName.put("emptyCList", TypedFunction.buildT(ArrayList::new, T_ListChar));
+		functionsByName.put("appendCList", TypedFunction.buildT(ZAssemblerParser::<CharLiteral> appendList,
+				T_ListChar, T_ListChar, CharLiteral.class));
 
 		// Optionals
 		functionsByName.put("optFormEmpty", TypedFunction.buildT(Optional::empty, T_OptForm));

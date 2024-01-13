@@ -63,7 +63,11 @@ Globals
   | Globals '.' 'global' 'ident' MaybeIntegralValue      { globals[-1] = appendGlList(globals[0], Global(str([3]), valueOpt[4])); } ;
 
 Dictionary
- -> '.' 'dictionary' DictionaryEntries { dictionary[-1] = Dictionary(entries[2]); } ;
+ -> '.' 'dictionary' Separators DictionaryEntries { dictionary[-1] = Dictionary(separators[2], entries[3]); } ;
+
+Separators
+ ->                   { separators[-1] = emptyCList(); }
+  | Separators 'char' { separators[-1] = appendCList(separators[0], CharLiteral(parseChar([1]))); } ;
 
 DictionaryEntries
  -> { entries[-1] = emptyDEList(); }

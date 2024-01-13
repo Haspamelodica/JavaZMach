@@ -5,12 +5,20 @@ import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defau
 import java.util.Iterator;
 import java.util.List;
 
+import net.haspamelodica.javazmach.assembler.model.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.Dictionary;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
+import net.haspamelodica.javazmach.core.text.UnicodeZSCIIConverterNoSpecialChars;
 
 public final class AssembledDictionary implements AssembledEntry
 {
-	private static final int						MAX_DICTIONARY_ENTRIES	= 0xffff;
+	// according to sec. 3.3 of the Z-machine emulation document,
+	// the word representing the number of dictionary entries is signed.
+	// Hence the top bit must be unset (with the exception of alternative
+	// dictionaries in V5+, but we do not have those)
+	private static final int						MAX_DICTIONARY_ENTRIES	= 0x7fff;
+	private static final int						MAX_SEPARATORS			= 255;
+	private final List<Integer>						separators;
 	private final List<AssembledDictionaryEntry>	entries;
 	private final int								maxEntrySize;
 
@@ -60,6 +68,22 @@ public final class AssembledDictionary implements AssembledEntry
 		{
 			defaultError("Too many dictionary entries. Maximum allowed: %d Actual: %d".formatted(MAX_DICTIONARY_ENTRIES, entries.size()));
 		}
+
+		separators = dictionary.separators().stream().map(CharLiteral::value).peek(cp ->
+		{
+			switch(cp)
+			{
+				case '\r':
+				case ' ':
+					defaultError("Code point %d is not an allowed separator".formatted(cp));
+					break;
+			}
+		}).map(UnicodeZSCIIConverterNoSpecialChars::unicodeToZsciiNoCR).toList();
+
+		if(separators.size() > MAX_SEPARATORS)
+		{
+			defaultError("Too many separators provided. Maximum is %d; Got %d".formatted(MAX_SEPARATORS, separators.size()));
+		}
 	}
 
 	@Override
@@ -72,8 +96,11 @@ public final class AssembledDictionary implements AssembledEntry
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		locationEmitter.emitLocationHere(SpecialDataStructureLocation.DICTIONARY);
-		// TODO: separators
-		memSeq.writeNextByte(0);
+		memSeq.writeNextByte(separators.size());
+		for(Integer separator : separators)
+		{
+			memSeq.writeNextByte(separator);
+		}
 		memSeq.writeNextByte(maxEntrySize);
 		memSeq.writeNextWord(entries.size());
 		entries.forEach(e -> e.appendPadded(locationEmitter, memSeq, diagnosticHandler, maxEntrySize));
