@@ -31,7 +31,7 @@
 
 .SECTION static
 
-.DICTIONARY
+.DICTIONARY '.' ',' '"'
 .KEY "mail"
 .DATA 1 BYTE 00
 .KEY "door"
@@ -42,6 +42,13 @@
 
 
 entry:
+verify ? checksum_match
+print "checksum false!"
+// Unfortunately, the unconditional branch is asinine to use.
+jz 0 ? checksum_after
+checksum_match:
+print "checksum verified!"
+checksum_after:
 print "Hello World!"
 print "Hello World!"
 print "Hello World!"
