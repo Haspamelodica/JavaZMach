@@ -43,18 +43,28 @@
 
 entry:
 verify ? checksum_match
-print "checksum false!"
+print "checksum wrong!\n"
 // Unfortunately, the unconditional branch is asinine to use.
 jz 0 ? checksum_after
 checksum_match:
-print "checksum verified!"
+print "checksum verified!\n"
 checksum_after:
-print "Hello World!"
-print "Hello World!"
-print "Hello World!"
-print "Hello World!\n"
 call testroutine -> sp
 print_obj 1
+test_attr 1, 4 ? attr4_set
+print "obj1.attribute4 is unset! (incorrect)\n"
+jz 0 ? attr4_after
+attr4_set:
+print "obj1.attribute4 is set! (correct)\n"
+attr4_after:
+
+test_attr 1, 2 ? attr2_set
+print "obj1.attribute2 is unset! (correct)\n"
+jz 0 ? attr2_after
+attr2_set:
+print "obj1.attribute2 is set! (incorrect)\n"
+attr2_after:
+
 quit
 
 // In practice, it's nonsensical why code should be before the high memory mark - this is just for testing.
