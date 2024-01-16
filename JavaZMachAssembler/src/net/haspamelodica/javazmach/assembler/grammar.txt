@@ -151,6 +151,7 @@ MaybeBranchInfo
 
 MaybeBranchInfoBranchOnConditionFalse
  ->     { branchOnConditionFalse[-1] = false(); }
+
   | '~' { branchOnConditionFalse[-1] = true(); } ;
 
 BranchTarget
@@ -174,6 +175,10 @@ ZStringElements
 ZStringElement
  -> 'text' { element[-1] = ZStringElement(parseText([0])); } ;
 
+CString
+ -> 'ctext'         { cstring[-1] = CString(parseCText([0])); }
+  | CString 'ctext' { cstring[-1] = appendCString(cstring[0], parseCText([1])); } ;
+
 ByteSequence
  -> ByteSequenceElement { sequence[-1] = ByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
   | ByteSequenceMin2    { sequence[-1] = sequence[0]; } ;
@@ -190,7 +195,8 @@ ByteSequenceElement
   | ByteSequenceElementNoIntegralLiteral { element[-1] = element[0]; } ;
 
 ByteSequenceElementNoIntegralLiteral
- -> 'text' { element[-1] = StringLiteral(parseText([0])); } ;
+ -> ZStringElements { element[-1] = ZString(elements[0]); }
+  | CString         { element[-1] = cstring[0]; } ;
 
 // NoTilde variant disallows a ~ at the start.
 // Needed because otherwise the grammar would be ambiguous because of clash with branch-on-condition-false.

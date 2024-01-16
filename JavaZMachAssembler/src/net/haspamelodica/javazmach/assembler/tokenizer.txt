@@ -79,6 +79,7 @@ opcode_upper = OPCODESUPPER ;
 ident = [a-zA-Z_][a-zA-Z0-9_]* ;
 
 text = "(([^\\\\\\r\\n"]|)(\\\\([\\\\"'trn\\r\\n]|\\r\\n)|))*" ;
+ctext = [Cc]"(([^\\\\\\r\\n"]|)(\\\\([\\\\"'trn\\r\\n]|\\r\\n)|))*" ;
 
 char = '([^\\\\\\r\\n']|\\\\[\\\\"'trn\\r\\n])' ;
 

@@ -29,7 +29,7 @@ public class AssembledDictionaryEntry
 			return switch(e.value())
 			{
 				case IntegralValue value -> new AssembledDictionaryIntegralData(value, e.size());
-				case ByteSequence value -> new AssembledDictionaryByteSequenceData(value, e.size());
+				case ByteSequence value -> new AssembledDictionaryByteSequenceData(value, e.size(), version);
 			};
 		}).toList();
 		int zCharLength;

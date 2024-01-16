@@ -4,7 +4,7 @@
 .ZHEADER StoryfileSplit 0
 .ZHEADER Tandy 0
 .ZHEADER ReleaseNumber 0x42
-.ZHEADER SerialNum "421337"
+.ZHEADER SerialNum C"421337"
 .ZHEADER CompilerVer 0x1337
 .ZHEADER InitialPC15 entry
 
@@ -15,12 +15,14 @@
 	.ATTRIBUTE 0
 	.ATTRIBUTE 4
 	
-	.PROPERTY 1 "Hello"
+	.PROPERTY 1 C"Hello"
+	.PROPERTY 2 "to,ke ns"
 	.OBJECT "WORLD" {
-		.PROPERTY 1 "World"
+		.PROPERTY 15 0, 0
+		.PROPERTY 1 C"World"
 	}
 	.OBJECT "!" {
-		.PROPERTY 1 "!"
+		.PROPERTY 1 C"!"
 	}
 }
 
@@ -31,7 +33,7 @@
 
 .SECTION static
 
-.DICTIONARY
+.DICTIONARY '.' ',' '"'
 .KEY "mail"
 .DATA 1 BYTE 00
 .KEY "door"
@@ -42,12 +44,33 @@
 
 
 entry:
-print "Hello World!"
-print "Hello World!"
-print "Hello World!"
-print "Hello World!\n"
+verify ? checksum_match
+print "checksum wrong!\n"
+// Unfortunately, the unconditional branch is asinine to use.
+jz 0 ? checksum_after
+checksum_match:
+print "checksum verified!\n"
+checksum_after:
 call testroutine -> sp
 print_obj 1
+print "\n"
+
+test_attr 1, 4 ? attr4_set
+print "obj1.attribute4 is unset! (incorrect)\n"
+jz 0 ? attr4_after
+attr4_set:
+print "obj1.attribute4 is set! (correct)\n"
+attr4_after:
+
+test_attr 1, 2 ? attr2_set
+print "obj1.attribute2 is unset! (correct)\n"
+jz 0 ? attr2_after
+attr2_set:
+print "obj1.attribute2 is set! (incorrect)\n"
+attr2_after:
+
+call testproperties -> sp
+
 quit
 
 // In practice, it's nonsensical why code should be before the high memory mark - this is just for testing.
@@ -57,4 +80,30 @@ quit
 .ROUTINE testroutine
 .LOCAL asdf
 print "Hello from testroutine!\n"
+rtrue
+
+.ROUTINE testproperties
+.LOCAL prop
+.LOCAL child
+get_prop 1, 15 -> l0
+jz l0 ? obj1prop1_zero
+print "obj1.prop1 is not zero (correct)\n"
+jz 0 ? obj1prop1_end
+obj1prop1_zero:
+print "obj1.prop1 is zero (incorrect)\n"
+obj1prop1_end:
+
+get_child 1 -> l1 ? has_child
+print "obj1 has no child (incorrect)\n"
+rtrue
+has_child:
+print "obj1 has a child (correct)\n"
+
+get_prop l1, 15 -> l0
+jz l0 ? child1prop1_zero
+print "obj1.child1.prop1 is not zero (incorrect)\n"
+jz 0 ? child1prop1_end
+child1prop1_zero:
+print "obj1.child1.prop1 is zero (correct)\n"
+child1prop1_end:
 rtrue
