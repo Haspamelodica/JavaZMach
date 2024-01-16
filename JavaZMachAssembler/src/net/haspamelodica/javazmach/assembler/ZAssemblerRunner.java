@@ -9,6 +9,7 @@ import java.util.List;
 
 import net.haspamelodica.javazmach.assembler.core.ZAssembler;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
+import net.haspamelodica.javazmach.assembler.parser.ZAssemblerParser;
 import net.haspamelodica.parser.parser.ParseException;
 import net.haspamelodica.parser.tokenizer.CharReader;
 

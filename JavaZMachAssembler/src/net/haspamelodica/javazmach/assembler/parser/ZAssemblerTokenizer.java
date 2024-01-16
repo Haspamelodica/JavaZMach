@@ -1,4 +1,4 @@
-package net.haspamelodica.javazmach.assembler;
+package net.haspamelodica.javazmach.assembler.parser;
 
 import java.io.IOException;
 import java.io.InputStream;

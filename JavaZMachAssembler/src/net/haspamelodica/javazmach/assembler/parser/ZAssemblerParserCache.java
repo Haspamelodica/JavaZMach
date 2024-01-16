@@ -1,22 +1,36 @@
-package net.haspamelodica.javazmach.assembler;
+package net.haspamelodica.javazmach.assembler.parser;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
-import net.haspamelodica.javazmach.assembler.ZAssemblerParserCache.ZAssemblerGrammar;
 import net.haspamelodica.javazmach.assembler.model.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.BranchInfo;
 import net.haspamelodica.javazmach.assembler.model.BranchLength;
 import net.haspamelodica.javazmach.assembler.model.BranchTarget;
 import net.haspamelodica.javazmach.assembler.model.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
+import net.haspamelodica.javazmach.assembler.model.CString;
 import net.haspamelodica.javazmach.assembler.model.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.DictionaryDataElement;
@@ -39,7 +53,6 @@ import net.haspamelodica.javazmach.assembler.model.RoutineLocal;
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
 import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
-import net.haspamelodica.javazmach.assembler.model.CString;
 import net.haspamelodica.javazmach.assembler.model.UnaryExpression;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
@@ -52,48 +65,144 @@ import net.haspamelodica.javazmach.assembler.model.ZObjectTable;
 import net.haspamelodica.javazmach.assembler.model.ZString;
 import net.haspamelodica.javazmach.assembler.model.ZStringElement;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
-import net.haspamelodica.parser.ast.InnerNode;
+import net.haspamelodica.parser.caching.DigestingInputStream;
+import net.haspamelodica.parser.caching.LRkParserSerializer;
+import net.haspamelodica.parser.caching.LRkParserSerializer.Symbols;
+import net.haspamelodica.parser.caching.VersionMagicMismatchException;
 import net.haspamelodica.parser.generics.ParameterizedTypeImpl;
 import net.haspamelodica.parser.generics.TypedFunction;
+import net.haspamelodica.parser.grammar.ContextFreeGrammar;
+import net.haspamelodica.parser.grammar.Nonterminal;
+import net.haspamelodica.parser.grammar.Terminal;
 import net.haspamelodica.parser.grammar.attributes.Attribute;
 import net.haspamelodica.parser.grammar.attributes.evaluating.lattributed.LAttributedEvaluator;
+import net.haspamelodica.parser.grammar.parser.AttributeGrammarParseResult;
+import net.haspamelodica.parser.grammar.parser.GrammarParser;
 import net.haspamelodica.parser.parser.ParseException;
 import net.haspamelodica.parser.parser.Parser;
+import net.haspamelodica.parser.parser.lrk.GenericLRkParser;
+import net.haspamelodica.parser.parser.lrk.LRkParser;
+import net.haspamelodica.parser.parser.lrk.LRkParserGenerator;
 import net.haspamelodica.parser.tokenizer.CharReader;
 import net.haspamelodica.parser.tokenizer.CharString;
-import net.haspamelodica.parser.tokenizer.Tokenizer;
 
-public class ZAssemblerParser
+public class ZAssemblerParserCache
 {
-	private static final Tokenizer<CharReader> tokenizer;
+	private static final String	CACHE_RESOURCE_NAME		= "grammar.txt.cache";
+	private static final String	GRAMMAR_RESOURCE_NAME	= "grammar.txt";
 
-	private static final Parser						parser;
-	private static final LAttributedEvaluator		attributeEvaluator;
-	private static final Attribute<ZAssemblerFile>	assemblerFileAttr;
+	public static record ZAssemblerGrammar(Parser parser, LAttributedEvaluator attributeEvaluator, Attribute<ZAssemblerFile> assemblerFileAttr)
+	{}
 
-	static
+	private static record ParsedGrammar(AttributeGrammarParseResult grammarResult, byte[] grammarDigest)
+	{}
+
+	public static void main(String[] args) throws IOException
 	{
-		tokenizer = ZAssemblerTokenizer.createTokenizer();
-
-		ZAssemblerGrammar grammar = ZAssemblerParserCache.createParser(tokenizer.allTerminals());
-		parser = grammar.parser();
-		attributeEvaluator = grammar.attributeEvaluator();
-		assemblerFileAttr = grammar.assemblerFileAttr();
+		Path out = Path.of(args[0]);
+		System.out.println("Regenerating " + CACHE_RESOURCE_NAME + " in file " + out + "...");
+		ParsedGrammar parsedGrammar = parseGrammar(ZAssemblerTokenizer.createTokenizer().allTerminals());
+		LRkParser parser = generateUncachedParser(parsedGrammar.grammarResult());
+		serializeParser(parsedGrammar.grammarDigest(), parser, out);
+		System.out.println("Done!");
 	}
 
-	public static ZAssemblerFile parse(String in) throws ParseException
+	public static void serializeParser(byte[] checksum, GenericLRkParser<?> parser, Path output) throws IOException
 	{
-		return parse(CharReader.readString(in));
-	}
-	public static ZAssemblerFile parse(CharReader in) throws ParseException
-	{
-		InnerNode root = parser.parse(tokenizer.tokenize(in));
-		attributeEvaluator.evaluate(root, Set.of());
-		return root.getValueForAttribute(assemblerFileAttr);
+		try(OutputStream out = new DeflaterOutputStream(Files.newOutputStream(output)))
+		{
+			out.write(checksum);
+			LRkParserSerializer.serialize(parser, (t, d) -> d.writeUTF(t.getName()), (n, d) -> d.writeUTF(n.getName()), out);
+		}
 	}
 
-	/** TODO only here for easier merge - move to ZAssemblerParserCache! */
-	public static Map<String, TypedFunction> createFunctionsByName()
+	public static ZAssemblerGrammar createParser(Set<Terminal<?>> allTerminals)
+	{
+		ParsedGrammar parsedGrammar = parseGrammar(allTerminals);
+		AttributeGrammarParseResult grammarResult = parsedGrammar.grammarResult();
+		GenericLRkParser<?> parser = loadCachedParser(parsedGrammar.grammarDigest(), grammarResult.getGrammar());
+		if(parser == null)
+			parser = generateUncachedParser(grammarResult);
+
+		LAttributedEvaluator attributeEvaluator = new LAttributedEvaluator(parsedGrammar.grammarResult().getAttributeSystem());
+		@SuppressWarnings("unchecked")
+		Attribute<ZAssemblerFile> programAttrL = (Attribute<ZAssemblerFile>) parsedGrammar.grammarResult().getAttributesByName().get("file");
+
+		return new ZAssemblerGrammar(parser, attributeEvaluator, programAttrL);
+	}
+
+	public static LRkParser generateUncachedParser(AttributeGrammarParseResult grammarResult)
+	{
+		// This grammar is not LR(1) in two places: when discerning ".zversion" and ".zheader" after the dot,
+		// and when discerning whether an ident is a label declaration or a label usage as an operand.
+		LRkParser originalParser = LRkParserGenerator.generate(grammarResult.getGrammar(), 2);
+		return originalParser;
+	}
+
+	public static ParsedGrammar parseGrammar(Set<Terminal<?>> allTerminals)
+	{
+		Map<String, TypedFunction> functionsByName = createFunctionsByName();
+
+		ParsedGrammar parsedGrammar;
+		try(InputStream resource = ZAssemblerParserCache.class.getResourceAsStream(GRAMMAR_RESOURCE_NAME))
+		{
+			if(resource == null)
+				throw new RuntimeException("Grammar definition not found");
+			DigestingInputStream digestingIn = new DigestingInputStream(resource, MessageDigest.getInstance("SHA256"));
+			AttributeGrammarParseResult grammarResult = GrammarParser.parseAttributeGrammar(CharReader.fromReader(new InputStreamReader(digestingIn)), allTerminals, functionsByName);
+			Set<Nonterminal> unreachableNonterminals = grammarResult.getGrammar().calculateUnreachableNonterminals();
+			if(!unreachableNonterminals.isEmpty())
+				System.err.println("WARNING: Grammar contains unreachable symbols - this is an assembler bug: " + unreachableNonterminals);
+			parsedGrammar = new ParsedGrammar(grammarResult, digestingIn.digest());
+		} catch(ParseException e)
+		{
+			throw new IllegalArgumentException("Error parsing grammar", e);
+		} catch(IOException e)
+		{
+			throw new RuntimeException("Error reading grammar definition", e);
+		} catch(NoSuchAlgorithmException e)
+		{
+			throw new RuntimeException("No SHA256", e);
+		}
+		return parsedGrammar;
+	}
+
+	public static GenericLRkParser<?> loadCachedParser(byte[] checksum, ContextFreeGrammar grammar)
+	{
+		try(InputStream grammarParserCacheIn = ZAssemblerParserCache.class.getResourceAsStream(CACHE_RESOURCE_NAME))
+		{
+			if(grammarParserCacheIn == null)
+			{
+				System.err.println("WARNING: No parser cache found - regenerate " + CACHE_RESOURCE_NAME);
+				return null;
+			}
+
+			InputStream deflatedIn = new InflaterInputStream(grammarParserCacheIn);
+			if(!Arrays.equals(deflatedIn.readNBytes(checksum.length), checksum))
+			{
+				System.err.println("WARNING: Cached parser checksum mismatch - regenerate " + CACHE_RESOURCE_NAME);
+				return null;
+
+			}
+
+			Symbols symbols = LRkParserSerializer.categorizeSymbols(grammar);
+			Map<String, Nonterminal> nonterminals = symbols.nonterminalsExceptGeneratedStart()
+					.stream().collect(Collectors.toMap(Nonterminal::getName, Function.identity()));
+			Map<String, Terminal<?>> terminals = symbols.terminals()
+					.stream().collect(Collectors.toMap(Terminal::getName, Function.identity()));
+
+			return LRkParserSerializer.deserialize(deflatedIn, d -> terminals.get(d.readUTF()), d -> nonterminals.get(d.readUTF()));
+		} catch(IOException e)
+		{
+			throw new UncheckedIOException(e);
+		} catch(VersionMagicMismatchException e)
+		{
+			System.err.println("WARNING: Cached parser version mismatch - regenerate " + CACHE_RESOURCE_NAME);
+			return null;
+		}
+	}
+
+	private static Map<String, TypedFunction> createFunctionsByName()
 	{
 		ParameterizedType T_ListZAssemblyFileEntry = new ParameterizedTypeImpl(null, List.class, ZAssemblerFileEntry.class);
 		ParameterizedType T_ListOperand = new ParameterizedTypeImpl(null, List.class, Operand.class);
@@ -181,46 +290,46 @@ public class ZAssemblerParser
 
 		// lists
 		functionsByName.put("emptyAEList", TypedFunction.buildT(ArrayList::new, T_ListZAssemblyFileEntry));
-		functionsByName.put("appendAEList", TypedFunction.buildT(ZAssemblerParser::<ZAssemblerFileEntry> appendList,
+		functionsByName.put("appendAEList", TypedFunction.buildT(ZAssemblerParserCache::<ZAssemblerFileEntry> appendList,
 				T_ListZAssemblyFileEntry, T_ListZAssemblyFileEntry, ZAssemblerFileEntry.class));
 		functionsByName.put("emptyRLList", TypedFunction.buildT(ArrayList::new, T_ListRoutineLocal));
-		functionsByName.put("appendRLList", TypedFunction.buildT(ZAssemblerParser::<RoutineLocal> appendList,
+		functionsByName.put("appendRLList", TypedFunction.buildT(ZAssemblerParserCache::<RoutineLocal> appendList,
 				T_ListRoutineLocal, T_ListRoutineLocal, RoutineLocal.class));
 		functionsByName.put("emptyGlList", TypedFunction.buildT(ArrayList::new, T_ListGlobal));
-		functionsByName.put("appendGlList", TypedFunction.buildT(ZAssemblerParser::<Global> appendList,
+		functionsByName.put("appendGlList", TypedFunction.buildT(ZAssemblerParserCache::<Global> appendList,
 				T_ListGlobal, T_ListGlobal, Global.class));
 		functionsByName.put("emptyPropList", TypedFunction.buildT(ArrayList::new, T_ListProperty));
-		functionsByName.put("appendPropList", TypedFunction.buildT(ZAssemblerParser::<Property> appendList,
+		functionsByName.put("appendPropList", TypedFunction.buildT(ZAssemblerParserCache::<Property> appendList,
 				T_ListProperty, T_ListProperty, Property.class));
 		functionsByName.put("emptyObjList", TypedFunction.buildT(ArrayList::new, T_ListObject));
-		functionsByName.put("appendObjList", TypedFunction.buildT(ZAssemblerParser::<ZObject> appendList,
+		functionsByName.put("appendObjList", TypedFunction.buildT(ZAssemblerParserCache::<ZObject> appendList,
 				T_ListObject, T_ListObject, ZObject.class));
 		functionsByName.put("emptyOEList", TypedFunction.buildT(ArrayList::new, T_ListObjectEntry));
-		functionsByName.put("appendOEList", TypedFunction.buildT(ZAssemblerParser::<ZObjectEntry> appendList,
+		functionsByName.put("appendOEList", TypedFunction.buildT(ZAssemblerParserCache::<ZObjectEntry> appendList,
 				T_ListObjectEntry, T_ListObjectEntry, ZObjectEntry.class));
 		functionsByName.put("emptyDEList", TypedFunction.buildT(ArrayList::new, T_ListDictionaryEntry));
-		functionsByName.put("appendDEList", TypedFunction.buildT(ZAssemblerParser::<DictionaryEntry> appendList,
+		functionsByName.put("appendDEList", TypedFunction.buildT(ZAssemblerParserCache::<DictionaryEntry> appendList,
 				T_ListDictionaryEntry, T_ListDictionaryEntry, DictionaryEntry.class));
 		functionsByName.put("emptyDDEList", TypedFunction.buildT(ArrayList::new, T_ListDataEntry));
-		functionsByName.put("appendDDEList", TypedFunction.buildT(ZAssemblerParser::<DictionaryDataElement> appendList,
+		functionsByName.put("appendDDEList", TypedFunction.buildT(ZAssemblerParserCache::<DictionaryDataElement> appendList,
 				T_ListDataEntry, T_ListDataEntry, DictionaryDataElement.class));
 		functionsByName.put("emptyOperandList", TypedFunction.buildT(ArrayList::new, T_ListOperand));
-		functionsByName.put("appendOperandList", TypedFunction.buildT(ZAssemblerParser::<Operand> appendList,
+		functionsByName.put("appendOperandList", TypedFunction.buildT(ZAssemblerParserCache::<Operand> appendList,
 				T_ListOperand, T_ListOperand, Operand.class));
 		functionsByName.put("emptyByteSequenceList", TypedFunction.buildT(ArrayList::new, T_ListByteSequenceElement));
-		functionsByName.put("appendByteSequenceList", TypedFunction.buildT(ZAssemblerParser::<ByteSequenceElement> appendList,
+		functionsByName.put("appendByteSequenceList", TypedFunction.buildT(ZAssemblerParserCache::<ByteSequenceElement> appendList,
 				T_ListByteSequenceElement, T_ListByteSequenceElement, ByteSequenceElement.class));
 		functionsByName.put("emptyZStringElementList", TypedFunction.buildT(ArrayList::new, T_ListZStringElement));
-		functionsByName.put("appendZStringElementList", TypedFunction.buildT(ZAssemblerParser::<ZStringElement> appendList,
+		functionsByName.put("appendZStringElementList", TypedFunction.buildT(ZAssemblerParserCache::<ZStringElement> appendList,
 				T_ListZStringElement, T_ListZStringElement, ZStringElement.class));
 		functionsByName.put("emptyCList", TypedFunction.buildT(ArrayList::new, T_ListChar));
-		functionsByName.put("appendCList", TypedFunction.buildT(ZAssemblerParser::<CharLiteral> appendList,
+		functionsByName.put("appendCList", TypedFunction.buildT(ZAssemblerParserCache::<CharLiteral> appendList,
 				T_ListChar, T_ListChar, CharLiteral.class));
 
 		// C-Strings
 		functionsByName.put("appendCString", TypedFunction.build(CString::append, CString.class, CString.class, String.class));
 
-		
+
 		// Optionals
 		functionsByName.put("optFormEmpty", TypedFunction.buildT(Optional::empty, T_OptForm));
 		functionsByName.put("optFormOf", TypedFunction.buildT(Optional::of, T_OptForm, OpcodeForm.class));
@@ -239,10 +348,10 @@ public class ZAssemblerParser
 
 		// Strings, ints, booleans
 		functionsByName.put("str", TypedFunction.build(CharString::toStringNoEscaping, String.class, CharString.class));
-		functionsByName.put("parseText", TypedFunction.build(ZAssemblerParser::parseText, String.class, CharString.class));
-		functionsByName.put("parseCText", TypedFunction.build(ZAssemblerParser::parseCText, String.class, CharString.class));
-		functionsByName.put("parseChar", TypedFunction.build(ZAssemblerParser::parseChar, Character.class, CharString.class));
-		functionsByName.put("parseBigInt", TypedFunction.build(ZAssemblerParser::parseBigInt, BigInteger.class, Integer.class, Integer.class, CharString.class));
+		functionsByName.put("parseText", TypedFunction.build(ZAssemblerParserCache::parseText, String.class, CharString.class));
+		functionsByName.put("parseCText", TypedFunction.build(ZAssemblerParserCache::parseCText, String.class, CharString.class));
+		functionsByName.put("parseChar", TypedFunction.build(ZAssemblerParserCache::parseChar, Character.class, CharString.class));
+		functionsByName.put("parseBigInt", TypedFunction.build(ZAssemblerParserCache::parseBigInt, BigInteger.class, Integer.class, Integer.class, CharString.class));
 		functionsByName.put("int", TypedFunction.build(BigInteger::intValueExact, Integer.class, BigInteger.class));
 		functionsByName.put("_0", TypedFunction.build(() -> 0, Integer.class));
 		functionsByName.put("_1", TypedFunction.build(() -> 1, Integer.class));
@@ -263,7 +372,7 @@ public class ZAssemblerParser
 
 		return parseTextOrChar(rawText, 1, rawText.length() - 1, true, "text");
 	}
-	
+
 	private static String parseCText(CharString cs)
 	{
 		String rawText = cs.toStringNoEscaping();
@@ -272,7 +381,7 @@ public class ZAssemblerParser
 
 		return parseTextOrChar(rawText, 2, rawText.length() - 1, true, "text");
 	}
-	
+
 	private static Character parseChar(CharString cs)
 	{
 		String rawText = cs.toStringNoEscaping();
@@ -358,6 +467,6 @@ public class ZAssemblerParser
 		return list;
 	}
 
-	private ZAssemblerParser()
+	private ZAssemblerParserCache()
 	{}
 }
