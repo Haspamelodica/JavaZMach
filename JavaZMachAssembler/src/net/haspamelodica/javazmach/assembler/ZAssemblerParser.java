@@ -1,21 +1,16 @@
 package net.haspamelodica.javazmach.assembler;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.ZAssemblerParserCache.ZAssemblerGrammar;
 import net.haspamelodica.javazmach.assembler.model.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.BranchInfo;
 import net.haspamelodica.javazmach.assembler.model.BranchLength;
@@ -56,33 +51,49 @@ import net.haspamelodica.javazmach.assembler.model.ZObjectEntry;
 import net.haspamelodica.javazmach.assembler.model.ZObjectTable;
 import net.haspamelodica.javazmach.assembler.model.ZString;
 import net.haspamelodica.javazmach.assembler.model.ZStringElement;
-import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
 import net.haspamelodica.parser.ast.InnerNode;
 import net.haspamelodica.parser.generics.ParameterizedTypeImpl;
 import net.haspamelodica.parser.generics.TypedFunction;
-import net.haspamelodica.parser.grammar.Nonterminal;
 import net.haspamelodica.parser.grammar.attributes.Attribute;
 import net.haspamelodica.parser.grammar.attributes.evaluating.lattributed.LAttributedEvaluator;
-import net.haspamelodica.parser.grammar.parser.AttributeGrammarParseResult;
-import net.haspamelodica.parser.grammar.parser.GrammarParser;
 import net.haspamelodica.parser.parser.ParseException;
 import net.haspamelodica.parser.parser.Parser;
-import net.haspamelodica.parser.parser.lrk.LRkParserGenerator;
 import net.haspamelodica.parser.tokenizer.CharReader;
 import net.haspamelodica.parser.tokenizer.CharString;
 import net.haspamelodica.parser.tokenizer.Tokenizer;
-import net.haspamelodica.parser.tokenizer.regexbased.RegexBasedTokenizerParser;
 
 public class ZAssemblerParser
 {
-	private static final Tokenizer<CharReader>	tokenizer;
-	private static final Parser					parser;
-	private static final LAttributedEvaluator	attributeEvaluator;
+	private static final Tokenizer<CharReader> tokenizer;
 
-	private static final Attribute<ZAssemblerFile> assemblerFileAttr;
+	private static final Parser						parser;
+	private static final LAttributedEvaluator		attributeEvaluator;
+	private static final Attribute<ZAssemblerFile>	assemblerFileAttr;
 
 	static
+	{
+		tokenizer = ZAssemblerTokenizer.createTokenizer();
+
+		ZAssemblerGrammar grammar = ZAssemblerParserCache.createParser(tokenizer.allTerminals());
+		parser = grammar.parser();
+		attributeEvaluator = grammar.attributeEvaluator();
+		assemblerFileAttr = grammar.assemblerFileAttr();
+	}
+
+	public static ZAssemblerFile parse(String in) throws ParseException
+	{
+		return parse(CharReader.readString(in));
+	}
+	public static ZAssemblerFile parse(CharReader in) throws ParseException
+	{
+		InnerNode root = parser.parse(tokenizer.tokenize(in));
+		attributeEvaluator.evaluate(root, Set.of());
+		return root.getValueForAttribute(assemblerFileAttr);
+	}
+
+	/** TODO only here for easier merge - move to ZAssemblerParserCache! */
+	public static Map<String, TypedFunction> createFunctionsByName()
 	{
 		ParameterizedType T_ListZAssemblyFileEntry = new ParameterizedTypeImpl(null, List.class, ZAssemblerFileEntry.class);
 		ParameterizedType T_ListOperand = new ParameterizedTypeImpl(null, List.class, Operand.class);
@@ -235,71 +246,7 @@ public class ZAssemblerParser
 		functionsByName.put("_16", TypedFunction.build(() -> 16, Integer.class));
 		functionsByName.put("true", TypedFunction.build(() -> true, Boolean.class));
 		functionsByName.put("false", TypedFunction.build(() -> false, Boolean.class));
-
-		String tokenizerStringRaw;
-		try(InputStream resource = ZAssemblerParser.class.getResourceAsStream("tokenizer.txt"))
-		{
-			if(resource == null)
-				throw new RuntimeException("Tokenizer definition not found");
-			tokenizerStringRaw = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
-		} catch(IOException e)
-		{
-			throw new RuntimeException("Error reading tokenizer definition", e);
-		}
-
-		// Just putting this in one huge regex is too much (causes StackOverflowErrors during tokenizer parsing).
-		// So, split in three regexes: original caseness, lowercase, uppercase.
-		String opcodesOrigRegex = Arrays.stream(Opcode.values())
-				.filter(o -> o != Opcode._unknown_instr).map(o -> o.name)
-				.distinct()
-				.collect(Collectors.joining("|"));
-
-		String tokenizerString = tokenizerStringRaw
-				.replace("OPCODESORIG", opcodesOrigRegex)
-				.replace("OPCODESLOWER", opcodesOrigRegex.toLowerCase())
-				.replace("OPCODESUPPER", opcodesOrigRegex.toUpperCase());
-		try
-		{
-			tokenizer = RegexBasedTokenizerParser.create(tokenizerString);
-		} catch(ParseException e)
-		{
-			throw new IllegalArgumentException("Error parsing tokenizer", e);
-		}
-
-		AttributeGrammarParseResult grammarResult;
-		try(InputStream resource = ZAssemblerParser.class.getResourceAsStream("grammar.txt"))
-		{
-			if(resource == null)
-				throw new RuntimeException("Grammar definition not found");
-			grammarResult = GrammarParser.parseAttributeGrammar(CharReader.fromReader(new InputStreamReader(resource)), tokenizer.allTerminals(), functionsByName);
-		} catch(ParseException e)
-		{
-			throw new IllegalArgumentException("Error parsing grammar", e);
-		} catch(IOException e)
-		{
-			throw new RuntimeException("Error reading grammar definition", e);
-		}
-		Set<Nonterminal> unreachableNonterminals = grammarResult.getGrammar().calculateUnreachableNonterminals();
-		if(!unreachableNonterminals.isEmpty())
-			System.err.println("WARNING: Grammar contains unreachable symbols - this is an assembler bug: " + unreachableNonterminals);
-		// This grammar is not LR(1) in two places: when discerning ".zversion" and ".zheader" after the dot,
-		// and when discerning whether an ident is a label declaration or a label usage as an operand.
-		parser = LRkParserGenerator.generate(grammarResult.getGrammar(), 2);
-		attributeEvaluator = new LAttributedEvaluator(grammarResult.getAttributeSystem());
-		@SuppressWarnings("unchecked")
-		Attribute<ZAssemblerFile> programAttrL = (Attribute<ZAssemblerFile>) grammarResult.getAttributesByName().get("file");
-		assemblerFileAttr = programAttrL;
-	}
-
-	public static ZAssemblerFile parse(String in) throws ParseException
-	{
-		return parse(CharReader.readString(in));
-	}
-	public static ZAssemblerFile parse(CharReader in) throws ParseException
-	{
-		InnerNode root = parser.parse(tokenizer.tokenize(in));
-		attributeEvaluator.evaluate(root, Set.of());
-		return root.getValueForAttribute(assemblerFileAttr);
+		return functionsByName;
 	}
 
 	private static String parseText(CharString cs)
