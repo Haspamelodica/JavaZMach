@@ -135,8 +135,7 @@ public class ZAssemblerParserCache
 	{
 		// This grammar is not LR(1) in two places: when discerning ".zversion" and ".zheader" after the dot,
 		// and when discerning whether an ident is a label declaration or a label usage as an operand.
-		LRkParser originalParser = LRkParserGenerator.generate(grammarResult.getGrammar(), 2);
-		return originalParser;
+		return LRkParserGenerator.generate(grammarResult.getGrammar(), 2);
 	}
 
 	public static ParsedGrammar parseGrammar(Set<Terminal<?>> allTerminals)
