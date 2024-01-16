@@ -16,7 +16,7 @@
 	.ATTRIBUTE 4
 	
 	.PROPERTY 1 C"Hello"
-	.PROPERTY 2 "this,should be tokenized."
+	.PROPERTY 2 "to,ke ns"
 	.OBJECT "WORLD" {
 		.PROPERTY 15 0, 0
 		.PROPERTY 1 C"World"
