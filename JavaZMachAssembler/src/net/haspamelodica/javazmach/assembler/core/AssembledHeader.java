@@ -167,7 +167,7 @@ public final class AssembledHeader implements AssembledEntry
 					: new AssembledIntegralRegularHeaderField(field, value));
 			case ByteSequence byteSequence ->
 			{
-				byte[] value = materializeByteSequence(byteSequence, (error) -> "Error in field " + field + ": " + error);
+				byte[] value = materializeByteSequence(byteSequence, version, (error) -> "Error in field " + field + ": " + error);
 
 				if(isBitfieldEntry)
 					defaultError("Setting a bitfield entry to a byte sequence "

@@ -46,7 +46,7 @@ public class AssembledDefaultProperties
 			final int index = ZAssemblerUtils.bigintIntChecked(32, p.index(), (bigIndex) -> "Property index " + bigIndex + " too large", DiagnosticHandler.defaultHandler());
 			if(index >= MIN_PROPERTY && index < MIN_PROPERTY + defaultPropertyCount)
 			{
-				byte[] value = materializeByteSequence(p.bytes(), (error) -> "Error in default property " + index + ": ");
+				byte[] value = materializeByteSequence(p.bytes(), version,(error) -> "Error in default property " + index + ": ");
 				if(value.length > 2)
 				{
 					defaultError(String.format("Default property %d values must have at most 2 bytes. Got %d bytes", index, value.length));

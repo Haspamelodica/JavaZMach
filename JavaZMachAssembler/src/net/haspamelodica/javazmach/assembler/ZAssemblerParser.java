@@ -44,7 +44,7 @@ import net.haspamelodica.javazmach.assembler.model.RoutineLocal;
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
 import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
-import net.haspamelodica.javazmach.assembler.model.StringLiteral;
+import net.haspamelodica.javazmach.assembler.model.CString;
 import net.haspamelodica.javazmach.assembler.model.UnaryExpression;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
@@ -132,6 +132,7 @@ public class ZAssemblerParser
 		functionsByName.put("GlobalVariable", TypedFunction.build(GlobalVariable::new, GlobalVariable.class, Integer.class));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
 		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
+		functionsByName.put("CString", TypedFunction.buildT(CString::new, CString.class, String.class));
 		functionsByName.put("ByteSequence", TypedFunction.buildT(ByteSequence::new,
 				ByteSequence.class, T_ListByteSequenceElement));
 		functionsByName.put("BinaryExpression", TypedFunction.build(BinaryExpression::new,
@@ -140,7 +141,7 @@ public class ZAssemblerParser
 				UnaryExpression.class, UnaryExpression.Op.class, IntegralValue.class));
 		functionsByName.put("NumberLiteral", TypedFunction.build(NumberLiteral::new, NumberLiteral.class, BigInteger.class));
 		functionsByName.put("CharLiteral", TypedFunction.build(CharLiteral::new, CharLiteral.class, Character.class));
-		functionsByName.put("StringLiteral", TypedFunction.build(StringLiteral::new, StringLiteral.class, String.class));
+		functionsByName.put("StringLiteral", TypedFunction.build(CString::new, CString.class, String.class));
 
 		// enum constants
 		functionsByName.put("SHORTBRANCH", TypedFunction.build(() -> BranchLength.SHORTBRANCH, BranchLength.class));
@@ -205,6 +206,10 @@ public class ZAssemblerParser
 		functionsByName.put("appendCList", TypedFunction.buildT(ZAssemblerParser::<CharLiteral> appendList,
 				T_ListChar, T_ListChar, CharLiteral.class));
 
+		// C-Strings
+		functionsByName.put("appendCString", TypedFunction.build(CString::append, CString.class, CString.class, String.class));
+
+		
 		// Optionals
 		functionsByName.put("optFormEmpty", TypedFunction.buildT(Optional::empty, T_OptForm));
 		functionsByName.put("optFormOf", TypedFunction.buildT(Optional::of, T_OptForm, OpcodeForm.class));
@@ -224,6 +229,7 @@ public class ZAssemblerParser
 		// Strings, ints, booleans
 		functionsByName.put("str", TypedFunction.build(CharString::toStringNoEscaping, String.class, CharString.class));
 		functionsByName.put("parseText", TypedFunction.build(ZAssemblerParser::parseText, String.class, CharString.class));
+		functionsByName.put("parseCText", TypedFunction.build(ZAssemblerParser::parseCText, String.class, CharString.class));
 		functionsByName.put("parseChar", TypedFunction.build(ZAssemblerParser::parseChar, Character.class, CharString.class));
 		functionsByName.put("parseBigInt", TypedFunction.build(ZAssemblerParser::parseBigInt, BigInteger.class, Integer.class, Integer.class, CharString.class));
 		functionsByName.put("int", TypedFunction.build(BigInteger::intValueExact, Integer.class, BigInteger.class));
@@ -310,6 +316,16 @@ public class ZAssemblerParser
 
 		return parseTextOrChar(rawText, 1, rawText.length() - 1, true, "text");
 	}
+	
+	private static String parseCText(CharString cs)
+	{
+		String rawText = cs.toStringNoEscaping();
+		if("cC".indexOf(rawText.charAt(0)) >= 0 && rawText.charAt(1) != '"' || rawText.charAt(rawText.length() - 1) != '"')
+			throw new IllegalArgumentException("Invalid text literal: " + cs);
+
+		return parseTextOrChar(rawText, 2, rawText.length() - 1, true, "text");
+	}
+	
 	private static Character parseChar(CharString cs)
 	{
 		String rawText = cs.toStringNoEscaping();

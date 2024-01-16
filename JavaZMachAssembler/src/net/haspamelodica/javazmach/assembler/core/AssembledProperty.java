@@ -34,7 +34,7 @@ public class AssembledProperty
 
 		int index = ZAssemblerUtils.bigintIntChecked(indexBits, property.index(),
 				b -> String.format("Property index %d is too large for version %d. Should occupy at most %d bits", b, version, indexBits), diagnosticHandler);
-		byte propertyBytes[] = ZAssemblerUtils.materializeByteSequence(property.bytes(), (error) -> String.format("Error in property %d: %s", index, error));
+		byte propertyBytes[] = ZAssemblerUtils.materializeByteSequence(property.bytes(), version, (error) -> String.format("Error in property %d: %s", index, error));
 		// See section 12.4
 		if(version >= 1 && version <= 3)
 		{

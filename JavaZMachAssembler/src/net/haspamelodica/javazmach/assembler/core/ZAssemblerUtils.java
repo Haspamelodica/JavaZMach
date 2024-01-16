@@ -13,6 +13,7 @@ import java.util.function.Function;
 import net.haspamelodica.javazmach.assembler.model.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
+import net.haspamelodica.javazmach.assembler.model.CString;
 import net.haspamelodica.javazmach.assembler.model.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
@@ -20,7 +21,6 @@ import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
-import net.haspamelodica.javazmach.assembler.model.StringLiteral;
 import net.haspamelodica.javazmach.assembler.model.UnaryExpression;
 import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZString;
@@ -73,15 +73,18 @@ public class ZAssemblerUtils
 		};
 	}
 
-	public static byte[] materializeByteSequence(ByteSequence byteSequence, Function<String, String> errorMessage)
+	public static byte[] materializeByteSequence(ByteSequence byteSequence, int version, Function<String, String> errorMessage)
 	{
+		
 		int length = byteSequence
 				.elements()
 				.stream()
 				.mapToInt(e -> switch(e)
 				{
 					case NumberLiteral elementInteger -> 1;
-					case StringLiteral elementString -> elementString.value().length();
+					case CString elementString -> elementString.value().length();
+					// This is ugly, computing this twice per zString...
+					case ZString elementString -> ZAssemblerUtils.zStringWordLength(ZAssemblerUtils.toZChars(elementString, version)) * 2;
 					case CharLiteral elementChar -> 1;
 				})
 				.sum();
@@ -94,10 +97,18 @@ public class ZAssemblerUtils
 				case NumberLiteral element -> value[i ++] = (byte) bigintIntChecked(8,
 						// We can use the default diagnostic handler here - we don't have a LocationResolver anyway, so errors can't change
 						element.value(), bigint -> errorMessage.apply("byte literal out of range: " + bigint), DiagnosticHandler.defaultHandler());
-				case StringLiteral element ->
+				case CString element ->
 				{
-					System.arraycopy(element.value().getBytes(StandardCharsets.US_ASCII), 0, value, 0, element.value().length());
+					System.arraycopy(element.value().getBytes(StandardCharsets.US_ASCII), 0, value, i, element.value().length());
 					i += element.value().length();
+				}
+				case ZString element ->
+				{
+					NoRangeCheckMemory mem = new NoRangeCheckMemory();
+					SequentialMemoryWriteAccess memSeq = new SequentialMemoryWriteAccess(mem);
+					ZAssemblerUtils.appendZString(memSeq, element, version);
+					System.arraycopy(mem.data(), 0, value, i, mem.currentSize());
+					i += mem.currentSize();
 				}
 				case CharLiteral element ->
 				{

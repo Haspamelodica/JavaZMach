@@ -4,7 +4,7 @@
 .ZHEADER StoryfileSplit 0
 .ZHEADER Tandy 0
 .ZHEADER ReleaseNumber 0x42
-.ZHEADER SerialNum "421337"
+.ZHEADER SerialNum C"421337"
 .ZHEADER CompilerVer 0x1337
 .ZHEADER InitialPC15 entry
 
@@ -15,13 +15,14 @@
 	.ATTRIBUTE 0
 	.ATTRIBUTE 4
 	
-	.PROPERTY 1 "Hello"
+	.PROPERTY 1 C"Hello"
+	.PROPERTY 2 "this,should be tokenized."
 	.OBJECT "WORLD" {
 		.PROPERTY 15 0, 0
-		.PROPERTY 1 "World"
+		.PROPERTY 1 C"World"
 	}
 	.OBJECT "!" {
-		.PROPERTY 1 "!"
+		.PROPERTY 1 C"!"
 	}
 }
 
