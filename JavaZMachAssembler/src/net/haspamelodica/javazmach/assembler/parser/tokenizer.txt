@@ -21,6 +21,7 @@ section = section|SECTION ;
 static = static|STATIC ;
 high = high|HIGH ;
 buffer = buffer|BUFFER ;
+value = value|VALUE ;
 
 : = : ;
 

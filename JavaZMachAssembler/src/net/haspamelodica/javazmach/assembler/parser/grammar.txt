@@ -18,10 +18,13 @@ FileEntry
   | LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
   | Instruction      { fileEntry[-1] = instruction[0]; }
   | Section          { fileEntry[-1] = section[0]; }
-  | Buffer           { fileEntry[-1] = buffer[0]; } ;
+  | Buffer           { fileEntry[-1] = buffer[0]; }
+  | NamedValue       { fileEntry[-1] = namedValue[0]; } ;
 
 HeaderEntry
  -> '.' 'zheader' 'ident' HeaderValue { headerEntry[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
+
+NamedValue -> '.' 'value' 'ident' IntegralValue { namedValue[-1] = NamedValue(str([2]), value[3]); } ;
 
 Buffer
  -> '.' 'buffer' NumberLiteral 'byte' 'ident' MaybeByteSequence { buffer[-1] = Buffer(str([4]), bigint[2], optSeq[5]); } ;

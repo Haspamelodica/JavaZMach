@@ -13,6 +13,7 @@ import net.haspamelodica.javazmach.assembler.model.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
+import net.haspamelodica.javazmach.assembler.model.NamedValue;
 import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
@@ -73,6 +74,7 @@ public class ZAssembler
 			case Dictionary dictionary -> assembler.addEntry(new AssembledDictionary(dictionary, version));
 			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
 			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(buffer, version));
+			case NamedValue namedValue -> assembler.addEntry(new AssembledNamedValue(namedValue));
 		}
 	}
 

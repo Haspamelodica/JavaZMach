@@ -46,6 +46,7 @@ import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
+import net.haspamelodica.javazmach.assembler.model.NamedValue;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.Operand;
 import net.haspamelodica.javazmach.assembler.model.Property;
@@ -253,6 +254,7 @@ public class ZAssemblerParserCache
 		functionsByName.put("GlobalVariable", TypedFunction.build(GlobalVariable::new, GlobalVariable.class, Integer.class));
 		functionsByName.put("Buffer", TypedFunction.buildT(Buffer::new,
 				Buffer.class, String.class, BigInteger.class, T_OptByteSequence));
+		functionsByName.put("NamedValue", TypedFunction.build(NamedValue::new, NamedValue.class, String.class, IntegralValue.class));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
 		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
 		functionsByName.put("CString", TypedFunction.buildT(CString::new, CString.class, String.class));
