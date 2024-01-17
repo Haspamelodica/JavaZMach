@@ -78,7 +78,7 @@ public final class AssembledZObjectTable implements AssembledEntry
 		linearizeObjects(children, objectIndex, objects, properties, version);
 
 		int siblingIndex = hasSibling ? objects.size() + MIN_OBJECT_INDEX : 0;
-		objects.set(realIndex, new AssembledZObject(localAttributes, objectIndex, parentIndex, siblingIndex, firstChildIndex, version));
+		objects.set(realIndex, new AssembledZObject(root.ident(), localAttributes, objectIndex, parentIndex, siblingIndex, firstChildIndex, version));
 		properties.set(realIndex, new AssembledProperties(localProperties, root.name(), objectIndex, version));
 	}
 

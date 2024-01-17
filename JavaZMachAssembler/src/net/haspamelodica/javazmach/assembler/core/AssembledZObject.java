@@ -4,18 +4,21 @@ import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintI
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import net.haspamelodica.javazmach.assembler.model.ZAttribute;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public class AssembledZObject
 {
-	private AssembledZAttributes	attributes;
-	private int						index, parentIndex, siblingIndex, childIndex;
-	private BigInteger				propAddress;
+	private final Optional<String>		ident;
+	private final AssembledZAttributes	attributes;
+	private final int					index, parentIndex, siblingIndex, childIndex;
+	private BigInteger					propAddress;
 
-	public AssembledZObject(List<ZAttribute> attributes, int index, int parentIndex, int siblingIndex, int childIndex, int version)
+	public AssembledZObject(Optional<String> ident, List<ZAttribute> attributes, int index, int parentIndex, int siblingIndex, int childIndex, int version)
 	{
+		this.ident = ident;
 		this.attributes = new AssembledZAttributes(attributes, version);
 		this.index = index;
 		this.parentIndex = parentIndex;
@@ -31,6 +34,7 @@ public class AssembledZObject
 
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
+		ident.ifPresent(i -> locationEmitter.emitLocation(new LabelLocation(i), BigInteger.valueOf(index)));
 		attributes.append(locationEmitter, memSeq, diagnosticHandler);
 		memSeq.writeNextByte(parentIndex);
 		memSeq.writeNextByte(siblingIndex);

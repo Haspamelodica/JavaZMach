@@ -44,7 +44,11 @@ Objects
  | { objects[-1] = emptyObjList(); };
 
 Object
- -> '.' 'object' ZStringElements '{' ObjectEntries '}' { object[-1] = ZObject(ZString(elements[2]), elements[4]); };
+ -> '.' 'object' MaybeIdent ZStringElements '{' ObjectEntries '}' { object[-1] = ZObject(maybeIdent[2], ZString(elements[3]), elements[5]); };
+
+MaybeIdent
+ ->         { maybeIdent[-1] = optStringEmpty(); }
+  | 'ident' { maybeIdent[-1] = optStringOf(str([0])); } ;
 
 // Could also track the inner elements in separate lists but that seems painful
 ObjectEntries

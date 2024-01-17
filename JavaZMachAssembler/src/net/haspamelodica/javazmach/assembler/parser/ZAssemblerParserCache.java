@@ -223,6 +223,7 @@ public class ZAssemblerParserCache
 		ParameterizedType T_OptBLO = new ParameterizedTypeImpl(null, Optional.class, BranchLength.class);
 		ParameterizedType T_OptZString = new ParameterizedTypeImpl(null, Optional.class, ZString.class);
 		ParameterizedType T_OptByteSequence = new ParameterizedTypeImpl(null, Optional.class, ByteSequence.class);
+		ParameterizedType T_OptString = new ParameterizedTypeImpl(null, Optional.class, String.class);
 
 		Map<String, TypedFunction> functionsByName = new HashMap<>();
 
@@ -236,7 +237,7 @@ public class ZAssemblerParserCache
 		functionsByName.put("RoutineLocal", TypedFunction.buildT(RoutineLocal::new, RoutineLocal.class, String.class, T_OptIntegralValue));
 		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, BigInteger.class, ByteSequence.class));
 		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
-		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, ZString.class, T_ListObjectEntry));
+		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, T_OptString, ZString.class, T_ListObjectEntry));
 		functionsByName.put("Dictionary", TypedFunction.buildT(Dictionary::new, Dictionary.class, T_ListChar, T_ListDictionaryEntry));
 		functionsByName.put("DictionaryEntry", TypedFunction.buildT(DictionaryEntry::new, DictionaryEntry.class, ZString.class, T_ListDataEntry));
 		functionsByName.put("DictionaryDataElement", TypedFunction.build(DictionaryDataElement::new, DictionaryDataElement.class, BigInteger.class, HeaderValue.class));
@@ -347,6 +348,8 @@ public class ZAssemblerParserCache
 		functionsByName.put("optZStringOf", TypedFunction.buildT(Optional::of, T_OptZString, ZString.class));
 		functionsByName.put("optByteSequenceEmpty", TypedFunction.buildT(Optional::empty, T_OptByteSequence));
 		functionsByName.put("optByteSequenceOf", TypedFunction.buildT(Optional::of, T_OptByteSequence, ByteSequence.class));
+		functionsByName.put("optStringEmpty", TypedFunction.buildT(Optional::empty, T_OptString));
+		functionsByName.put("optStringOf", TypedFunction.buildT(Optional::of, T_OptString, String.class));
 		functionsByName.put("optIntEmpty", TypedFunction.build(OptionalInt::empty, OptionalInt.class));
 		functionsByName.put("optIntOf", TypedFunction.build(OptionalInt::of, OptionalInt.class, Integer.class));
 
