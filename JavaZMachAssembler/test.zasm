@@ -32,7 +32,7 @@
 .GLOBAL dsdf
 
 .BUFFER 16 BYTE testbuffer1
-.BUFFER 64 BYTE testbuffer2 "This is the buffer content. maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+.BUFFER 64 BYTE testbuffer2 "This is the buffer content.\n"
 
 .SECTION static
 
