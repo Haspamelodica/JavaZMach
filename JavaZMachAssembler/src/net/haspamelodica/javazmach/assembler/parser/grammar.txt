@@ -27,7 +27,7 @@ HeaderEntry
 NamedValue -> '.' 'value' 'ident' IntegralValue { namedValue[-1] = NamedValue(str([2]), value[3]); } ;
 
 Buffer
- -> '.' 'buffer' NumberLiteral 'byte' 'ident' MaybeByteSequence { buffer[-1] = Buffer(str([4]), bigint[2], optSeq[5]); } ;
+ -> '.' 'buffer' IntegralValue 'byte' 'ident' MaybeByteSequence { buffer[-1] = Buffer(str([4]), value[2], optSeq[5]); } ;
 
 Routine
  -> '.' 'routine' 'ident' RoutineLocals { routine[-1] = Routine(str([2]), routineLocals[3]); } ;
