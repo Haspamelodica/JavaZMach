@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.model.Buffer;
 import net.haspamelodica.javazmach.assembler.model.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
@@ -71,6 +72,7 @@ public class ZAssembler
 			case GlobalVarTable globals -> assembler.addEntry(new AssembledGlobals(globals));
 			case Dictionary dictionary -> assembler.addEntry(new AssembledDictionary(dictionary, version));
 			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
+			case Buffer buffer -> System.out.println("TODO");
 		}
 	}
 

@@ -17,10 +17,14 @@ FileEntry
   | Dictionary       { fileEntry[-1] = dictionary[0]; }
   | LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
   | Instruction      { fileEntry[-1] = instruction[0]; }
-  | Section          { fileEntry[-1] = section[0];} ;
+  | Section          { fileEntry[-1] = section[0]; }
+  | Buffer           { fileEntry[-1] = buffer[0]; } ;
 
 HeaderEntry
  -> '.' 'zheader' 'ident' HeaderValue { headerEntry[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
+
+Buffer
+ -> '.' 'buffer' NumberLiteral 'byte' 'ident' MaybeByteSequence { buffer[-1] = Buffer(str([4]), bigint[2], optSeq[5]); } ;
 
 Routine
  -> '.' 'routine' 'ident' RoutineLocals { routine[-1] = Routine(str([2]), routineLocals[3]); } ;
@@ -197,6 +201,10 @@ ByteSequenceElement
 ByteSequenceElementNoIntegralLiteral
  -> ZStringElements { element[-1] = ZString(elements[0]); }
   | CString         { element[-1] = cstring[0]; } ;
+
+MaybeByteSequence
+ ->                 { optSeq[-1] = optByteSequenceEmpty(); }
+  | ByteSequence    { optSeq[-1] = optByteSequenceOf(sequence[0]); } ;
 
 // NoTilde variant disallows a ~ at the start.
 // Needed because otherwise the grammar would be ambiguous because of clash with branch-on-condition-false.

@@ -28,6 +28,7 @@ import net.haspamelodica.javazmach.assembler.model.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.BranchInfo;
 import net.haspamelodica.javazmach.assembler.model.BranchLength;
 import net.haspamelodica.javazmach.assembler.model.BranchTarget;
+import net.haspamelodica.javazmach.assembler.model.Buffer;
 import net.haspamelodica.javazmach.assembler.model.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.ByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.CString;
@@ -221,6 +222,7 @@ public class ZAssemblerParserCache
 		ParameterizedType T_OptBranchInfo = new ParameterizedTypeImpl(null, Optional.class, BranchInfo.class);
 		ParameterizedType T_OptBLO = new ParameterizedTypeImpl(null, Optional.class, BranchLength.class);
 		ParameterizedType T_OptZString = new ParameterizedTypeImpl(null, Optional.class, ZString.class);
+		ParameterizedType T_OptByteSequence = new ParameterizedTypeImpl(null, Optional.class, ByteSequence.class);
 
 		Map<String, TypedFunction> functionsByName = new HashMap<>();
 
@@ -232,7 +234,6 @@ public class ZAssemblerParserCache
 		functionsByName.put("Global", TypedFunction.buildT(Global::new, Global.class, String.class, T_OptIntegralValue));
 		functionsByName.put("Routine", TypedFunction.buildT(Routine::new, Routine.class, String.class, T_ListRoutineLocal));
 		functionsByName.put("RoutineLocal", TypedFunction.buildT(RoutineLocal::new, RoutineLocal.class, String.class, T_OptIntegralValue));
-		functionsByName.put("Global", TypedFunction.buildT(Global::new, Global.class, String.class, T_OptIntegralValue));
 		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, BigInteger.class, ByteSequence.class));
 		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
 		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, ZString.class, T_ListObjectEntry));
@@ -249,6 +250,8 @@ public class ZAssemblerParserCache
 		functionsByName.put("LabelReference", TypedFunction.build(LabelReference::new, LabelReference.class, String.class));
 		functionsByName.put("LocalVariable", TypedFunction.build(LocalVariable::new, LocalVariable.class, Integer.class));
 		functionsByName.put("GlobalVariable", TypedFunction.build(GlobalVariable::new, GlobalVariable.class, Integer.class));
+		functionsByName.put("Buffer", TypedFunction.buildT(Buffer::new,
+				Buffer.class, String.class, BigInteger.class, T_OptByteSequence));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
 		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
 		functionsByName.put("CString", TypedFunction.buildT(CString::new, CString.class, String.class));
@@ -342,6 +345,8 @@ public class ZAssemblerParserCache
 		functionsByName.put("optBranchLengthOf", TypedFunction.buildT(Optional::of, T_OptBLO, BranchLength.class));
 		functionsByName.put("optZStringEmpty", TypedFunction.buildT(Optional::empty, T_OptZString));
 		functionsByName.put("optZStringOf", TypedFunction.buildT(Optional::of, T_OptZString, ZString.class));
+		functionsByName.put("optByteSequenceEmpty", TypedFunction.buildT(Optional::empty, T_OptByteSequence));
+		functionsByName.put("optByteSequenceOf", TypedFunction.buildT(Optional::of, T_OptByteSequence, ByteSequence.class));
 		functionsByName.put("optIntEmpty", TypedFunction.build(OptionalInt::empty, OptionalInt.class));
 		functionsByName.put("optIntOf", TypedFunction.build(OptionalInt::of, OptionalInt.class, Integer.class));
 

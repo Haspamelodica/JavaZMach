@@ -31,6 +31,10 @@
 .GLOBAL csdf 0
 .GLOBAL dsdf
 
+.BUFFER 16 BYTE testbuffer1
+// We currently don't append a 0 byte... Should we?
+.BUFFER 29 BYTE testbuffer C"This is the buffer content."
+
 .SECTION static
 
 .DICTIONARY '.' ',' '"'
