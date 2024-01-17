@@ -111,6 +111,7 @@ public class ConvergingEntriesAssembler
 							// labels or section declarations by themselves don't do anything
 							case AssembledLabelDeclaration entry -> null;
 							case AssembledSectionDeclaration entry -> null;
+							case AssembledBuffer entry -> null;
 						}))
 				.filter(h -> h.type() != null)
 				.collect(Collectors.groupingBy(SectionTypeHint::type, Collectors.mapping(h -> new BigIntegerSummary(h.start(), h.end()),

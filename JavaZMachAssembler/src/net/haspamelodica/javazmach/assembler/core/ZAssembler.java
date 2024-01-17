@@ -72,7 +72,7 @@ public class ZAssembler
 			case GlobalVarTable globals -> assembler.addEntry(new AssembledGlobals(globals));
 			case Dictionary dictionary -> assembler.addEntry(new AssembledDictionary(dictionary, version));
 			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
-			case Buffer buffer -> System.out.println("TODO");
+			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(buffer, version));
 		}
 	}
 

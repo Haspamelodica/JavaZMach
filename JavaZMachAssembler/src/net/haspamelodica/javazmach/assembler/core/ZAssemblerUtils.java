@@ -73,9 +73,10 @@ public class ZAssemblerUtils
 		};
 	}
 
+	//TODO: this should accept a diagnostic handler
 	public static byte[] materializeByteSequence(ByteSequence byteSequence, int version, Function<String, String> errorMessage)
 	{
-		
+
 		int length = byteSequence
 				.elements()
 				.stream()
