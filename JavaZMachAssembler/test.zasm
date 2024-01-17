@@ -32,8 +32,7 @@
 .GLOBAL dsdf
 
 .BUFFER 16 BYTE testbuffer1
-// We currently don't append a 0 byte... Should we?
-.BUFFER 29 BYTE testbuffer C"This is the buffer content."
+.BUFFER 64 BYTE testbuffer2 "This is the buffer content. maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 .SECTION static
 
@@ -74,6 +73,7 @@ print "obj1.attribute2 is set! (incorrect)\n"
 attr2_after:
 
 call testproperties -> sp
+call testbuffer -> sp
 
 quit
 
@@ -110,4 +110,9 @@ jz 0 ? child1prop1_end
 child1prop1_zero:
 print "obj1.child1.prop1 is zero (correct)\n"
 child1prop1_end:
+rtrue
+
+.ROUTINE testbuffer
+print "Trying to print buffer content...\n"
+print_addr testbuffer2
 rtrue
