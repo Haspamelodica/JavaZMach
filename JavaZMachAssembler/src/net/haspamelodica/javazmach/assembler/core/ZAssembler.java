@@ -6,6 +6,7 @@ import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_inst
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 import net.haspamelodica.javazmach.assembler.model.Buffer;
@@ -83,16 +84,16 @@ public class ZAssembler
 		return assembler.assembleUntilConvergence();
 	}
 
-	public static byte[] assemble(ZAssemblerFile file, int externallyGivenVersion, String externallyGivenVersionSourceName)
+	public static byte[] assemble(ZAssemblerFile file, OptionalInt externallyGivenVersion, String externallyGivenVersionSourceName)
 	{
 		int version;
-		if(externallyGivenVersion <= 0)
+		if(externallyGivenVersion.isEmpty())
 			version = file.version().orElseGet(() -> defaultError(
 					"Z-version not given: neither by " + externallyGivenVersionSourceName + ", nor by .ZVERSION in file"));
 		else if(file.version().isEmpty())
-			version = externallyGivenVersion;
-		else if(file.version().getAsInt() == externallyGivenVersion)
-			version = externallyGivenVersion;
+			version = externallyGivenVersion.getAsInt();
+		else if(file.version().getAsInt() == externallyGivenVersion.getAsInt())
+			version = externallyGivenVersion.getAsInt();
 		else
 			return defaultError("Z-version given by " + externallyGivenVersionSourceName + " mismatches .ZVERSION in file");
 
