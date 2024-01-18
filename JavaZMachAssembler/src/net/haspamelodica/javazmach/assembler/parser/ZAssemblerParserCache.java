@@ -295,41 +295,41 @@ public class ZAssemblerParserCache
 
 		// lists
 		functionsByName.put("emptyAEList", TypedFunction.buildT(ArrayList::new, T_ListZAssemblyFileEntry));
-		functionsByName.put("appendAEList", TypedFunction.buildT(ZAssemblerParserCache::<ZAssemblerFileEntry> appendList,
-				T_ListZAssemblyFileEntry, T_ListZAssemblyFileEntry, ZAssemblerFileEntry.class));
+		functionsByName.put("appendAEList", TypedFunction.<List<ZAssemblerFileEntry>, ZAssemblerFileEntry, List<ZAssemblerFileEntry>> buildT(
+				ZAssemblerParserCache::appendList, T_ListZAssemblyFileEntry, T_ListZAssemblyFileEntry, ZAssemblerFileEntry.class));
 		functionsByName.put("emptyRLList", TypedFunction.buildT(ArrayList::new, T_ListRoutineLocal));
-		functionsByName.put("appendRLList", TypedFunction.buildT(ZAssemblerParserCache::<RoutineLocal> appendList,
-				T_ListRoutineLocal, T_ListRoutineLocal, RoutineLocal.class));
+		functionsByName.put("appendRLList", TypedFunction.<List<RoutineLocal>, RoutineLocal, List<RoutineLocal>> buildT(
+				ZAssemblerParserCache::appendList, T_ListRoutineLocal, T_ListRoutineLocal, RoutineLocal.class));
 		functionsByName.put("emptyGlList", TypedFunction.buildT(ArrayList::new, T_ListGlobal));
-		functionsByName.put("appendGlList", TypedFunction.buildT(ZAssemblerParserCache::<Global> appendList,
-				T_ListGlobal, T_ListGlobal, Global.class));
+		functionsByName.put("appendGlList", TypedFunction.<List<Global>, Global, List<Global>> buildT(
+				ZAssemblerParserCache::appendList, T_ListGlobal, T_ListGlobal, Global.class));
 		functionsByName.put("emptyPropList", TypedFunction.buildT(ArrayList::new, T_ListProperty));
-		functionsByName.put("appendPropList", TypedFunction.buildT(ZAssemblerParserCache::<Property> appendList,
-				T_ListProperty, T_ListProperty, Property.class));
+		functionsByName.put("appendPropList", TypedFunction.<List<Property>, Property, List<Property>> buildT(
+				ZAssemblerParserCache::appendList, T_ListProperty, T_ListProperty, Property.class));
 		functionsByName.put("emptyObjList", TypedFunction.buildT(ArrayList::new, T_ListObject));
-		functionsByName.put("appendObjList", TypedFunction.buildT(ZAssemblerParserCache::<ZObject> appendList,
-				T_ListObject, T_ListObject, ZObject.class));
+		functionsByName.put("appendObjList", TypedFunction.<List<ZObject>, ZObject, List<ZObject>> buildT(
+				ZAssemblerParserCache::appendList, T_ListObject, T_ListObject, ZObject.class));
 		functionsByName.put("emptyOEList", TypedFunction.buildT(ArrayList::new, T_ListObjectEntry));
-		functionsByName.put("appendOEList", TypedFunction.buildT(ZAssemblerParserCache::<ZObjectEntry> appendList,
-				T_ListObjectEntry, T_ListObjectEntry, ZObjectEntry.class));
+		functionsByName.put("appendOEList", TypedFunction.<List<ZObjectEntry>, ZObjectEntry, List<ZObjectEntry>> buildT(
+				ZAssemblerParserCache::appendList, T_ListObjectEntry, T_ListObjectEntry, ZObjectEntry.class));
 		functionsByName.put("emptyDEList", TypedFunction.buildT(ArrayList::new, T_ListDictionaryEntry));
-		functionsByName.put("appendDEList", TypedFunction.buildT(ZAssemblerParserCache::<DictionaryEntry> appendList,
-				T_ListDictionaryEntry, T_ListDictionaryEntry, DictionaryEntry.class));
+		functionsByName.put("appendDEList", TypedFunction.<List<DictionaryEntry>, DictionaryEntry, List<DictionaryEntry>> buildT(
+				ZAssemblerParserCache::appendList, T_ListDictionaryEntry, T_ListDictionaryEntry, DictionaryEntry.class));
 		functionsByName.put("emptyDDEList", TypedFunction.buildT(ArrayList::new, T_ListDataEntry));
-		functionsByName.put("appendDDEList", TypedFunction.buildT(ZAssemblerParserCache::<DictionaryDataElement> appendList,
-				T_ListDataEntry, T_ListDataEntry, DictionaryDataElement.class));
+		functionsByName.put("appendDDEList", TypedFunction.<List<DictionaryDataElement>, DictionaryDataElement, List<DictionaryDataElement>> buildT(
+				ZAssemblerParserCache::appendList, T_ListDataEntry, T_ListDataEntry, DictionaryDataElement.class));
 		functionsByName.put("emptyOperandList", TypedFunction.buildT(ArrayList::new, T_ListOperand));
-		functionsByName.put("appendOperandList", TypedFunction.buildT(ZAssemblerParserCache::<Operand> appendList,
-				T_ListOperand, T_ListOperand, Operand.class));
+		functionsByName.put("appendOperandList", TypedFunction.<List<Operand>, Operand, List<Operand>> buildT(
+				ZAssemblerParserCache::appendList, T_ListOperand, T_ListOperand, Operand.class));
 		functionsByName.put("emptyByteSequenceList", TypedFunction.buildT(ArrayList::new, T_ListByteSequenceElement));
-		functionsByName.put("appendByteSequenceList", TypedFunction.buildT(ZAssemblerParserCache::<ByteSequenceElement> appendList,
-				T_ListByteSequenceElement, T_ListByteSequenceElement, ByteSequenceElement.class));
+		functionsByName.put("appendByteSequenceList", TypedFunction.<List<ByteSequenceElement>, ByteSequenceElement, List<ByteSequenceElement>> buildT(
+				ZAssemblerParserCache::appendList, T_ListByteSequenceElement, T_ListByteSequenceElement, ByteSequenceElement.class));
 		functionsByName.put("emptyZStringElementList", TypedFunction.buildT(ArrayList::new, T_ListZStringElement));
-		functionsByName.put("appendZStringElementList", TypedFunction.buildT(ZAssemblerParserCache::<ZStringElement> appendList,
-				T_ListZStringElement, T_ListZStringElement, ZStringElement.class));
+		functionsByName.put("appendZStringElementList", TypedFunction.<List<ZStringElement>, ZStringElement, List<ZStringElement>> buildT(
+				ZAssemblerParserCache::appendList, T_ListZStringElement, T_ListZStringElement, ZStringElement.class));
 		functionsByName.put("emptyCList", TypedFunction.buildT(ArrayList::new, T_ListChar));
-		functionsByName.put("appendCList", TypedFunction.buildT(ZAssemblerParserCache::<CharLiteral> appendList,
-				T_ListChar, T_ListChar, CharLiteral.class));
+		functionsByName.put("appendCList", TypedFunction.<List<CharLiteral>, CharLiteral, List<CharLiteral>> buildT(
+				ZAssemblerParserCache::appendList, T_ListChar, T_ListChar, CharLiteral.class));
 
 		// C-Strings
 		functionsByName.put("appendCString", TypedFunction.build(CString::append, CString.class, CString.class, String.class));

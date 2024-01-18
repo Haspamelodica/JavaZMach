@@ -87,7 +87,7 @@ public class ZAssembler
 	{
 		int version;
 		if(externallyGivenVersion <= 0)
-			version = file.version().orElseThrow(() -> defaultError(
+			version = file.version().orElseGet(() -> defaultError(
 					"Z-version not given: neither by " + externallyGivenVersionSourceName + ", nor by .ZVERSION in file"));
 		else if(file.version().isEmpty())
 			version = externallyGivenVersion;
