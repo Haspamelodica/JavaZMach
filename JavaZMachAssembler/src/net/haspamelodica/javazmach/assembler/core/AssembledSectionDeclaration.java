@@ -8,7 +8,7 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 public final class AssembledSectionDeclaration implements AssembledEntry
 {
 	private final SpecialLocation			location;
-	/** null means use {@link SpecialLocationEmitter#emitLocationHere(Location)} */
+	/** null means use {@link SpecialLocationEmitter#emitLocationHere(SpecialLocation)} */
 	private final ResolvableIntegralValue	valueOrNull;
 
 	public AssembledSectionDeclaration(SectionDeclaration section)

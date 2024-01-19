@@ -7,8 +7,8 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public final class AssembledDictionaryByteSequenceData extends AssembledDictionaryDataElement
 {
-	private final ByteSequence seq;
-	private final int version;
+	private final ByteSequence	seq;
+	private final int			version;
 
 	public AssembledDictionaryByteSequenceData(ByteSequence seq, BigInteger size, int version)
 	{
