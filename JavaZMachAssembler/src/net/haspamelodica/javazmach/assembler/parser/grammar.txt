@@ -11,15 +11,31 @@ FileEntries
 
 FileEntry
  -> HeaderEntry      { fileEntry[-1] = headerEntry[0]; }
-  | Routine          { fileEntry[-1] = routine[0]; }
   | ObjectTable      { fileEntry[-1] = table[0]; }
   | GlobalVarTable   { fileEntry[-1] = globals[0]; }
   | Dictionary       { fileEntry[-1] = dictionary[0]; }
-  | LabelDeclaration { fileEntry[-1] = labelDeclaration[0]; }
-  | Instruction      { fileEntry[-1] = instruction[0]; }
   | Section          { fileEntry[-1] = section[0]; }
-  | Buffer           { fileEntry[-1] = buffer[0]; }
-  | NamedValue       { fileEntry[-1] = namedValue[0]; } ;
+  | Macro            { fileEntry[-1] = macro[0]; }
+  | MacroOrFileEntry { fileEntry[-1] = macroOrFileEntry[0]; } ;
+
+MacroBody
+ ->                      { macroBody[-1] = emptyMEList(); }
+  | MacroBody MacroEntry { macroBody[-1] = appendMEList(macroBody[0], macroEntry[1]); } ;
+
+MacroEntry -> MacroOrFileEntry { macroEntry[-1] = macroOrFileEntry[0]; } ;
+
+MacroOrFileEntry
+ -> Routine          { macroOrFileEntry[-1] = routine[0]; }
+  | LabelDeclaration { macroOrFileEntry[-1] = labelDeclaration[0]; }
+  | Instruction      { macroOrFileEntry[-1] = instruction[0]; }
+  | Buffer           { macroOrFileEntry[-1] = buffer[0]; }
+  | NamedValue       { macroOrFileEntry[-1] = namedValue[0]; } ;
+
+Macro -> '.' 'macro' 'ident' MacroParams MacroBody '.' 'endmacro' { macro[-1] = Macro(str([2]), macroParams[3], macroBody[4]); } ;
+
+MacroParams
+ ->                                      { macroParams[-1] = emptyMPList(); }
+  | MacroParams '.' 'macroparam' 'ident' { macroParams[-1] = appendMPList(macroParams[0], str([2])); } ;
 
 HeaderEntry
  -> '.' 'zheader' 'ident' HeaderValue { headerEntry[-1] = HeaderEntry(str([2]), headerValue[3]); } ;

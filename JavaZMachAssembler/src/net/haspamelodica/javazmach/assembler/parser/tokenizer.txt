@@ -22,6 +22,9 @@ static = static|STATIC ;
 high = high|HIGH ;
 buffer = buffer|BUFFER ;
 value = value|VALUE ;
+macro = macro|MACRO ;
+macroparam = macroparam|MACROPARAM ;
+endmacro = endmacro|ENDMACRO ;
 
 : = : ;
 

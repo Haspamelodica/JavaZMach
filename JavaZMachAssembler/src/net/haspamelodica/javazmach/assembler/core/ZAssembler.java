@@ -4,6 +4,7 @@ import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defau
 import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
@@ -14,6 +15,7 @@ import net.haspamelodica.javazmach.assembler.model.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
+import net.haspamelodica.javazmach.assembler.model.Macro;
 import net.haspamelodica.javazmach.assembler.model.NamedValue;
 import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
@@ -28,9 +30,9 @@ public class ZAssembler
 	private final int					version;
 	private final Map<String, Opcode>	opcodesByNameLowercase;
 
-	//TODO make this an AssembledEntry
 	private final AssembledHeader				header;
 	private final ConvergingEntriesAssembler	assembler;
+	private final Map<String, Macro>			macrosByName;
 
 	public ZAssembler(int version)
 	{
@@ -45,6 +47,7 @@ public class ZAssembler
 
 		this.header = new AssembledHeader(version);
 		this.assembler = new ConvergingEntriesAssembler(version);
+		this.macrosByName = new HashMap<>();
 		assembler.addEntry(header);
 	}
 
@@ -76,6 +79,7 @@ public class ZAssembler
 			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
 			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(buffer, version));
 			case NamedValue namedValue -> assembler.addEntry(new AssembledNamedValue(namedValue));
+			case Macro macro -> macrosByName.put(macro.name(), macro);
 		}
 	}
 
