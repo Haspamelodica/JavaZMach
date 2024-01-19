@@ -46,9 +46,10 @@ import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
-import net.haspamelodica.javazmach.assembler.model.Macro;
+import net.haspamelodica.javazmach.assembler.model.MacroDeclaration;
 import net.haspamelodica.javazmach.assembler.model.MacroEntry;
 import net.haspamelodica.javazmach.assembler.model.MacroParam;
+import net.haspamelodica.javazmach.assembler.model.MacroReference;
 import net.haspamelodica.javazmach.assembler.model.NamedValue;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.Operand;
@@ -246,8 +247,10 @@ public class ZAssemblerParserCache
 		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, T_OptString, ZString.class, T_ListObjectEntry));
 		functionsByName.put("Dictionary", TypedFunction.buildT(Dictionary::new, Dictionary.class, T_ListChar, T_ListDictionaryEntry));
 		functionsByName.put("DictionaryEntry", TypedFunction.buildT(DictionaryEntry::new, DictionaryEntry.class, ZString.class, T_ListDataEntry));
-		functionsByName.put("DictionaryDataElement", TypedFunction.build(DictionaryDataElement::new, DictionaryDataElement.class, BigInteger.class, HeaderValue.class));
-		functionsByName.put("SectionDeclaration", TypedFunction.buildT(SectionDeclaration::new, SectionDeclaration.class, ExplicitSection.class, T_OptIntegralValue));
+		functionsByName.put("DictionaryDataElement", TypedFunction.build(DictionaryDataElement::new,
+				DictionaryDataElement.class, BigInteger.class, HeaderValue.class));
+		functionsByName.put("SectionDeclaration", TypedFunction.buildT(SectionDeclaration::new,
+				SectionDeclaration.class, ExplicitSection.class, T_OptIntegralValue));
 		functionsByName.put("ZAttribute", TypedFunction.build(ZAttribute::new, ZAttribute.class, BigInteger.class));
 		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, String.class));
 		functionsByName.put("AssemblerZMachInstruction", TypedFunction.buildT(ZAssemblerInstruction::new,
@@ -260,7 +263,9 @@ public class ZAssemblerParserCache
 		functionsByName.put("Buffer", TypedFunction.buildT(Buffer::new,
 				Buffer.class, String.class, IntegralValue.class, T_OptByteSequence));
 		functionsByName.put("NamedValue", TypedFunction.build(NamedValue::new, NamedValue.class, String.class, IntegralValue.class));
-		functionsByName.put("Macro", TypedFunction.buildT(Macro::new, Macro.class, String.class, T_ListMacroParam, T_ListMacroEntry));
+		functionsByName.put("MacroDeclaration", TypedFunction.buildT(MacroDeclaration::new,
+				MacroDeclaration.class, String.class, T_ListMacroParam, T_ListMacroEntry));
+		functionsByName.put("MacroReference", TypedFunction.build(MacroReference::new, MacroReference.class, String.class));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
 		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
 		functionsByName.put("CString", TypedFunction.buildT(CString::new, CString.class, String.class));

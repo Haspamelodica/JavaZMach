@@ -15,7 +15,7 @@ FileEntry
   | GlobalVarTable   { fileEntry[-1] = globals[0]; }
   | Dictionary       { fileEntry[-1] = dictionary[0]; }
   | Section          { fileEntry[-1] = section[0]; }
-  | Macro            { fileEntry[-1] = macro[0]; }
+  | MacroDeclaration { fileEntry[-1] = macro[0]; }
   | MacroOrFileEntry { fileEntry[-1] = macroOrFileEntry[0]; } ;
 
 MacroBody
@@ -29,9 +29,13 @@ MacroOrFileEntry
   | LabelDeclaration { macroOrFileEntry[-1] = labelDeclaration[0]; }
   | Instruction      { macroOrFileEntry[-1] = instruction[0]; }
   | Buffer           { macroOrFileEntry[-1] = buffer[0]; }
-  | NamedValue       { macroOrFileEntry[-1] = namedValue[0]; } ;
+  | NamedValue       { macroOrFileEntry[-1] = namedValue[0]; }
+  | MacroReference   { macroOrFileEntry[-1] = macroReference[0]; } ;
 
-Macro -> '.' 'macro' 'ident' MacroParams MacroBody '.' 'endmacro' { macro[-1] = Macro(str([2]), macroParams[3], macroBody[4]); } ;
+MacroReference -> '.' 'ident' { macroReference[-1] = MacroReference(str([1])); } ;
+
+MacroDeclaration -> '.' 'macro' 'ident' MacroParams MacroBody '.' 'endmacro'
+  { macro[-1] = MacroDeclaration(str([2]), macroParams[3], macroBody[4]); } ;
 
 MacroParams
  ->                                      { macroParams[-1] = emptyMPList(); }

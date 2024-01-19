@@ -73,6 +73,18 @@ attr2_set:
 print "obj1.attribute2 is set! (incorrect)\n"
 attr2_after:
 
+.MACRO testmacro
+print "Macro "
+print "called"
+new_line
+.ENDMACRO
+
+print "before macro calls"
+new_line
+.testmacro
+.testmacro
+.testmacro
+
 call testproperties -> sp
 call testbuffer -> sp
 

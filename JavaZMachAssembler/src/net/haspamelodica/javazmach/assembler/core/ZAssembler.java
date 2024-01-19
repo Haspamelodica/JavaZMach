@@ -15,7 +15,10 @@ import net.haspamelodica.javazmach.assembler.model.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.HeaderEntry;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
-import net.haspamelodica.javazmach.assembler.model.Macro;
+import net.haspamelodica.javazmach.assembler.model.MacroDeclaration;
+import net.haspamelodica.javazmach.assembler.model.MacroEntry;
+import net.haspamelodica.javazmach.assembler.model.MacroOrFileEntry;
+import net.haspamelodica.javazmach.assembler.model.MacroReference;
 import net.haspamelodica.javazmach.assembler.model.NamedValue;
 import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
@@ -32,7 +35,9 @@ public class ZAssembler
 
 	private final AssembledHeader				header;
 	private final ConvergingEntriesAssembler	assembler;
-	private final Map<String, Macro>			macrosByName;
+	private final Map<String, MacroDeclaration>	macrosByName;
+
+	private int nextMacroReferenceIdent;
 
 	public ZAssembler(int version)
 	{
@@ -47,8 +52,11 @@ public class ZAssembler
 
 		this.header = new AssembledHeader(version);
 		this.assembler = new ConvergingEntriesAssembler(version);
-		this.macrosByName = new HashMap<>();
 		assembler.addEntry(header);
+
+		this.macrosByName = new HashMap<>();
+		// 0 is the main file
+		this.nextMacroReferenceIdent = 1;
 	}
 
 	public void add(ZAssemblerFile file)
@@ -70,17 +78,36 @@ public class ZAssembler
 		switch(entry)
 		{
 			case HeaderEntry headerEntry -> header.addEntry(headerEntry);
-			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(labelDeclaration.name()));
-			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(instruction, version, opcodesByNameLowercase));
-			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(routine, version));
 			case ZObjectTable table -> assembler.addEntry(new AssembledZObjectTable(table, version));
 			case GlobalVarTable globals -> assembler.addEntry(new AssembledGlobals(globals));
 			case Dictionary dictionary -> assembler.addEntry(new AssembledDictionary(dictionary, version));
 			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
+			case MacroDeclaration macroDeclaration -> macrosByName.put(macroDeclaration.name(), macroDeclaration);
+			case MacroOrFileEntry e -> add(e, 0);
+		}
+	}
+
+	public void add(MacroOrFileEntry entry, int macroReferenceIdent)
+	{
+		switch(entry)
+		{
+			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(labelDeclaration.name()));
+			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(instruction, version, opcodesByNameLowercase));
+			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(routine, version));
 			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(buffer, version));
 			case NamedValue namedValue -> assembler.addEntry(new AssembledNamedValue(namedValue));
-			case Macro macro -> macrosByName.put(macro.name(), macro);
+			case MacroReference macroReference -> addMacroReference(macrosByName.get(macroReference.name()));
 		}
+	}
+
+	private void addMacroReference(MacroDeclaration macro)
+	{
+		int macroReferenceIdent = nextMacroReferenceIdent ++;
+		for(MacroEntry entry : macro.body())
+			switch(entry)
+			{
+				case MacroOrFileEntry e -> add(e, macroReferenceIdent);
+			}
 	}
 
 	public byte[] assemble()
