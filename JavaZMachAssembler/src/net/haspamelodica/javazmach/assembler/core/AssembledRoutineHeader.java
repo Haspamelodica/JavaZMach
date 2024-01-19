@@ -12,6 +12,8 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public final class AssembledRoutineHeader implements AssembledEntry
 {
+	private final int macroRefId;
+
 	private final boolean	writeInitialValues;
 	private final int		alignmentBitCount;
 	private final String	name;
@@ -20,8 +22,10 @@ public final class AssembledRoutineHeader implements AssembledEntry
 	{}
 	private final List<AssembledLocalVariable> locals;
 
-	public AssembledRoutineHeader(Routine routine, int version)
+	public AssembledRoutineHeader(MacroContext macroContext, Routine routine, int version)
 	{
+		this.macroRefId = macroContext.refId();
+
 		if(routine.locals().size() > 15)
 			defaultError("More than 15 local variables declared");
 
@@ -42,7 +46,7 @@ public final class AssembledRoutineHeader implements AssembledEntry
 		};
 		this.name = routine.name();
 		this.locals = routine.locals().stream()
-				.map(l -> new AssembledLocalVariable(l.name(), resolvableIntValOrZero(l.initialValue())))
+				.map(l -> new AssembledLocalVariable(l.name(), resolvableIntValOrZero(macroContext, l.initialValue())))
 				.toList();
 	}
 
@@ -56,7 +60,7 @@ public final class AssembledRoutineHeader implements AssembledEntry
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		memSeq.alignToBytes(1 << alignmentBitCount);
-		locationEmitter.emitLocationHere(new LabelLocation(name), a -> a.shiftRight(alignmentBitCount));
+		locationEmitter.emitLocationHere(new LabelLocation(macroRefId, name), a -> a.shiftRight(alignmentBitCount));
 		// no need to check whether this fits into a byte - locals count is checked in the constructor.
 		memSeq.writeNextByte(locals.size());
 		for(AssembledLocalVariable local : locals)

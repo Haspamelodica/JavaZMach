@@ -1,5 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
+
 import java.math.BigInteger;
 
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
@@ -15,7 +17,8 @@ public class AssembledIntegralBitfieldHeaderField implements AssembledIntegralHe
 	public AssembledIntegralBitfieldHeaderField(HeaderField field, IntegralValue value)
 	{
 		this.field = field;
-		this.value = new ResolvableIntegralValue(value);
+		// header is always in global context
+		this.value = new ResolvableIntegralValue(GLOBAL_MACRO_CONTEXT, value);
 	}
 
 	@Override

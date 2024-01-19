@@ -1,5 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
 import static net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue.resolvableIntValOrZero;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 
@@ -12,7 +13,8 @@ public class AssembledGlobal
 
 	public AssembledGlobal(Global global)
 	{
-		this.defaultValue = resolvableIntValOrZero(global.initialValue());
+		// globals are always in global context
+		this.defaultValue = resolvableIntValOrZero(GLOBAL_MACRO_CONTEXT, global.initialValue());
 	}
 
 	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)

@@ -10,14 +10,16 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public final class AssembledBuffer implements AssembledEntry
 {
+	private final int						macroRefid;
 	private final String					name;
 	private final ResolvableIntegralValue	byteLength;
 	private final Optional<byte[]>			bytes;
 
-	public AssembledBuffer(Buffer buffer, int version)
+	public AssembledBuffer(MacroContext macroContext, Buffer buffer, int version)
 	{
+		this.macroRefid = macroContext.refId();
 		this.name = buffer.name();
-		this.byteLength = new ResolvableIntegralValue(buffer.byteLength());
+		this.byteLength = new ResolvableIntegralValue(macroContext, buffer.byteLength());
 		this.bytes = buffer.optSeq().map(b -> materializeByteSequence(b, version, s -> "Cannot compute buffer initial value: " + s));
 	}
 
@@ -30,7 +32,7 @@ public final class AssembledBuffer implements AssembledEntry
 	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
-		locationEmitter.emitLocationHere(new LabelLocation(name));
+		locationEmitter.emitLocationHere(new LabelLocation(macroRefid, name));
 		int byteLengthInt = bigintIntChecked(31, byteLength.resolvedValueOrZero(), b -> "Buffer size %s is too large!".formatted(b), diagnosticHandler);
 
 		int written = 0;

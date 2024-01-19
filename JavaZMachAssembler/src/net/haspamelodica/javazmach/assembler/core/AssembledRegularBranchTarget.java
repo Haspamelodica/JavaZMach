@@ -15,12 +15,12 @@ public class AssembledRegularBranchTarget implements AssembledBranchTarget
 {
 	private final SizeVariantAssemblerUnsigned<BranchLength> encodedOffsetAssembler;
 
-	public AssembledRegularBranchTarget(IntegralValue target, ValueReference branchOriginLocation, Optional<BranchLength> branchLengthOverride)
+	public AssembledRegularBranchTarget(MacroContext macroContext, IntegralValue target, ValueReference branchOriginLocation, Optional<BranchLength> branchLengthOverride)
 	{
 		this.encodedOffsetAssembler = new SizeVariantAssemblerUnsigned<>(
 				intFunc(valueReferenceResolver ->
 				{
-					BigInteger resolvedTarget = integralValueOrNull(target, valueReferenceResolver);
+					BigInteger resolvedTarget = integralValueOrNull(macroContext, target, valueReferenceResolver);
 					if(resolvedTarget == null)
 						return null;
 					BigInteger resolvedBranchOrigin = valueReferenceResolver.resolveAbsoluteOrNull(branchOriginLocation);

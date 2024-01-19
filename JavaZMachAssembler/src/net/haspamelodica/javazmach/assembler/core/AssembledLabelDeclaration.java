@@ -2,7 +2,7 @@ package net.haspamelodica.javazmach.assembler.core;
 
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public record AssembledLabelDeclaration(String label) implements AssembledEntry
+public record AssembledLabelDeclaration(MacroContext macroContext, String label) implements AssembledEntry
 {
 	@Override
 	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
@@ -14,6 +14,6 @@ public record AssembledLabelDeclaration(String label) implements AssembledEntry
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		// nothing to append - only emit location
-		locationEmitter.emitLocationHere(new LabelLocation(label));
+		locationEmitter.emitLocationHere(new LabelLocation(macroContext.refId(), label));
 	}
 }

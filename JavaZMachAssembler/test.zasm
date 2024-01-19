@@ -78,14 +78,27 @@ attr2_after:
 print "Macro called with arg "
 print_num ..theparam
 new_line
+add 0, ..theparam -> g0
+loop:
+call localroutine -> g2
+sub g0, 1 -> g0
+jg g0, 0 ?loop
+new_line
+jg 1, 0 ?afterlocalroutine
+
+.ROUTINE localroutine
+print "Loop"
+rtrue
+
+afterlocalroutine:
 .ENDMACRO
 
 print "before macro calls"
 new_line
-add 0, 567 -> g0
+add 0, 2 -> g1
 .testmacro 1
-.testmacro g0
-.testmacro 1234
+.testmacro g1
+.testmacro 3
 
 call testproperties -> sp
 call testbuffer -> sp

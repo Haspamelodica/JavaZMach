@@ -18,9 +18,9 @@ public record AssemblerIntegralValue(Function<ValueReferenceResolver, BigInteger
 	{
 		return new AssemblerIntegralValue(valueFunction);
 	}
-	public static AssemblerIntegralValue intVal(IntegralValue value)
+	public static AssemblerIntegralValue intVal(MacroContext macroContext, IntegralValue value)
 	{
-		return intFunc(r -> integralValueOrNull(value, r));
+		return intFunc(r -> integralValueOrNull(macroContext, value, r));
 	}
 	public static AssemblerIntegralValue intLoc(ValueReference location)
 	{

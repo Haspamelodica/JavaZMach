@@ -15,9 +15,9 @@ public class ResolvableIntegralValue
 
 	private BigInteger resolvedValue;
 
-	public ResolvableIntegralValue(IntegralValue integralValue)
+	public ResolvableIntegralValue(MacroContext macroContext, IntegralValue integralValue)
 	{
-		this(intVal(integralValue));
+		this(intVal(macroContext, integralValue));
 	}
 	public ResolvableIntegralValue(AssemblerIntegralValue integralValue)
 	{
@@ -38,8 +38,8 @@ public class ResolvableIntegralValue
 		return resolvedValue == null ? ZERO : resolvedValue;
 	}
 
-	public static ResolvableIntegralValue resolvableIntValOrZero(Optional<IntegralValue> value)
+	public static ResolvableIntegralValue resolvableIntValOrZero(MacroContext macroContext, Optional<IntegralValue> value)
 	{
-		return new ResolvableIntegralValue(value.map(AssemblerIntegralValue::intVal).orElse(intConst(0)));
+		return new ResolvableIntegralValue(value.map(v -> intVal(macroContext, v)).orElse(intConst(0)));
 	}
 }

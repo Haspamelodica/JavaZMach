@@ -10,13 +10,13 @@ public class AssembledBranchInfo
 	private final boolean				branchOnConditionFalse;
 	private final AssembledBranchTarget	target;
 
-	public AssembledBranchInfo(BranchInfo branchInfo, ValueReference branchOriginLocation)
+	public AssembledBranchInfo(MacroContext macroContext, BranchInfo branchInfo, ValueReference branchOriginLocation)
 	{
 		this.branchOnConditionFalse = branchInfo.branchOnConditionFalse();
 		this.target = switch(branchInfo.target())
 		{
 			case SimpleBranchTarget target -> new AssembledSimpleBranchTarget(target, branchInfo.branchLengthOverride());
-			case IntegralValue target -> new AssembledRegularBranchTarget(target, branchOriginLocation, branchInfo.branchLengthOverride());
+			case IntegralValue target -> new AssembledRegularBranchTarget(macroContext, target, branchOriginLocation, branchInfo.branchLengthOverride());
 		};
 	}
 

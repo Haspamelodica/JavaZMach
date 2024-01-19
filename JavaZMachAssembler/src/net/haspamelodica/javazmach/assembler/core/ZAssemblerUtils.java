@@ -32,17 +32,17 @@ import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssemblerUtils
 {
-	public static BigInteger integralValueOrNull(IntegralValue value, ValueReferenceResolver valueReferenceResolver)
+	public static BigInteger integralValueOrNull(MacroContext macroContext, IntegralValue value, ValueReferenceResolver valueReferenceResolver)
 	{
 		return switch(value)
 		{
 			case NumberLiteral literal -> literal.value();
 			case CharLiteral literal -> BigInteger.valueOf(literal.value());
-			case LabelReference labelRef -> valueReferenceResolver.resolveAbsoluteOrNull(new LabelLocation(labelRef.name()));
+			case LabelReference labelRef -> macroContext.resolve(labelRef, valueReferenceResolver);
 			case BinaryExpression expr ->
 			{
-				BigInteger lhs = integralValueOrNull(expr.lhs(), valueReferenceResolver);
-				BigInteger rhs = integralValueOrNull(expr.rhs(), valueReferenceResolver);
+				BigInteger lhs = integralValueOrNull(macroContext, expr.lhs(), valueReferenceResolver);
+				BigInteger rhs = integralValueOrNull(macroContext, expr.rhs(), valueReferenceResolver);
 				if(lhs == null || rhs == null)
 					yield null;
 				yield switch(expr.op())
@@ -61,7 +61,7 @@ public class ZAssemblerUtils
 			}
 			case UnaryExpression expr ->
 			{
-				BigInteger operand = integralValueOrNull(expr.operand(), valueReferenceResolver);
+				BigInteger operand = integralValueOrNull(macroContext, expr.operand(), valueReferenceResolver);
 				if(operand == null)
 					yield null;
 				yield switch(expr.op())

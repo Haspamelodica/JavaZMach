@@ -1,5 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 
 import java.math.BigInteger;
@@ -34,7 +35,8 @@ public class AssembledZObject
 
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
-		ident.ifPresent(i -> locationEmitter.emitLocation(new LabelLocation(i), BigInteger.valueOf(index)));
+		// object table is always in global context
+		ident.ifPresent(i -> locationEmitter.emitLocation(new LabelLocation(GLOBAL_MACRO_CONTEXT.refId(), i), BigInteger.valueOf(index)));
 		attributes.append(locationEmitter, memSeq, diagnosticHandler);
 		memSeq.writeNextByte(parentIndex);
 		memSeq.writeNextByte(siblingIndex);

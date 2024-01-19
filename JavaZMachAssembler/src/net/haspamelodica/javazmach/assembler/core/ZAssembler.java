@@ -1,6 +1,8 @@
 package net.haspamelodica.javazmach.assembler.core;
 
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.MacroContext.FIRST_NONGLOBAL_MACRO_REFID;
+import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
 import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
 
 import java.util.Arrays;
@@ -38,8 +40,7 @@ public class ZAssembler
 	private final ConvergingEntriesAssembler	assembler;
 	private final Map<String, MacroDeclaration>	macrosByName;
 
-	private final MacroContext	fileMacroContext;
-	private int					nextMacroReferenceIdent;
+	private int nextMacroRefId;
 
 	public ZAssembler(int version)
 	{
@@ -57,8 +58,7 @@ public class ZAssembler
 		assembler.addEntry(header);
 
 		this.macrosByName = new HashMap<>();
-		this.fileMacroContext = new MacroContext(0, Map.of());
-		this.nextMacroReferenceIdent = 1;
+		this.nextMacroRefId = FIRST_NONGLOBAL_MACRO_REFID;
 	}
 
 	public void add(ZAssemblerFile file)
@@ -85,7 +85,7 @@ public class ZAssembler
 			case Dictionary dictionary -> assembler.addEntry(new AssembledDictionary(dictionary, version));
 			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
 			case MacroDeclaration macroDeclaration -> macrosByName.put(macroDeclaration.name(), macroDeclaration);
-			case MacroOrFileEntry e -> add(e, fileMacroContext);
+			case MacroOrFileEntry e -> add(e, GLOBAL_MACRO_CONTEXT);
 		}
 	}
 
@@ -93,11 +93,11 @@ public class ZAssembler
 	{
 		switch(entry)
 		{
-			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(labelDeclaration.name()));
-			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(instruction, version, opcodesByNameLowercase, macroContext));
-			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(routine, version));
-			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(buffer, version));
-			case NamedValue namedValue -> assembler.addEntry(new AssembledNamedValue(namedValue));
+			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(macroContext, labelDeclaration.name()));
+			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(macroContext, instruction, version, opcodesByNameLowercase));
+			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(macroContext, routine, version));
+			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(macroContext, buffer, version));
+			case NamedValue namedValue -> assembler.addEntry(new AssembledNamedValue(macroContext, namedValue));
 			case MacroReference macroReference -> addMacroReference(macroReference, macroContext);
 		}
 	}
@@ -117,7 +117,7 @@ public class ZAssembler
 		for(int i = 0; i < paramCount; i ++)
 			macroArgs.put(macroDeclaration.params().get(i).name(), outerMacroContext.resolve(macroReference.args().get(i)));
 
-		MacroContext macroContext = new MacroContext(nextMacroReferenceIdent ++, macroArgs);
+		MacroContext macroContext = new MacroContext(nextMacroRefId ++, macroArgs, outerMacroContext);
 
 		for(MacroEntry entry : macroDeclaration.body())
 			switch(entry)

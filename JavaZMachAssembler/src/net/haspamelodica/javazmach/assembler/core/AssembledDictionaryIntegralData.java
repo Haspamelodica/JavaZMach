@@ -1,5 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
+
 import java.math.BigInteger;
 
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
@@ -20,7 +22,8 @@ public final class AssembledDictionaryIntegralData extends AssembledDictionaryDa
 	@Override
 	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		resolvedValue = ZAssemblerUtils.integralValueOrNull(unresolvedValue, valueReferenceResolver);
+		// dictionary is always in global context
+		resolvedValue = ZAssemblerUtils.integralValueOrNull(GLOBAL_MACRO_CONTEXT, unresolvedValue, valueReferenceResolver);
 	}
 
 	@Override

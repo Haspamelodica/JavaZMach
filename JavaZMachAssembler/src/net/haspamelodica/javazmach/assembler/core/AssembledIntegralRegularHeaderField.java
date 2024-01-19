@@ -1,6 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
 import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intVal;
+import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintBytesChecked;
 
 import java.math.BigInteger;
@@ -18,7 +19,8 @@ public class AssembledIntegralRegularHeaderField implements AssembledIntegralHea
 
 	public AssembledIntegralRegularHeaderField(HeaderField field, IntegralValue value)
 	{
-		this(field, intVal(value));
+		// header fields are always in global context
+		this(field, intVal(GLOBAL_MACRO_CONTEXT, value));
 	}
 	public AssembledIntegralRegularHeaderField(HeaderField field, AssemblerIntegralValue value)
 	{

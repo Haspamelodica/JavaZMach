@@ -5,13 +5,15 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public final class AssembledNamedValue implements AssembledEntry
 {
+	private final int						macroRefId;
 	private final String					name;
 	private final ResolvableIntegralValue	value;
 
-	public AssembledNamedValue(NamedValue namedValue)
+	public AssembledNamedValue(MacroContext macroContext, NamedValue namedValue)
 	{
+		this.macroRefId = macroContext.refId();
 		this.name = namedValue.name();
-		this.value = new ResolvableIntegralValue(namedValue.value());
+		this.value = new ResolvableIntegralValue(macroContext, namedValue.value());
 	}
 
 	@Override
@@ -23,6 +25,6 @@ public final class AssembledNamedValue implements AssembledEntry
 	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
-		locationEmitter.emitLocation(new LabelLocation(name), value.resolvedValueOrZero());
+		locationEmitter.emitLocation(new LabelLocation(macroRefId, name), value.resolvedValueOrZero());
 	}
 }

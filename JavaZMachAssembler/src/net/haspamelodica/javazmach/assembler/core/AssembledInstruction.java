@@ -37,7 +37,7 @@ public final class AssembledInstruction implements AssembledEntry
 	private final Optional<AssembledBranchInfo>	branchInfo;
 	private final Optional<ZString>				text;
 
-	public AssembledInstruction(ZAssemblerInstruction instruction, int version, Map<String, Opcode> opcodesByNameLowercase, MacroContext macroContext)
+	public AssembledInstruction(MacroContext macroContext, ZAssemblerInstruction instruction, int version, Map<String, Opcode> opcodesByNameLowercase)
 	{
 		this.version = version;
 
@@ -92,11 +92,11 @@ public final class AssembledInstruction implements AssembledEntry
 		boolean formOverriddenToLONG = formOverride.isPresent() && formOverride.get() == LONG;
 		this.operands = instruction.operands().stream().map(o -> switch(macroContext.resolve(o))
 		{
-			case IntegralValue value -> new AssembledImmediateOperand(value, formOverriddenToLONG);
+			case IntegralValue value -> new AssembledImmediateOperand(macroContext, value, formOverriddenToLONG);
 			case Variable variable -> new AssembledVariableOperand(variable);
 		}).toList();
 		this.storeTarget = instruction.storeTarget();
-		this.branchInfo = instruction.branchInfo().map(branchInfo -> new AssembledBranchInfo(branchInfo, new BranchOriginLocation(this)));
+		this.branchInfo = instruction.branchInfo().map(branchInfo -> new AssembledBranchInfo(macroContext, branchInfo, new BranchOriginLocation(this)));
 		this.text = instruction.text();
 	}
 

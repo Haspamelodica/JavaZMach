@@ -12,9 +12,9 @@ public final class AssembledImmediateOperand implements AssembledOperand
 {
 	private final SizeVariantAssemblerUnsigned<Boolean> value;
 
-	public AssembledImmediateOperand(IntegralValue value, boolean forcedSmallBecauseLONGForm)
+	public AssembledImmediateOperand(MacroContext macroContext, IntegralValue value, boolean forcedSmallBecauseLONGForm)
 	{
-		this.value = new SizeVariantAssemblerUnsigned<>(intVal(value), List.of(true, false),
+		this.value = new SizeVariantAssemblerUnsigned<>(intVal(macroContext, value), List.of(true, false),
 				forcedSmallBecauseLONGForm ? Optional.of(true) : Optional.empty(),
 				// The semantics of a small immediate are "a value from 0-255".
 				// So, the small size has to be unsigned to exclude "negative" immediates:

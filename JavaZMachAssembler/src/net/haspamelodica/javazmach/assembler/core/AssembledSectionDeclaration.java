@@ -1,5 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
+
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
@@ -12,7 +14,8 @@ public final class AssembledSectionDeclaration implements AssembledEntry
 	public AssembledSectionDeclaration(SectionDeclaration section)
 	{
 		this.location = new ExplicitSectionLocation(section.section());
-		this.valueOrNull = section.value().map(ResolvableIntegralValue::new).orElse(null);
+		// explicit section declarations are always in global context
+		this.valueOrNull = section.value().map(v -> new ResolvableIntegralValue(GLOBAL_MACRO_CONTEXT, v)).orElse(null);
 	}
 
 	@Override

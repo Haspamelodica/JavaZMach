@@ -1,4 +1,4 @@
 package net.haspamelodica.javazmach.assembler.core;
 
-public record LabelLocation(String label) implements SpecialLocation
+public record LabelLocation(int macroRefId, String label) implements SpecialLocation
 {}
