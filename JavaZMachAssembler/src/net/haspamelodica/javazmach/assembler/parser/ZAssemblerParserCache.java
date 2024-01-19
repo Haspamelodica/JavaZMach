@@ -49,6 +49,7 @@ import net.haspamelodica.javazmach.assembler.model.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.MacroDeclaration;
 import net.haspamelodica.javazmach.assembler.model.MacroEntry;
 import net.haspamelodica.javazmach.assembler.model.MacroParam;
+import net.haspamelodica.javazmach.assembler.model.MacroParamDecl;
 import net.haspamelodica.javazmach.assembler.model.MacroReference;
 import net.haspamelodica.javazmach.assembler.model.NamedValue;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
@@ -222,7 +223,7 @@ public class ZAssemblerParserCache
 		ParameterizedType T_ListDataEntry = new ParameterizedTypeImpl(null, List.class, DictionaryDataElement.class);
 		ParameterizedType T_ListChar = new ParameterizedTypeImpl(null, List.class, CharLiteral.class);
 		ParameterizedType T_ListMacroEntry = new ParameterizedTypeImpl(null, List.class, MacroEntry.class);
-		ParameterizedType T_ListMacroParam = new ParameterizedTypeImpl(null, List.class, MacroParam.class);
+		ParameterizedType T_ListMacroParamDecl = new ParameterizedTypeImpl(null, List.class, MacroParamDecl.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, Variable.class);
 		ParameterizedType T_OptIntegralValue = new ParameterizedTypeImpl(null, Optional.class, IntegralValue.class);
@@ -264,8 +265,10 @@ public class ZAssemblerParserCache
 				Buffer.class, String.class, IntegralValue.class, T_OptByteSequence));
 		functionsByName.put("NamedValue", TypedFunction.build(NamedValue::new, NamedValue.class, String.class, IntegralValue.class));
 		functionsByName.put("MacroDeclaration", TypedFunction.buildT(MacroDeclaration::new,
-				MacroDeclaration.class, String.class, T_ListMacroParam, T_ListMacroEntry));
-		functionsByName.put("MacroReference", TypedFunction.build(MacroReference::new, MacroReference.class, String.class));
+				MacroDeclaration.class, String.class, T_ListMacroParamDecl, T_ListMacroEntry));
+		functionsByName.put("MacroParamDecl", TypedFunction.build(MacroParamDecl::new, MacroParamDecl.class, String.class));
+		functionsByName.put("MacroReference", TypedFunction.buildT(MacroReference::new, MacroReference.class, String.class, T_ListOperand));
+		functionsByName.put("MacroParam", TypedFunction.build(MacroParam::new, MacroParam.class, String.class));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
 		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
 		functionsByName.put("CString", TypedFunction.buildT(CString::new, CString.class, String.class));
@@ -344,9 +347,9 @@ public class ZAssemblerParserCache
 		functionsByName.put("emptyMEList", TypedFunction.buildT(ArrayList::new, T_ListMacroEntry));
 		functionsByName.put("appendMEList", TypedFunction.<List<MacroEntry>, MacroEntry, List<MacroEntry>> buildT(
 				ZAssemblerParserCache::appendList, T_ListMacroEntry, T_ListMacroEntry, MacroEntry.class));
-		functionsByName.put("emptyMPList", TypedFunction.buildT(ArrayList::new, T_ListMacroParam));
-		functionsByName.put("appendMPList", TypedFunction.<List<MacroParam>, MacroParam, List<MacroParam>> buildT(
-				ZAssemblerParserCache::appendList, T_ListMacroParam, T_ListMacroParam, MacroParam.class));
+		functionsByName.put("emptyMPDList", TypedFunction.buildT(ArrayList::new, T_ListMacroParamDecl));
+		functionsByName.put("appendMPDList", TypedFunction.<List<MacroParamDecl>, MacroParamDecl, List<MacroParamDecl>> buildT(
+				ZAssemblerParserCache::appendList, T_ListMacroParamDecl, T_ListMacroParamDecl, MacroParamDecl.class));
 
 		// C-Strings
 		functionsByName.put("appendCString", TypedFunction.build(CString::append, CString.class, CString.class, String.class));

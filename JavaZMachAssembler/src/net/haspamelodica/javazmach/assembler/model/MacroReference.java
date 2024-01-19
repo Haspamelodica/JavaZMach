@@ -1,4 +1,6 @@
 package net.haspamelodica.javazmach.assembler.model;
 
-public record MacroReference(String name) implements MacroOrFileEntry
+import java.util.List;
+
+public record MacroReference(String name, List<Operand> args) implements MacroOrFileEntry
 {}

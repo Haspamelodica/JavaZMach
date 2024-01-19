@@ -74,16 +74,18 @@ print "obj1.attribute2 is set! (incorrect)\n"
 attr2_after:
 
 .MACRO testmacro
-print "Macro "
-print "called"
+.MACROPARAM theparam
+print "Macro called with arg "
+print_num ..theparam
 new_line
 .ENDMACRO
 
 print "before macro calls"
 new_line
-.testmacro
-.testmacro
-.testmacro
+add 0, 567 -> g0
+.testmacro 1
+.testmacro g0
+.testmacro 1234
 
 call testproperties -> sp
 call testbuffer -> sp

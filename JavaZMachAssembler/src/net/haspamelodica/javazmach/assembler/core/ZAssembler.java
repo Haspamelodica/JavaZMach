@@ -20,6 +20,7 @@ import net.haspamelodica.javazmach.assembler.model.MacroEntry;
 import net.haspamelodica.javazmach.assembler.model.MacroOrFileEntry;
 import net.haspamelodica.javazmach.assembler.model.MacroReference;
 import net.haspamelodica.javazmach.assembler.model.NamedValue;
+import net.haspamelodica.javazmach.assembler.model.ResolvedOperand;
 import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
@@ -37,7 +38,8 @@ public class ZAssembler
 	private final ConvergingEntriesAssembler	assembler;
 	private final Map<String, MacroDeclaration>	macrosByName;
 
-	private int nextMacroReferenceIdent;
+	private final MacroContext	fileMacroContext;
+	private int					nextMacroReferenceIdent;
 
 	public ZAssembler(int version)
 	{
@@ -55,7 +57,7 @@ public class ZAssembler
 		assembler.addEntry(header);
 
 		this.macrosByName = new HashMap<>();
-		// 0 is the main file
+		this.fileMacroContext = new MacroContext(0, Map.of());
 		this.nextMacroReferenceIdent = 1;
 	}
 
@@ -83,30 +85,44 @@ public class ZAssembler
 			case Dictionary dictionary -> assembler.addEntry(new AssembledDictionary(dictionary, version));
 			case SectionDeclaration section -> assembler.addEntry(new AssembledSectionDeclaration(section));
 			case MacroDeclaration macroDeclaration -> macrosByName.put(macroDeclaration.name(), macroDeclaration);
-			case MacroOrFileEntry e -> add(e, 0);
+			case MacroOrFileEntry e -> add(e, fileMacroContext);
 		}
 	}
 
-	public void add(MacroOrFileEntry entry, int macroReferenceIdent)
+	public void add(MacroOrFileEntry entry, MacroContext macroContext)
 	{
 		switch(entry)
 		{
 			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(labelDeclaration.name()));
-			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(instruction, version, opcodesByNameLowercase));
+			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(instruction, version, opcodesByNameLowercase, macroContext));
 			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(routine, version));
 			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(buffer, version));
 			case NamedValue namedValue -> assembler.addEntry(new AssembledNamedValue(namedValue));
-			case MacroReference macroReference -> addMacroReference(macrosByName.get(macroReference.name()));
+			case MacroReference macroReference -> addMacroReference(macroReference, macroContext);
 		}
 	}
 
-	private void addMacroReference(MacroDeclaration macro)
+	private void addMacroReference(MacroReference macroReference, MacroContext outerMacroContext)
 	{
-		int macroReferenceIdent = nextMacroReferenceIdent ++;
-		for(MacroEntry entry : macro.body())
+		MacroDeclaration macroDeclaration = macrosByName.get(macroReference.name());
+		if(macroDeclaration == null)
+			defaultError("No macro with name " + macroReference.name());
+
+		int paramCount = macroDeclaration.params().size();
+		if(paramCount != macroReference.args().size())
+			defaultError("Macro " + macroReference.name() + " called with incorrect number of arguments: "
+					+ "expected " + paramCount + " but was " + macroReference.args().size());
+
+		Map<String, ResolvedOperand> macroArgs = new HashMap<>();
+		for(int i = 0; i < paramCount; i ++)
+			macroArgs.put(macroDeclaration.params().get(i).name(), outerMacroContext.resolve(macroReference.args().get(i)));
+
+		MacroContext macroContext = new MacroContext(nextMacroReferenceIdent ++, macroArgs);
+
+		for(MacroEntry entry : macroDeclaration.body())
 			switch(entry)
 			{
-				case MacroOrFileEntry e -> add(e, macroReferenceIdent);
+				case MacroOrFileEntry e -> add(e, macroContext);
 			}
 	}
 

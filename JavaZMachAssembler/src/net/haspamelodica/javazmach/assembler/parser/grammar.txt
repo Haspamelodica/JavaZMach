@@ -32,14 +32,14 @@ MacroOrFileEntry
   | NamedValue       { macroOrFileEntry[-1] = namedValue[0]; }
   | MacroReference   { macroOrFileEntry[-1] = macroReference[0]; } ;
 
-MacroReference -> '.' 'ident' { macroReference[-1] = MacroReference(str([1])); } ;
+MacroReference -> '.' 'ident' Operands { macroReference[-1] = MacroReference(str([1]), operands[2]); } ;
 
-MacroDeclaration -> '.' 'macro' 'ident' MacroParams MacroBody '.' 'endmacro'
-  { macro[-1] = MacroDeclaration(str([2]), macroParams[3], macroBody[4]); } ;
+MacroDeclaration -> '.' 'macro' 'ident' MacroParamDecls MacroBody '.' 'endmacro'
+  { macro[-1] = MacroDeclaration(str([2]), macroParamDecls[3], macroBody[4]); } ;
 
-MacroParams
- ->                                      { macroParams[-1] = emptyMPList(); }
-  | MacroParams '.' 'macroparam' 'ident' { macroParams[-1] = appendMPList(macroParams[0], str([2])); } ;
+MacroParamDecls
+ ->                                          { macroParamDecls[-1] = emptyMPDList(); }
+  | MacroParamDecls '.' 'macroparam' 'ident' { macroParamDecls[-1] = appendMPDList(macroParamDecls[0], MacroParamDecl(str([3]))); } ;
 
 HeaderEntry
  -> '.' 'zheader' 'ident' HeaderValue { headerEntry[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
@@ -169,7 +169,8 @@ OperandsEndingComma
 
 Operand
  -> IntegralValue { operand[-1] = value[0]; }
-  | Variable      { operand[-1] = variable[0]; } ;
+  | Variable      { operand[-1] = variable[0]; }
+  | MacroParam    { operand[-1] = macroParam[0]; } ;
 
 MaybeStoreTarget
  ->               { storeTarget[-1] = optVariableEmpty(); }
@@ -232,6 +233,8 @@ ByteSequenceElementNoIntegralLiteral
 MaybeByteSequence
  ->                 { optSeq[-1] = optByteSequenceEmpty(); }
   | ByteSequence    { optSeq[-1] = optByteSequenceOf(sequence[0]); } ;
+
+MacroParam -> ".." 'ident' { macroParam[-1] = MacroParam(str([2])); } ;
 
 // NoTilde variant disallows a ~ at the start.
 // Needed because otherwise the grammar would be ambiguous because of clash with branch-on-condition-false.
