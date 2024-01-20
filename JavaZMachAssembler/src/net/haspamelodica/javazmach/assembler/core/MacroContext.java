@@ -1,6 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.integralValueOrNull;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Map;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.MacroParam;
+import net.haspamelodica.javazmach.assembler.model.MacroParamRef;
 import net.haspamelodica.javazmach.assembler.model.Operand;
 import net.haspamelodica.javazmach.assembler.model.ResolvedOperand;
 import net.haspamelodica.javazmach.assembler.model.StoreTarget;
@@ -25,7 +27,7 @@ public record MacroContext(int refId, Map<String, ResolvedOperand> args, MacroCo
 		this.outerMacroContext = outerMacroContext;
 	}
 
-	public BigInteger resolve(LabelReference labelRef, ValueReferenceResolver valueReferenceResolver)
+	public BigInteger resolveLabelRef(LabelReference labelRef, ValueReferenceResolver valueReferenceResolver)
 	{
 		for(MacroContext context = this; context != null; context = context.outerMacroContext())
 		{
@@ -36,37 +38,48 @@ public record MacroContext(int refId, Map<String, ResolvedOperand> args, MacroCo
 		return null;
 	}
 
-	public ResolvedOperand resolve(Operand operand)
+	public BigInteger resolveIntegralValue(MacroParamRef paramRef, ValueReferenceResolver valueReferenceResolver)
+	{
+		MacroParam param = paramRef.param();
+		return switch(resolveMacroParam(param))
+		{
+			case Variable v -> defaultError("Macro param used in integral expression was not an IntegralValue, but a Variable: " + param.name());
+			// Use outerMacroContext instead of this:
+			// If a macro with param a calls another macro, giving it its param a as the argument to the inner macro's param a,
+			// then the inner macro's a should resolve to the value of the outer macro's a.
+			//TODO this is not entirely clean. The route used with Operand / ResolvedOperand would be cleaner:
+			// introduce a ResolvedIntegralValue and let a ResolvedOperand not permit IntegralValue, but ResolvedIntegralValue.
+			case IntegralValue v -> integralValueOrNull(outerMacroContext(), v, valueReferenceResolver);
+		};
+	}
+
+	public ResolvedOperand resolveOperand(Operand operand)
 	{
 		return switch(operand)
 		{
 			case ResolvedOperand r -> r;
-			case MacroParam param ->
-			{
-				ResolvedOperand resolvedOperand = args.get(param.name());
-				if(resolvedOperand == null)
-					defaultError("Unknown macro parameter: " + param.name());
-				yield resolvedOperand;
-			}
+			case MacroParam param -> resolveMacroParam(param);
 		};
 	}
 
-	public Variable resolve(StoreTarget storeTarget)
+	public Variable resolveStoreTarget(StoreTarget storeTarget)
 	{
 		return switch(storeTarget)
 		{
 			case Variable v -> v;
-			case MacroParam param ->
+			case MacroParam param -> switch(resolveMacroParam(param))
 			{
-				ResolvedOperand resolvedOperand = args.get(param.name());
-				if(resolvedOperand == null)
-					defaultError("Unknown macro parameter: " + param.name());
-				yield switch(resolvedOperand)
-				{
-					case Variable v -> v;
-					case IntegralValue v -> defaultError("Macro param used as store target was not a variable, but an IntegralValue: " + param.name());
-				};
-			}
+				case Variable v -> v;
+				case IntegralValue v -> defaultError("Macro param used as store target was not a variable, but an IntegralValue: " + param.name());
+			};
 		};
+	}
+
+	public ResolvedOperand resolveMacroParam(MacroParam param)
+	{
+		ResolvedOperand resolvedOperand = args.get(param.name());
+		if(resolvedOperand == null)
+			defaultError("Unknown macro parameter: " + param.name());
+		return resolvedOperand;
 	}
 }

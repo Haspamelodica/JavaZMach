@@ -90,12 +90,12 @@ public final class AssembledInstruction implements AssembledEntry
 
 		this.formOverride = instruction.form();
 		boolean formOverriddenToLONG = formOverride.isPresent() && formOverride.get() == LONG;
-		this.operands = instruction.operands().stream().map(o -> switch(macroContext.resolve(o))
+		this.operands = instruction.operands().stream().map(o -> switch(macroContext.resolveOperand(o))
 		{
 			case IntegralValue value -> new AssembledImmediateOperand(macroContext, value, formOverriddenToLONG);
 			case Variable variable -> new AssembledVariableOperand(variable);
 		}).toList();
-		this.storeTarget = instruction.storeTarget().map(macroContext::resolve);
+		this.storeTarget = instruction.storeTarget().map(macroContext::resolveStoreTarget);
 		this.branchInfo = instruction.branchInfo().map(branchInfo -> new AssembledBranchInfo(macroContext, branchInfo, new BranchOriginLocation(this)));
 		this.text = instruction.text();
 	}

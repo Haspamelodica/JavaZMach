@@ -115,7 +115,7 @@ public class ZAssembler
 
 		Map<String, ResolvedOperand> macroArgs = new HashMap<>();
 		for(int i = 0; i < paramCount; i ++)
-			macroArgs.put(macroDeclaration.params().get(i).name(), outerMacroContext.resolve(macroReference.args().get(i)));
+			macroArgs.put(macroDeclaration.params().get(i).name(), outerMacroContext.resolveOperand(macroReference.args().get(i)));
 
 		MacroContext macroContext = new MacroContext(nextMacroRefId ++, macroArgs, outerMacroContext);
 

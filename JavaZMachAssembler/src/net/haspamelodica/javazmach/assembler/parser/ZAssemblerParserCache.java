@@ -50,6 +50,7 @@ import net.haspamelodica.javazmach.assembler.model.MacroDeclaration;
 import net.haspamelodica.javazmach.assembler.model.MacroEntry;
 import net.haspamelodica.javazmach.assembler.model.MacroParam;
 import net.haspamelodica.javazmach.assembler.model.MacroParamDecl;
+import net.haspamelodica.javazmach.assembler.model.MacroParamRef;
 import net.haspamelodica.javazmach.assembler.model.MacroReference;
 import net.haspamelodica.javazmach.assembler.model.NamedValue;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
@@ -269,6 +270,7 @@ public class ZAssemblerParserCache
 		functionsByName.put("MacroParamDecl", TypedFunction.build(MacroParamDecl::new, MacroParamDecl.class, String.class));
 		functionsByName.put("MacroReference", TypedFunction.buildT(MacroReference::new, MacroReference.class, String.class, T_ListOperand));
 		functionsByName.put("MacroParam", TypedFunction.build(MacroParam::new, MacroParam.class, String.class));
+		functionsByName.put("MacroParamRef", TypedFunction.build(MacroParamRef::new, MacroParamRef.class, MacroParam.class));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
 		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
 		functionsByName.put("CString", TypedFunction.buildT(CString::new, CString.class, String.class));

@@ -19,6 +19,7 @@ import net.haspamelodica.javazmach.assembler.model.GlobalVariable;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
+import net.haspamelodica.javazmach.assembler.model.MacroParamRef;
 import net.haspamelodica.javazmach.assembler.model.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
 import net.haspamelodica.javazmach.assembler.model.UnaryExpression;
@@ -38,7 +39,8 @@ public class ZAssemblerUtils
 		{
 			case NumberLiteral literal -> literal.value();
 			case CharLiteral literal -> BigInteger.valueOf(literal.value());
-			case LabelReference labelRef -> macroContext.resolve(labelRef, valueReferenceResolver);
+			case LabelReference labelRef -> macroContext.resolveLabelRef(labelRef, valueReferenceResolver);
+			case MacroParamRef macroParamRef -> macroContext.resolveIntegralValue(macroParamRef, valueReferenceResolver);
 			case BinaryExpression expr ->
 			{
 				BigInteger lhs = integralValueOrNull(macroContext, expr.lhs(), valueReferenceResolver);
