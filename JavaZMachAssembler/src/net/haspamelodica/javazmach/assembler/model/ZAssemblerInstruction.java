@@ -5,10 +5,10 @@ import java.util.Optional;
 
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
 
-public record ZAssemblerInstruction(String opcode, Optional<OpcodeForm> form, List<Operand> operands, Optional<Variable> storeTarget,
+public record ZAssemblerInstruction(String opcode, Optional<OpcodeForm> form, List<Operand> operands, Optional<StoreTarget> storeTarget,
 		Optional<BranchInfo> branchInfo, Optional<ZString> text) implements MacroOrFileEntry
 {
-	public ZAssemblerInstruction(String opcode, Optional<OpcodeForm> form, List<Operand> operands, Optional<Variable> storeTarget,
+	public ZAssemblerInstruction(String opcode, Optional<OpcodeForm> form, List<Operand> operands, Optional<StoreTarget> storeTarget,
 			Optional<BranchInfo> branchInfo, Optional<ZString> text)
 	{
 		this.opcode = opcode;

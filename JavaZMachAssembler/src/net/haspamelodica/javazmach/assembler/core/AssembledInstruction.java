@@ -95,7 +95,7 @@ public final class AssembledInstruction implements AssembledEntry
 			case IntegralValue value -> new AssembledImmediateOperand(macroContext, value, formOverriddenToLONG);
 			case Variable variable -> new AssembledVariableOperand(variable);
 		}).toList();
-		this.storeTarget = instruction.storeTarget();
+		this.storeTarget = instruction.storeTarget().map(macroContext::resolve);
 		this.branchInfo = instruction.branchInfo().map(branchInfo -> new AssembledBranchInfo(macroContext, branchInfo, new BranchOriginLocation(this)));
 		this.text = instruction.text();
 	}

@@ -5,10 +5,13 @@ import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defau
 import java.math.BigInteger;
 import java.util.Map;
 
+import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.MacroParam;
 import net.haspamelodica.javazmach.assembler.model.Operand;
 import net.haspamelodica.javazmach.assembler.model.ResolvedOperand;
+import net.haspamelodica.javazmach.assembler.model.StoreTarget;
+import net.haspamelodica.javazmach.assembler.model.Variable;
 
 public record MacroContext(int refId, Map<String, ResolvedOperand> args, MacroContext outerMacroContext)
 {
@@ -44,6 +47,25 @@ public record MacroContext(int refId, Map<String, ResolvedOperand> args, MacroCo
 				if(resolvedOperand == null)
 					defaultError("Unknown macro parameter: " + param.name());
 				yield resolvedOperand;
+			}
+		};
+	}
+
+	public Variable resolve(StoreTarget storeTarget)
+	{
+		return switch(storeTarget)
+		{
+			case Variable v -> v;
+			case MacroParam param ->
+			{
+				ResolvedOperand resolvedOperand = args.get(param.name());
+				if(resolvedOperand == null)
+					defaultError("Unknown macro parameter: " + param.name());
+				yield switch(resolvedOperand)
+				{
+					case Variable v -> v;
+					case IntegralValue v -> defaultError("Macro param used as store target was not a variable, but an IntegralValue: " + param.name());
+				};
 			}
 		};
 	}

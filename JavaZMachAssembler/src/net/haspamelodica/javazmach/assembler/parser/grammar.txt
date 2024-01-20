@@ -137,7 +137,7 @@ HeaderValue
 LabelDeclaration -> 'ident' ':' { labelDeclaration[-1] = LabelDeclaration(str([0])); } ;
 
 Instruction -> Opcode MaybeForm Operands MaybeStoreTarget MaybeBranchInfo MaybeText { instruction[-1] =
-    AssemblerZMachInstruction(str(str[0]), form[1], operands[2], storeTarget[3], branchInfo[4], text[5]); } ;
+    Instruction(str(str[0]), form[1], operands[2], optStoreTarget[3], branchInfo[4], text[5]); } ;
 
 Opcode
  -> 'opcode_orig'  { str[-1] = [0]; }
@@ -173,8 +173,12 @@ Operand
   | MacroParam    { operand[-1] = macroParam[0]; } ;
 
 MaybeStoreTarget
- ->               { storeTarget[-1] = optVariableEmpty(); }
-  | '->' Variable { storeTarget[-1] = optVariableOf(variable[1]); } ;
+ ->                  { optStoreTarget[-1] = optStoreTargetEmpty(); }
+  | '->' StoreTarget { optStoreTarget[-1] = optStoreTargetOf(storeTarget[1]); } ;
+
+StoreTarget
+ -> Variable   { storeTarget[-1] = variable[0]; }
+  | MacroParam { storeTarget[-1] = macroParam[0]; } ;
 
 MaybeBranchInfo
  -> { branchInfo[-1] = optBranchInfoEmpty(); }

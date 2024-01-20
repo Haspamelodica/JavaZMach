@@ -60,8 +60,8 @@ import net.haspamelodica.javazmach.assembler.model.RoutineLocal;
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
 import net.haspamelodica.javazmach.assembler.model.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.StackPointer;
+import net.haspamelodica.javazmach.assembler.model.StoreTarget;
 import net.haspamelodica.javazmach.assembler.model.UnaryExpression;
-import net.haspamelodica.javazmach.assembler.model.Variable;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFileEntry;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerInstruction;
@@ -225,7 +225,7 @@ public class ZAssemblerParserCache
 		ParameterizedType T_ListMacroEntry = new ParameterizedTypeImpl(null, List.class, MacroEntry.class);
 		ParameterizedType T_ListMacroParamDecl = new ParameterizedTypeImpl(null, List.class, MacroParamDecl.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
-		ParameterizedType T_OptVariable = new ParameterizedTypeImpl(null, Optional.class, Variable.class);
+		ParameterizedType T_OptStoreTarget = new ParameterizedTypeImpl(null, Optional.class, StoreTarget.class);
 		ParameterizedType T_OptIntegralValue = new ParameterizedTypeImpl(null, Optional.class, IntegralValue.class);
 		ParameterizedType T_OptBranchInfo = new ParameterizedTypeImpl(null, Optional.class, BranchInfo.class);
 		ParameterizedType T_OptBLO = new ParameterizedTypeImpl(null, Optional.class, BranchLength.class);
@@ -254,8 +254,8 @@ public class ZAssemblerParserCache
 				SectionDeclaration.class, ExplicitSection.class, T_OptIntegralValue));
 		functionsByName.put("ZAttribute", TypedFunction.build(ZAttribute::new, ZAttribute.class, BigInteger.class));
 		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, String.class));
-		functionsByName.put("AssemblerZMachInstruction", TypedFunction.buildT(ZAssemblerInstruction::new,
-				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptVariable, T_OptBranchInfo, T_OptZString));
+		functionsByName.put("Instruction", TypedFunction.buildT(ZAssemblerInstruction::new,
+				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptStoreTarget, T_OptBranchInfo, T_OptZString));
 		functionsByName.put("BranchInfo", TypedFunction.buildT(BranchInfo::new,
 				BranchInfo.class, Boolean.class, BranchTarget.class, T_OptBLO));
 		functionsByName.put("LabelReference", TypedFunction.build(LabelReference::new, LabelReference.class, String.class));
@@ -358,8 +358,8 @@ public class ZAssemblerParserCache
 		// Optionals
 		functionsByName.put("optFormEmpty", TypedFunction.buildT(Optional::empty, T_OptForm));
 		functionsByName.put("optFormOf", TypedFunction.buildT(Optional::of, T_OptForm, OpcodeForm.class));
-		functionsByName.put("optVariableEmpty", TypedFunction.buildT(Optional::empty, T_OptVariable));
-		functionsByName.put("optVariableOf", TypedFunction.buildT(Optional::of, T_OptVariable, Variable.class));
+		functionsByName.put("optStoreTargetEmpty", TypedFunction.buildT(Optional::empty, T_OptStoreTarget));
+		functionsByName.put("optStoreTargetOf", TypedFunction.buildT(Optional::of, T_OptStoreTarget, StoreTarget.class));
 		functionsByName.put("optIntegralValueEmpty", TypedFunction.buildT(Optional::empty, T_OptIntegralValue));
 		functionsByName.put("optIntegralValueOf", TypedFunction.buildT(Optional::of, T_OptIntegralValue, IntegralValue.class));
 		functionsByName.put("optBranchInfoEmpty", TypedFunction.buildT(Optional::empty, T_OptBranchInfo));

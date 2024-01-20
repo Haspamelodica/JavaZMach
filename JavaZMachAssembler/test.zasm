@@ -75,14 +75,16 @@ attr2_after:
 
 .MACRO testmacro
 .MACROPARAM theparam
+.MACROPARAM scratchreg1
+.MACROPARAM scratchreg2
 print "Macro called with arg "
 print_num ..theparam
 new_line
-add 0, ..theparam -> g0
+add 0, ..theparam -> ..scratchreg1
 loop:
-call localroutine -> g2
-sub g0, 1 -> g0
-jg g0, 0 ?loop
+call localroutine -> ..scratchreg2
+sub ..scratchreg1, 1 -> ..scratchreg1
+jg ..scratchreg1, 0 ?loop
 new_line
 jg 1, 0 ?afterlocalroutine
 
@@ -96,9 +98,9 @@ afterlocalroutine:
 print "before macro calls"
 new_line
 add 0, 2 -> g1
-.testmacro 1
-.testmacro g1
-.testmacro 3
+.testmacro 1, g0, g2
+.testmacro g1, g0, g2
+.testmacro 3, g0, g1
 
 call testproperties -> sp
 call testbuffer -> sp
