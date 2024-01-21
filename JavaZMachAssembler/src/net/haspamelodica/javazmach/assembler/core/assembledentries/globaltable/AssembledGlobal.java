@@ -1,8 +1,8 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries.globaltable;
 
-import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
 import static net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue.resolvableIntValOrZero;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
+import static net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext.GLOBAL_MACRO_CONTEXT;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
 import net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue;
@@ -18,7 +18,7 @@ public class AssembledGlobal
 	public AssembledGlobal(Global global)
 	{
 		// globals are always in global context
-		this.defaultValue = resolvableIntValOrZero(GLOBAL_MACRO_CONTEXT, global.initialValue());
+		this.defaultValue = resolvableIntValOrZero(global.initialValue().map(GLOBAL_MACRO_CONTEXT::resolve));
 	}
 
 	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)

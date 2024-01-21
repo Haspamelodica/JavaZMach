@@ -7,8 +7,8 @@ import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.
 import java.math.BigInteger;
 import java.util.Optional;
 
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
-import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
 
 public class ResolvableIntegralValue
 {
@@ -16,9 +16,9 @@ public class ResolvableIntegralValue
 
 	private BigInteger resolvedValue;
 
-	public ResolvableIntegralValue(MacroContext macroContext, IntegralValue integralValue)
+	public ResolvableIntegralValue(ResolvedIntegralValue integralValue)
 	{
-		this(intVal(macroContext, integralValue));
+		this(intVal(integralValue));
 	}
 	public ResolvableIntegralValue(AssemblerIntegralValue integralValue)
 	{
@@ -39,8 +39,8 @@ public class ResolvableIntegralValue
 		return resolvedValue == null ? ZERO : resolvedValue;
 	}
 
-	public static ResolvableIntegralValue resolvableIntValOrZero(MacroContext macroContext, Optional<IntegralValue> value)
+	public static ResolvableIntegralValue resolvableIntValOrZero(Optional<ResolvedIntegralValue> value)
 	{
-		return new ResolvableIntegralValue(value.map(v -> intVal(macroContext, v)).orElse(intConst(0)));
+		return new ResolvableIntegralValue(value.map(AssemblerIntegralValue::intVal).orElse(intConst(0)));
 	}
 }

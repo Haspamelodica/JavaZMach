@@ -18,16 +18,17 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
-import net.haspamelodica.javazmach.assembler.core.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledBranchInfo;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledImmediateOperand;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledOperand;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledVariableOperand;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedVariable;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.BranchOriginLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.entries.ZAssemblerInstruction;
-import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.values.Operand;
 import net.haspamelodica.javazmach.assembler.model.values.Variable;
 import net.haspamelodica.javazmach.assembler.model.values.ZString;
@@ -99,10 +100,10 @@ public final class AssembledInstruction implements AssembledEntry
 
 		this.formOverride = instruction.form();
 		boolean formOverriddenToLONG = formOverride.isPresent() && formOverride.get() == LONG;
-		this.operands = instruction.operands().stream().map(o -> switch(macroContext.resolveOperand(o))
+		this.operands = instruction.operands().stream().map(o -> switch(macroContext.resolve(o))
 		{
-			case IntegralValue value -> new AssembledImmediateOperand(macroContext, value, formOverriddenToLONG);
-			case Variable variable -> new AssembledVariableOperand(variable);
+			case ResolvedIntegralValue value -> new AssembledImmediateOperand(value, formOverriddenToLONG);
+			case ResolvedVariable variable -> new AssembledVariableOperand(variable.variable());
 		}).toList();
 		this.storeTarget = instruction.storeTarget().map(macroContext::resolveStoreTarget);
 		this.branchInfo = instruction.branchInfo().map(branchInfo -> new AssembledBranchInfo(macroContext, branchInfo, new BranchOriginLocation(this)));

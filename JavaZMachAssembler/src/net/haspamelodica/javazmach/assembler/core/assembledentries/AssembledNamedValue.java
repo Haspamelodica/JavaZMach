@@ -1,8 +1,8 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
-import net.haspamelodica.javazmach.assembler.core.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
@@ -19,7 +19,7 @@ public final class AssembledNamedValue implements AssembledEntry
 	{
 		this.macroRefId = macroContext.refId();
 		this.name = namedValue.name();
-		this.value = new ResolvableIntegralValue(macroContext, namedValue.value());
+		this.value = new ResolvableIntegralValue(macroContext.resolve(namedValue.value()));
 	}
 
 	@Override

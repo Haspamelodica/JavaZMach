@@ -1,7 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries.objecttable;
 
-import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
+import static net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext.GLOBAL_MACRO_CONTEXT;
 
 import java.math.BigInteger;
 import java.util.List;

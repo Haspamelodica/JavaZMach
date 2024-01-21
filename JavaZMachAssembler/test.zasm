@@ -225,7 +225,7 @@ print "add4_vars had incorrect result (incorrect)\n"
 addend:
 
 
-print "\n\n--- Testing add4_consts\n"
+print "\n\n--- Testing add4_const\n"
 .MACRO add_simulcarry_consts_0x8000
 .MACROPARAM an0
 .MACROPARAM bn0

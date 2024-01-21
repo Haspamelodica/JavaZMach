@@ -8,8 +8,8 @@ import java.math.BigInteger;
 import java.util.List;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
-import net.haspamelodica.javazmach.assembler.core.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
@@ -52,7 +52,7 @@ public final class AssembledRoutineHeader implements AssembledEntry
 		};
 		this.name = routine.name();
 		this.locals = routine.locals().stream()
-				.map(l -> new AssembledLocalVariable(l.name(), resolvableIntValOrZero(macroContext, l.initialValue())))
+				.map(l -> new AssembledLocalVariable(l.name(), resolvableIntValOrZero(l.initialValue().map(macroContext::resolve))))
 				.toList();
 	}
 

@@ -1,7 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
-import net.haspamelodica.javazmach.assembler.core.MacroContext;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;

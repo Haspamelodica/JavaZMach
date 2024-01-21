@@ -6,19 +6,18 @@ import java.util.List;
 import java.util.Optional;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
-import net.haspamelodica.javazmach.assembler.core.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.SizeVariantAssemblerUnsigned;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
-import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public final class AssembledImmediateOperand implements AssembledOperand
 {
 	private final SizeVariantAssemblerUnsigned<Boolean> value;
 
-	public AssembledImmediateOperand(MacroContext macroContext, IntegralValue value, boolean forcedSmallBecauseLONGForm)
+	public AssembledImmediateOperand(ResolvedIntegralValue value, boolean forcedSmallBecauseLONGForm)
 	{
-		this.value = new SizeVariantAssemblerUnsigned<>(intVal(macroContext, value), List.of(true, false),
+		this.value = new SizeVariantAssemblerUnsigned<>(intVal(value), List.of(true, false),
 				forcedSmallBecauseLONGForm ? Optional.of(true) : Optional.empty(),
 				// The semantics of a small immediate are "a value from 0-255".
 				// So, the small size has to be unsigned to exclude "negative" immediates:

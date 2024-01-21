@@ -1,6 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries;
 
-import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
+import static net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext.GLOBAL_MACRO_CONTEXT;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
 import net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue;
@@ -21,7 +21,7 @@ public final class AssembledSectionDeclaration implements AssembledEntry
 	{
 		this.location = new ExplicitSectionLocation(section.section());
 		// explicit section declarations are always in global context
-		this.valueOrNull = section.value().map(v -> new ResolvableIntegralValue(GLOBAL_MACRO_CONTEXT, v)).orElse(null);
+		this.valueOrNull = section.value().map(v -> new ResolvableIntegralValue(GLOBAL_MACRO_CONTEXT.resolve(v))).orElse(null);
 	}
 
 	@Override

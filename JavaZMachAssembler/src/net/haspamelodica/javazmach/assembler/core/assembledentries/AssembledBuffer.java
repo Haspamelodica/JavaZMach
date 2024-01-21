@@ -6,8 +6,8 @@ import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.materia
 import java.util.Optional;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
-import net.haspamelodica.javazmach.assembler.core.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
@@ -25,7 +25,7 @@ public final class AssembledBuffer implements AssembledEntry
 	{
 		this.macroRefid = macroContext.refId();
 		this.name = buffer.name();
-		this.byteLength = new ResolvableIntegralValue(macroContext, buffer.byteLength());
+		this.byteLength = new ResolvableIntegralValue(macroContext.resolve(buffer.byteLength()));
 		this.bytes = buffer.optSeq().map(b -> materializeByteSequence(b, version, s -> "Cannot compute buffer initial value: " + s));
 	}
 

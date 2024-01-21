@@ -9,23 +9,22 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
-import net.haspamelodica.javazmach.assembler.core.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.SizeVariantAssemblerUnsigned;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.ValueReference;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.entries.instruction.BranchLength;
-import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
 
 public class AssembledRegularBranchTarget implements AssembledBranchTarget
 {
 	private final SizeVariantAssemblerUnsigned<BranchLength> encodedOffsetAssembler;
 
-	public AssembledRegularBranchTarget(MacroContext macroContext, IntegralValue target, ValueReference branchOriginLocation, Optional<BranchLength> branchLengthOverride)
+	public AssembledRegularBranchTarget(ResolvedIntegralValue target, ValueReference branchOriginLocation, Optional<BranchLength> branchLengthOverride)
 	{
 		this.encodedOffsetAssembler = new SizeVariantAssemblerUnsigned<>(
 				intFunc(valueReferenceResolver ->
 				{
-					BigInteger resolvedTarget = integralValueOrNull(macroContext, target, valueReferenceResolver);
+					BigInteger resolvedTarget = integralValueOrNull(target, valueReferenceResolver);
 					if(resolvedTarget == null)
 						return null;
 					BigInteger resolvedBranchOrigin = valueReferenceResolver.resolveAbsoluteOrNull(branchOriginLocation);

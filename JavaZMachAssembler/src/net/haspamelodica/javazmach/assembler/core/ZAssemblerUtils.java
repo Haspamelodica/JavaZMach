@@ -10,20 +10,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedBinaryExpression;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralLiteral;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReference;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedUnaryExpression;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
-import net.haspamelodica.javazmach.assembler.model.values.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.values.CString;
 import net.haspamelodica.javazmach.assembler.model.values.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.values.GlobalVariable;
-import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
-import net.haspamelodica.javazmach.assembler.model.values.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.values.LocalVariable;
-import net.haspamelodica.javazmach.assembler.model.values.MacroParamRef;
 import net.haspamelodica.javazmach.assembler.model.values.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.values.StackPointer;
-import net.haspamelodica.javazmach.assembler.model.values.UnaryExpression;
 import net.haspamelodica.javazmach.assembler.model.values.Variable;
 import net.haspamelodica.javazmach.assembler.model.values.ZString;
 import net.haspamelodica.javazmach.assembler.model.values.zstrings.ZStringElement;
@@ -34,18 +35,20 @@ import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssemblerUtils
 {
-	public static BigInteger integralValueOrNull(MacroContext macroContext, IntegralValue value, ValueReferenceResolver valueReferenceResolver)
+	public static BigInteger integralValueOrNull(ResolvedIntegralValue value, ValueReferenceResolver valueReferenceResolver)
 	{
 		return switch(value)
 		{
-			case NumberLiteral literal -> literal.value();
-			case CharLiteral literal -> BigInteger.valueOf(literal.value());
-			case LabelReference labelRef -> macroContext.resolveLabelRef(labelRef.name(), valueReferenceResolver);
-			case MacroParamRef macroParamRef -> macroContext.resolveIntegralValue(macroParamRef, valueReferenceResolver);
-			case BinaryExpression expr ->
+			case ResolvedIntegralLiteral literal -> switch(literal.value())
 			{
-				BigInteger lhs = integralValueOrNull(macroContext, expr.lhs(), valueReferenceResolver);
-				BigInteger rhs = integralValueOrNull(macroContext, expr.rhs(), valueReferenceResolver);
+				case NumberLiteral l -> l.value();
+				case CharLiteral l -> BigInteger.valueOf(l.value());
+			};
+			case ResolvedLabelReference labelRef -> valueReferenceResolver.resolveAbsoluteOrNull(new LabelLocation(labelRef.macroContext().refId(), labelRef.name()));
+			case ResolvedBinaryExpression expr ->
+			{
+				BigInteger lhs = integralValueOrNull(expr.lhs(), valueReferenceResolver);
+				BigInteger rhs = integralValueOrNull(expr.rhs(), valueReferenceResolver);
 				if(lhs == null || rhs == null)
 					yield null;
 				yield switch(expr.op())
@@ -62,9 +65,9 @@ public class ZAssemblerUtils
 					case MODULO -> lhs.mod(rhs);
 				};
 			}
-			case UnaryExpression expr ->
+			case ResolvedUnaryExpression expr ->
 			{
-				BigInteger operand = integralValueOrNull(macroContext, expr.operand(), valueReferenceResolver);
+				BigInteger operand = integralValueOrNull(expr.operand(), valueReferenceResolver);
 				if(operand == null)
 					yield null;
 				yield switch(expr.op())

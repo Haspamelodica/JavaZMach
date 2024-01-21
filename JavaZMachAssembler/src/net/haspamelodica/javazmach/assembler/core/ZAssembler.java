@@ -1,8 +1,8 @@
 package net.haspamelodica.javazmach.assembler.core;
 
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
-import static net.haspamelodica.javazmach.assembler.core.MacroContext.FIRST_NONGLOBAL_MACRO_REFID;
-import static net.haspamelodica.javazmach.assembler.core.MacroContext.GLOBAL_MACRO_CONTEXT;
+import static net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext.FIRST_NONGLOBAL_MACRO_REFID;
+import static net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext.GLOBAL_MACRO_CONTEXT;
 import static net.haspamelodica.javazmach.core.instructions.Opcode._unknown_instr;
 
 import java.util.Arrays;
@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
-import net.haspamelodica.javazmach.assembler.core.MacroContext.ResolvedMacroArgumentWithContext;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledBuffer;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledDictionary;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledGlobals;
@@ -23,6 +22,8 @@ import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledName
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledRoutineHeader;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledSectionDeclaration;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledZObjectTable;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext.ResolvedMacroArgumentWithContext;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.entries.Buffer;
 import net.haspamelodica.javazmach.assembler.model.entries.Dictionary;
@@ -126,7 +127,7 @@ public class ZAssembler
 
 		Map<String, ResolvedMacroArgumentWithContext> macroArgs = new HashMap<>();
 		for(int i = 0; i < paramCount; i ++)
-			macroArgs.put(macroDeclaration.params().get(i).name(), outerMacroContext.resolveMacroArgument(macroReference.args().get(i)));
+			macroArgs.put(macroDeclaration.params().get(i).name(), outerMacroContext.resolveWithContext(macroReference.args().get(i)));
 
 		MacroContext macroContext = new MacroContext(nextMacroRefId ++, macroArgs, outerMacroContext);
 

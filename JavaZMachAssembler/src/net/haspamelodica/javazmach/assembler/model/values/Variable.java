@@ -1,4 +1,4 @@
 package net.haspamelodica.javazmach.assembler.model.values;
 
-public sealed interface Variable extends ResolvedOperand, StoreTarget, ResolvedMacroArgument permits StackPointer, LocalVariable, GlobalVariable
+public sealed interface Variable extends Operand, StoreTarget, MacroArgument permits StackPointer, LocalVariable, GlobalVariable
 {}

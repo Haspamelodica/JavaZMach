@@ -1,7 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries.instruction;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
-import net.haspamelodica.javazmach.assembler.core.MacroContext;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.ValueReference;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.entries.instruction.BranchInfo;
@@ -20,7 +20,7 @@ public class AssembledBranchInfo
 		this.target = switch(branchInfo.target())
 		{
 			case SimpleBranchTarget target -> new AssembledSimpleBranchTarget(target, branchInfo.branchLengthOverride());
-			case IntegralValue target -> new AssembledRegularBranchTarget(macroContext, target, branchOriginLocation, branchInfo.branchLengthOverride());
+			case IntegralValue target -> new AssembledRegularBranchTarget(macroContext.resolve(target), branchOriginLocation, branchInfo.branchLengthOverride());
 		};
 	}
 
