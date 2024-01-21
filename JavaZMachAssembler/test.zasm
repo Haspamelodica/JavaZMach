@@ -290,9 +290,9 @@ print "\n\n--- Testing add4_const\n"
 	.MACROPARAM b
 	
 	.add4_consts ..a0, ..a1, ..a2, ..a3,
-		(..b >> 0x00) & 0xffff, 
-		(..b >> 0x10) & 0xffff, 
-		(..b >> 0x20) & 0xffff, 
+		(..b >> 0x00) & 0xffff,
+		(..b >> 0x10) & 0xffff,
+		(..b >> 0x20) & 0xffff,
 		(..b >> 0x30) & 0xffff
 .ENDMACRO
 
