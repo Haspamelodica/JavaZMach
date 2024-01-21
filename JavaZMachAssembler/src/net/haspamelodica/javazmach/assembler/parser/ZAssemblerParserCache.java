@@ -270,7 +270,7 @@ public class ZAssemblerParserCache
 		functionsByName.put("LocalVariable", TypedFunction.build(LocalVariable::new, LocalVariable.class, Integer.class));
 		functionsByName.put("GlobalVariable", TypedFunction.build(GlobalVariable::new, GlobalVariable.class, Integer.class));
 		functionsByName.put("Buffer", TypedFunction.buildT(Buffer::new,
-				Buffer.class, String.class, IntegralValue.class, T_OptByteSequence));
+				Buffer.class, String.class, T_OptIntegralValue, T_OptByteSequence));
 		functionsByName.put("NamedValue", TypedFunction.build(NamedValue::new, NamedValue.class, String.class, IntegralValue.class));
 		functionsByName.put("MacroDeclaration", TypedFunction.buildT(MacroDeclaration::new,
 				MacroDeclaration.class, String.class, T_ListMacroParamDecl, T_ListMacroEntry));

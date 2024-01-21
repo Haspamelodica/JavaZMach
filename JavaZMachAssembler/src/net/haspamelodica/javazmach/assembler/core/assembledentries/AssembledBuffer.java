@@ -1,10 +1,13 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries;
 
+import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.*;
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.*;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.bigintIntChecked;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.materializeByteSequence;
 
 import java.util.Optional;
 
+import net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
 import net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
@@ -25,8 +28,10 @@ public final class AssembledBuffer implements AssembledEntry
 	{
 		this.macroRefid = macroContext.refId();
 		this.name = buffer.name();
-		this.byteLength = new ResolvableIntegralValue(macroContext.resolve(buffer.byteLength()));
 		this.bytes = buffer.optSeq().map(b -> materializeByteSequence(b, version, s -> "Cannot compute buffer initial value: " + s));
+		this.byteLength = new ResolvableIntegralValue(buffer.byteLength().map(macroContext::resolve).map(AssemblerIntegralValue::intVal)
+				.orElseGet(() -> intConst(bytes.orElseGet(
+						() -> defaultError("Buffer with neither initial content nor explicit length doesn't make sense")).length)));
 	}
 
 	@Override

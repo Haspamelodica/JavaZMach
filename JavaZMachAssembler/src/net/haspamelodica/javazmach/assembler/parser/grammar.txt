@@ -66,7 +66,11 @@ HeaderEntry
 NamedValue -> '.' 'value' 'ident' IntegralValue { namedValue[-1] = NamedValue(str([2]), value[3]); } ;
 
 Buffer
- -> '.' 'buffer' IntegralValue 'byte' 'ident' MaybeByteSequence { buffer[-1] = Buffer(str([4]), value[2], optSeq[5]); } ;
+ -> '.' 'buffer' MaybeBufferSize 'ident' MaybeByteSequence { buffer[-1] = Buffer(str([3]), bufferSize[2], optSeq[4]); } ;
+
+MaybeBufferSize
+ ->                      { bufferSize[-1] = optIntegralValueEmpty(); }
+  | IntegralValue 'byte' { bufferSize[-1] = optIntegralValueOf(value[0]); } ;
 
 Routine
  -> '.' 'routine' 'ident' RoutineLocals { routine[-1] = Routine(str([2]), routineLocals[3]); } ;
