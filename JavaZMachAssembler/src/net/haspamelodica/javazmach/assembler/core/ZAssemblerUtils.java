@@ -39,7 +39,7 @@ public class ZAssemblerUtils
 		{
 			case NumberLiteral literal -> literal.value();
 			case CharLiteral literal -> BigInteger.valueOf(literal.value());
-			case LabelReference labelRef -> macroContext.resolveLabelRef(labelRef, valueReferenceResolver);
+			case LabelReference labelRef -> macroContext.resolveLabelRef(labelRef.name(), valueReferenceResolver);
 			case MacroParamRef macroParamRef -> macroContext.resolveIntegralValue(macroParamRef, valueReferenceResolver);
 			case BinaryExpression expr ->
 			{

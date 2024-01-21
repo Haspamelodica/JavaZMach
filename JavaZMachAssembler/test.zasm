@@ -73,6 +73,7 @@ attr2_set:
 print "obj1.attribute2 is set! (incorrect)\n"
 attr2_after:
 
+
 .MACRO testmacro
 .MACROPARAM theparam
 .MACROPARAM scratchreg1
@@ -102,17 +103,27 @@ add 0, 2 -> g1
 .testmacro g1, g0, g2
 .testmacro 3, g0, g1
 
+
 .MACRO innermacro
+.MACROPARAM entry
 .MACROPARAM a
+print "Shouldn't happen!"
+quit
+.:entry:
 print_num ..a + 1
 new_line
 .ENDMACRO
+
 .MACRO outermacro
+.MACROPARAM entry
 .MACROPARAM a
-.innermacro ..a * 2
+.innermacro ..entry, ..a * 2
 .ENDMACRO
+
+jz 0 ?outermacroentry
 // This should print 11.
-.outermacro 5
+.outermacro outermacroentry, 5
+
 
 call testproperties -> sp
 call testbuffer -> sp
@@ -158,3 +169,44 @@ rtrue
 print "Trying to print buffer content...\n"
 print_addr testbuffer2
 rtrue
+
+/*
+.MACRO add_simulcarry_var
+.MACROPARAM aN
+.MACROPARAM bN
+add ..b0, 0x80 -> ..b0       // b0 += 0x80;
+add ..a0, ..b0 -> ..a0       // a0 += b0;
+jl a0, b0 ?~not_a0_carry     // a0_carry = a0 < b0;
+a0_carry:                    // if(a0_carry) {
+add ..b1, 1 -> ..b1          //   b1 ++;
+je ..b1, 0x00 ?~not_a1_carry //   if(b1 == 0x00) {
+add ..a1, 0x80 -> ..a1      //     a1 += 0x80;
+je 0, 0 ?a1_carry            //     a1_carry = true; } }
+not_a1_carry:                // if(!a1_carry) {
+.MACROEND
+*/
+
+.MACRO add4_vars
+.MACROPARAM a0
+.MACROPARAM a1
+.MACROPARAM a2
+.MACROPARAM a3
+.MACROPARAM b0
+.MACROPARAM b1
+.MACROPARAM b2
+.MACROPARAM b3
+add ..b0, 0x80 -> ..b0       // b0 += 0x80;
+add ..a0, ..b0 -> ..a0       // a0 += b0;
+jl a0, b0 ?~not_a0_carry     // a0_carry = a0 < b0;
+a0_carry:                    // if(a0_carry) {
+add ..b1, 1 -> ..b1          //   b1 ++;
+je ..b1, 0x00 ?~not_a1_carry //   if(b1 == 0x00) {
+add ..a1, 0x80 -> ..a1      //     a1 += 0x80;
+je 0, 0 ?a1_carry            //     a1_carry = true; } }
+not_a1_carry:                // if(!a1_carry) {
+
+add ..b1, 0x80 -> ..b1       //   b1 += 0x80;
+add ..a1, ..b1 -> ..a1       //   a1 += b1;
+jl a1, b1 ?~not_a1_carry     //   a1_carry = a1 < b1; }
+a1_carry:                    // if(a1_carry)
+.ENDMACRO

@@ -45,11 +45,14 @@ import net.haspamelodica.javazmach.assembler.model.HeaderValue;
 import net.haspamelodica.javazmach.assembler.model.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.LabelReference;
+import net.haspamelodica.javazmach.assembler.model.LabelReferenceMacroArgument;
 import net.haspamelodica.javazmach.assembler.model.LocalVariable;
+import net.haspamelodica.javazmach.assembler.model.MacroArgument;
 import net.haspamelodica.javazmach.assembler.model.MacroDeclaration;
 import net.haspamelodica.javazmach.assembler.model.MacroEntry;
 import net.haspamelodica.javazmach.assembler.model.MacroParam;
 import net.haspamelodica.javazmach.assembler.model.MacroParamDecl;
+import net.haspamelodica.javazmach.assembler.model.MacroParamLabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.MacroParamRef;
 import net.haspamelodica.javazmach.assembler.model.MacroReference;
 import net.haspamelodica.javazmach.assembler.model.NamedValue;
@@ -108,9 +111,12 @@ public class ZAssemblerParserCache
 	public static void main(String[] args) throws IOException
 	{
 		Path out = Path.of(args[0]);
-		System.out.println("Regenerating " + CACHE_RESOURCE_NAME + " in file " + out + "...");
+		System.out.println("Regenerating grammar cache into " + out + ":");
+		System.out.println("\tParsing grammar...");
 		ParsedGrammar parsedGrammar = parseGrammar(ZAssemblerTokenizer.createTokenizer().allTerminals());
+		System.out.println("\tGenerating parser...");
 		LRkParser parser = generateUncachedParser(parsedGrammar.grammarResult());
+		System.out.println("\tWriting cache...");
 		serializeParser(parsedGrammar.grammarDigest(), parser, out);
 		System.out.println("Done!");
 	}
@@ -225,6 +231,7 @@ public class ZAssemblerParserCache
 		ParameterizedType T_ListChar = new ParameterizedTypeImpl(null, List.class, CharLiteral.class);
 		ParameterizedType T_ListMacroEntry = new ParameterizedTypeImpl(null, List.class, MacroEntry.class);
 		ParameterizedType T_ListMacroParamDecl = new ParameterizedTypeImpl(null, List.class, MacroParamDecl.class);
+		ParameterizedType T_ListMacroArg = new ParameterizedTypeImpl(null, List.class, MacroArgument.class);
 		ParameterizedType T_OptForm = new ParameterizedTypeImpl(null, Optional.class, OpcodeForm.class);
 		ParameterizedType T_OptStoreTarget = new ParameterizedTypeImpl(null, Optional.class, StoreTarget.class);
 		ParameterizedType T_OptIntegralValue = new ParameterizedTypeImpl(null, Optional.class, IntegralValue.class);
@@ -271,6 +278,10 @@ public class ZAssemblerParserCache
 		functionsByName.put("MacroReference", TypedFunction.buildT(MacroReference::new, MacroReference.class, String.class, T_ListOperand));
 		functionsByName.put("MacroParam", TypedFunction.build(MacroParam::new, MacroParam.class, String.class));
 		functionsByName.put("MacroParamRef", TypedFunction.build(MacroParamRef::new, MacroParamRef.class, MacroParam.class));
+		functionsByName.put("MacroParamLabelDeclaration", TypedFunction.build(MacroParamLabelDeclaration::new,
+				MacroParamLabelDeclaration.class, MacroParam.class));
+		functionsByName.put("LabelReferenceMacroArgument", TypedFunction.build(LabelReferenceMacroArgument::new,
+				LabelReferenceMacroArgument.class, LabelReference.class));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
 		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
 		functionsByName.put("CString", TypedFunction.buildT(CString::new, CString.class, String.class));
@@ -352,10 +363,12 @@ public class ZAssemblerParserCache
 		functionsByName.put("emptyMPDList", TypedFunction.buildT(ArrayList::new, T_ListMacroParamDecl));
 		functionsByName.put("appendMPDList", TypedFunction.<List<MacroParamDecl>, MacroParamDecl, List<MacroParamDecl>> buildT(
 				ZAssemblerParserCache::appendList, T_ListMacroParamDecl, T_ListMacroParamDecl, MacroParamDecl.class));
+		functionsByName.put("emptyMacroArgList", TypedFunction.buildT(ArrayList::new, T_ListMacroArg));
+		functionsByName.put("appendMacroArgList", TypedFunction.<List<MacroArgument>, MacroArgument, List<MacroArgument>> buildT(
+				ZAssemblerParserCache::appendList, T_ListMacroArg, T_ListMacroArg, MacroArgument.class));
 
 		// C-Strings
 		functionsByName.put("appendCString", TypedFunction.build(CString::append, CString.class, CString.class, String.class));
-
 
 		// Optionals
 		functionsByName.put("optFormEmpty", TypedFunction.buildT(Optional::empty, T_OptForm));

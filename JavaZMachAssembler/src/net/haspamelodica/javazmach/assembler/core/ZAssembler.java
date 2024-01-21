@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.core.MacroContext.ResolvedMacroArgumentWithContext;
 import net.haspamelodica.javazmach.assembler.model.Buffer;
 import net.haspamelodica.javazmach.assembler.model.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.GlobalVarTable;
@@ -20,9 +21,9 @@ import net.haspamelodica.javazmach.assembler.model.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.MacroDeclaration;
 import net.haspamelodica.javazmach.assembler.model.MacroEntry;
 import net.haspamelodica.javazmach.assembler.model.MacroOrFileEntry;
+import net.haspamelodica.javazmach.assembler.model.MacroParamLabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.MacroReference;
 import net.haspamelodica.javazmach.assembler.model.NamedValue;
-import net.haspamelodica.javazmach.assembler.model.ResolvedOperand;
 import net.haspamelodica.javazmach.assembler.model.Routine;
 import net.haspamelodica.javazmach.assembler.model.SectionDeclaration;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
@@ -113,9 +114,9 @@ public class ZAssembler
 			defaultError("Macro " + macroReference.name() + " called with incorrect number of arguments: "
 					+ "expected " + paramCount + " but was " + macroReference.args().size());
 
-		Map<String, ResolvedOperand> macroArgs = new HashMap<>();
+		Map<String, ResolvedMacroArgumentWithContext> macroArgs = new HashMap<>();
 		for(int i = 0; i < paramCount; i ++)
-			macroArgs.put(macroDeclaration.params().get(i).name(), outerMacroContext.resolveOperand(macroReference.args().get(i)));
+			macroArgs.put(macroDeclaration.params().get(i).name(), outerMacroContext.resolveMacroArgument(macroReference.args().get(i)));
 
 		MacroContext macroContext = new MacroContext(nextMacroRefId ++, macroArgs, outerMacroContext);
 
@@ -123,6 +124,7 @@ public class ZAssembler
 			switch(entry)
 			{
 				case MacroOrFileEntry e -> add(e, macroContext);
+				case MacroParamLabelDeclaration e -> assembler.addEntry(macroContext.resolveAssembledLabelDeclaration(e));
 			}
 	}
 

@@ -22,7 +22,9 @@ MacroBody
  ->                      { macroBody[-1] = emptyMEList(); }
   | MacroBody MacroEntry { macroBody[-1] = appendMEList(macroBody[0], macroEntry[1]); } ;
 
-MacroEntry -> MacroOrFileEntry { macroEntry[-1] = macroOrFileEntry[0]; } ;
+MacroEntry
+ -> MacroOrFileEntry           { macroEntry[-1] = macroOrFileEntry[0]; } 
+  | MacroParamLabelDeclaration { macroEntry[-1] = macroParamLabelDeclaration[0]; } ;
 
 MacroOrFileEntry
  -> Routine          { macroOrFileEntry[-1] = routine[0]; }
@@ -32,7 +34,24 @@ MacroOrFileEntry
   | NamedValue       { macroOrFileEntry[-1] = namedValue[0]; }
   | MacroReference   { macroOrFileEntry[-1] = macroReference[0]; } ;
 
-MacroReference -> '.' 'ident' Operands { macroReference[-1] = MacroReference(str([1]), operands[2]); } ;
+MacroReference -> '.' 'ident' MacroArguments { macroReference[-1] = MacroReference(str([1]), macroArgs[2]); } ;
+
+MacroArguments
+ ->                    { macroArgs[-1] = emptyMacroArgList(); }
+  | MacroArgument      { macroArgs[-1] = appendMacroArgList(emptyMacroArgList(), macroArg[0]); }
+  | MacroArgumentsMin2 { macroArgs[-1] = macroArgs[0]; } ;
+
+MacroArgumentsMin2 -> MacroArgumentsEndingComma MacroArgument { macroArgs[-1] = appendMacroArgList(macroArgs[0], macroArg[1]); } ;
+
+MacroArgumentsEndingComma
+ -> MacroArgument ','                           { macroArgs[-1] = appendMacroArgList(emptyMacroArgList(), macroArg[0]); }
+  | MacroArgumentsEndingComma MacroArgument ',' { macroArgs[-1] = appendMacroArgList(macroArgs[0], macroArg[1]); } ;
+
+MacroArgument
+ -> IntegralValueNMPLR { macroArg[-1] = value[0]; }
+  | LabelReference     { macroArg[-1] = LabelReferenceMacroArgument(labelReference[0]); }
+  | Variable           { macroArg[-1] = variable[0]; }
+  | MacroParam         { macroArg[-1] = macroParam[0]; } ;
 
 MacroDeclaration -> '.' 'macro' 'ident' MacroParamDecls MacroBody '.' 'endmacro'
   { macro[-1] = MacroDeclaration(str([2]), macroParamDecls[3], macroBody[4]); } ;
@@ -135,6 +154,10 @@ HeaderValue
   | ByteSequenceMin2                     { headerValue[-1] = sequence[0]; } ;
 
 LabelDeclaration -> 'ident' ':' { labelDeclaration[-1] = LabelDeclaration(str([0])); } ;
+
+// This syntax (".:ident:") is so weird just so that it is LR(2)-parseable.
+// The syntax "..ident:" would be much nicer - but not LR(2) (or even ambiguous? not sure).
+MacroParamLabelDeclaration -> ".:" 'ident' ':' { macroParamLabelDeclaration[-1] = MacroParamLabelDeclaration(MacroParam(str([2]))); } ;
 
 Instruction -> Opcode MaybeForm Operands MaybeStoreTarget MaybeBranchInfo MaybeText { instruction[-1] =
     Instruction(str(str[0]), form[1], operands[2], optStoreTarget[3], branchInfo[4], text[5]); } ;
@@ -243,121 +266,130 @@ MacroParam -> ".." 'ident' { macroParam[-1] = MacroParam(str([2])); } ;
 // NoTilde variant disallows a ~ at the start.
 // Needed because otherwise the grammar would be ambiguous because of clash with branch-on-condition-false.
 // NMP (NoMacroParam) variant disallows the entire IntegralValue to be a single MacroParam.
-// Needed because otherwise the grammar would be ambiguous for Operands - they handle MacroParams differently.
+// Needed because otherwise the grammar would be ambiguous for Operands and MacroArguments - they handle MacroParams differently.
+// NLR (NoLabelReference) variant disallows the entire IntegralValue to be a single LabelReference.
+// Needed because otherwise the grammar would be ambiguous for MacroArguments - they handle LabelReferences differently.
 IntegralValue -> IExpr { value[-1] = value[0]; } ;
 IntegralValueNMP -> IExprNMP { value[-1] = value[0]; } ;
+IntegralValueNMPLR -> IExprNMPLR { value[-1] = value[0]; } ;
 IntegralValueNoTilde -> IExprNoTilde { value[-1] = value[0]; } ;
 
 IExpr -> IExprOr { value[-1] = value[0]; } ;
-IExprNMP -> IExprOrNMP { value[-1] = value[0]; } ;
+IExprNMP
+ -> IExprOrNMPLR { value[-1] = value[0]; }
+  | IExprLR      { value[-1] = value[0]; } ;
+IExprNMPLR -> IExprOrNMPLR { value[-1] = value[0]; } ;
 IExprNoTilde
- -> IExprOrNoTildeNMP { value[-1] = value[0]; }
-  | IExprMP           { value[-1] = value[0]; } ;
+ -> IExprOrNoTildeNMPLR { value[-1] = value[0]; }
+  | IExprMPLR           { value[-1] = value[0]; } ;
 
 IExprOr
- -> IExprOrNMP                  { value[-1] = value[0]; }
-  | IExprMP                     { value[-1] = value[0]; } ;
-IExprOrNMP
- -> IExprXorNMP                 { value[-1] = value[0]; }
+ -> IExprOrNMPLR                { value[-1] = value[0]; }
+  | IExprMPLR                   { value[-1] = value[0]; } ;
+IExprOrNMPLR
+ -> IExprXorNMPLR               { value[-1] = value[0]; }
   | IExprOr '|' IExprXor        { value[-1] = BinaryExpression(value[0], BITWISE_OR(), value[2]); } ;
 IExprOrNoTilde
- -> IExprOrNoTildeNMP           { value[-1] = value[0]; }
-  | IExprMP                     { value[-1] = value[0]; } ;
-IExprOrNoTildeNMP
- -> IExprXorNoTildeNMP          { value[-1] = value[0]; }
+ -> IExprOrNoTildeNMPLR         { value[-1] = value[0]; }
+  | IExprMPLR                   { value[-1] = value[0]; } ;
+IExprOrNoTildeNMPLR
+ -> IExprXorNoTildeNMPLR        { value[-1] = value[0]; }
   | IExprOrNoTilde '|' IExprXor { value[-1] = BinaryExpression(value[0], BITWISE_OR(), value[2]); } ;
 
 IExprXor
- -> IExprXorNMP                  { value[-1] = value[0]; }
-  | IExprMP                      { value[-1] = value[0]; } ;
-IExprXorNMP
- -> IExprAndNMP                  { value[-1] = value[0]; }
+ -> IExprXorNMPLR                { value[-1] = value[0]; }
+  | IExprMPLR                    { value[-1] = value[0]; } ;
+IExprXorNMPLR
+ -> IExprAndNMPLR                { value[-1] = value[0]; }
   | IExprXor '^' IExprAnd        { value[-1] = BinaryExpression(value[0], BITWISE_XOR(), value[2]); } ;
 IExprXorNoTilde
- -> IExprXorNoTildeNMP           { value[-1] = value[0]; }
-  | IExprMP                      { value[-1] = value[0]; } ;
-IExprXorNoTildeNMP
- -> IExprAndNoTildeNMP           { value[-1] = value[0]; }
+ -> IExprXorNoTildeNMPLR         { value[-1] = value[0]; }
+  | IExprMPLR                    { value[-1] = value[0]; } ;
+IExprXorNoTildeNMPLR
+ -> IExprAndNoTildeNMPLR         { value[-1] = value[0]; }
   | IExprXorNoTilde '^' IExprAnd { value[-1] = BinaryExpression(value[0], BITWISE_XOR(), value[2]); } ;
 
 IExprAnd
- -> IExprAndNMP                    { value[-1] = value[0]; }
-  | IExprMP                        { value[-1] = value[0]; } ;
-IExprAndNMP
- -> IExprShiftNMP                  { value[-1] = value[0]; }
+ -> IExprAndNMPLR                  { value[-1] = value[0]; }
+  | IExprMPLR                      { value[-1] = value[0]; } ;
+IExprAndNMPLR
+ -> IExprShiftNMPLR                { value[-1] = value[0]; }
   | IExprAnd '&' IExprShift        { value[-1] = BinaryExpression(value[0], BITWISE_AND(), value[2]); } ;
 IExprAndNoTilde
- -> IExprAndNoTildeNMP             { value[-1] = value[0]; }
-  | IExprMP                        { value[-1] = value[0]; } ;
-IExprAndNoTildeNMP
- -> IExprShiftNoTildeNMP           { value[-1] = value[0]; }
+ -> IExprAndNoTildeNMPLR           { value[-1] = value[0]; }
+  | IExprMPLR                      { value[-1] = value[0]; } ;
+IExprAndNoTildeNMPLR
+ -> IExprShiftNoTildeNMPLR         { value[-1] = value[0]; }
   | IExprAndNoTilde '&' IExprShift { value[-1] = BinaryExpression(value[0], BITWISE_AND(), value[2]); } ;
 
 IExprShift
- -> IExprShiftNMP                        { value[-1] = value[0]; }
-  | IExprMP                              { value[-1] = value[0]; } ;
-IExprShiftNMP
- -> IExprAdditiveNMP                     { value[-1] = value[0]; }
+ -> IExprShiftNMPLR                      { value[-1] = value[0]; }
+  | IExprMPLR                            { value[-1] = value[0]; } ;
+IExprShiftNMPLR
+ -> IExprAdditiveNMPLR                   { value[-1] = value[0]; }
   | IExprShift '<<' IExprAdditive        { value[-1] = BinaryExpression(value[0], LSHIFT(), value[2]); }
   | IExprShift '>>' IExprAdditive        { value[-1] = BinaryExpression(value[0], RSHIFT(), value[2]); } ;
 IExprShiftNoTilde
- -> IExprShiftNoTildeNMP                 { value[-1] = value[0]; }
-  | IExprMP                              { value[-1] = value[0]; } ;
-IExprShiftNoTildeNMP
- -> IExprAdditiveNoTildeNMP              { value[-1] = value[0]; }
+ -> IExprShiftNoTildeNMPLR               { value[-1] = value[0]; }
+  | IExprMPLR                            { value[-1] = value[0]; } ;
+IExprShiftNoTildeNMPLR
+ -> IExprAdditiveNoTildeNMPLR            { value[-1] = value[0]; }
   | IExprShiftNoTilde '<<' IExprAdditive { value[-1] = BinaryExpression(value[0], LSHIFT(), value[2]); }
   | IExprShiftNoTilde '>>' IExprAdditive { value[-1] = BinaryExpression(value[0], RSHIFT(), value[2]); } ;
 
 IExprAdditive
- -> IExprAdditiveNMP                             { value[-1] = value[0]; }
-  | IExprMP                                      { value[-1] = value[0]; } ;
-IExprAdditiveNMP
- -> IExprMultiplicativeNMP                       { value[-1] = value[0]; }
+ -> IExprAdditiveNMPLR                           { value[-1] = value[0]; }
+  | IExprMPLR                                    { value[-1] = value[0]; } ;
+IExprAdditiveNMPLR
+ -> IExprMultiplicativeNMPLR                     { value[-1] = value[0]; }
   | IExprAdditive '+' IExprMultiplicative        { value[-1] = BinaryExpression(value[0], ADD(), value[2]); }
   | IExprAdditive '-' IExprMultiplicative        { value[-1] = BinaryExpression(value[0], SUBTRACT(), value[2]); } ;
 IExprAdditiveNoTilde
- -> IExprAdditiveNoTildeNMP                      { value[-1] = value[0]; }
-  | IExprMP                                      { value[-1] = value[0]; } ;
-IExprAdditiveNoTildeNMP
- -> IExprMultiplicativeNoTildeNMP                { value[-1] = value[0]; }
+ -> IExprAdditiveNoTildeNMPLR                    { value[-1] = value[0]; }
+  | IExprMPLR                                    { value[-1] = value[0]; } ;
+IExprAdditiveNoTildeNMPLR
+ -> IExprMultiplicativeNoTildeNMPLR              { value[-1] = value[0]; }
   | IExprAdditiveNoTilde '+' IExprMultiplicative { value[-1] = BinaryExpression(value[0], ADD(), value[2]); }
   | IExprAdditiveNoTilde '-' IExprMultiplicative { value[-1] = BinaryExpression(value[0], SUBTRACT(), value[2]); } ;
 
 IExprMultiplicative
- -> IExprMultiplicativeNMP                    { value[-1] = value[0]; }
-  | IExprMP                                   { value[-1] = value[0]; } ;
-IExprMultiplicativeNMP
- -> IExprUnaryNMP                             { value[-1] = value[0]; }
+ -> IExprMultiplicativeNMPLR                  { value[-1] = value[0]; }
+  | IExprMPLR                                 { value[-1] = value[0]; } ;
+IExprMultiplicativeNMPLR
+ -> IExprUnaryNMPLR                           { value[-1] = value[0]; }
   | IExprMultiplicative '*' IExprUnary        { value[-1] = BinaryExpression(value[0], MULTIPLY(), value[2]); }
   | IExprMultiplicative '/' IExprUnary        { value[-1] = BinaryExpression(value[0], DIVIDE(), value[2]); }
   | IExprMultiplicative '%' IExprUnary        { value[-1] = BinaryExpression(value[0], MODULO(), value[2]); } ;
 IExprMultiplicativeNoTilde
- -> IExprMultiplicativeNoTildeNMP             { value[-1] = value[0]; }
-  | IExprMP                                   { value[-1] = value[0]; } ;
-IExprMultiplicativeNoTildeNMP
- -> IExprUnaryNoTildeNMP                      { value[-1] = value[0]; }
+ -> IExprMultiplicativeNoTildeNMPLR           { value[-1] = value[0]; }
+  | IExprMPLR                                 { value[-1] = value[0]; } ;
+IExprMultiplicativeNoTildeNMPLR
+ -> IExprUnaryNoTildeNMPLR                    { value[-1] = value[0]; }
   | IExprMultiplicativeNoTilde '*' IExprUnary { value[-1] = BinaryExpression(value[0], MULTIPLY(), value[2]); }
   | IExprMultiplicativeNoTilde '/' IExprUnary { value[-1] = BinaryExpression(value[0], DIVIDE(), value[2]); }
   | IExprMultiplicativeNoTilde '%' IExprUnary { value[-1] = BinaryExpression(value[0], MODULO(), value[2]); } ;
 
 IExprUnary
- -> IExprUnaryNMP        { value[-1] = value[0]; }
-  | IExprMP              { value[-1] = value[0]; } ;
-IExprUnaryNMP
- -> IExprUnaryNoTildeNMP { value[-1] = value[0]; }
-  | '~' IExprUnary       { value[-1] = UnaryExpression(BITWISE_NOT(), value[1]); } ;
-IExprUnaryNoTildeNMP
- -> IExprPrimaryNMP      { value[-1] = value[0]; }
-  | '+' IExprUnary       { value[-1] = value[1]; }
-  | '-' IExprUnary       { value[-1] = UnaryExpression(NEGATE(), value[1]); } ;
+ -> IExprUnaryNMPLR        { value[-1] = value[0]; }
+  | IExprMPLR              { value[-1] = value[0]; } ;
+IExprUnaryNMPLR
+ -> IExprUnaryNoTildeNMPLR { value[-1] = value[0]; }
+  | '~' IExprUnary         { value[-1] = UnaryExpression(BITWISE_NOT(), value[1]); } ;
+IExprUnaryNoTildeNMPLR
+ -> IExprPrimaryNMPLR      { value[-1] = value[0]; }
+  | '+' IExprUnary         { value[-1] = value[1]; }
+  | '-' IExprUnary         { value[-1] = UnaryExpression(NEGATE(), value[1]); } ;
 
-IExprPrimaryNMP
- -> IntegralLiteral  { value[-1] = literal[0]; }
-  | LabelReference   { value[-1] = label[0]; }
-  | '(' IExpr ')'    { value[-1] = value[1]; } ;
-IExprMP -> MacroParam { value[-1] = MacroParamRef(macroParam[0]); } ;
+IExprPrimaryNMPLR
+ -> IntegralLiteral       { value[-1] = literal[0]; }
+  | '(' IExpr ')'         { value[-1] = value[1]; } ;
+IExprMPLR
+ -> IExprMP               { value[-1] = value[0]; }
+  | IExprLR               { value[-1] = value[0]; } ;
+IExprMP -> MacroParam     { value[-1] = MacroParamRef(macroParam[0]); } ;
+IExprLR -> LabelReference { value[-1] = labelReference[0]; } ;
 
-LabelReference -> 'ident' { label[-1] = LabelReference(str([0])); } ;
+LabelReference -> 'ident' { labelReference[-1] = LabelReference(str([0])); } ;
 
 // For better error handling, each terminal allows all digits,
 // and errors are catched in the function parseBigInt().
