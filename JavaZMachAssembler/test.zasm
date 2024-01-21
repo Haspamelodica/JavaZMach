@@ -138,55 +138,50 @@ print "Shouldn't happen 2!"
 
 print "\n\n--- Testing add4_vars\n"
 .MACRO add_simulcarry_vars_0x8000
-.MACROPARAM an0
-.MACROPARAM bn0
-.MACROPARAM an1
-.MACROPARAM bn1
-.MACROPARAM an0_carry
-.MACROPARAM an1_carry
-                                 // <from previous> if(!a0_carry) { 
-add ..bn0, 0x8000 -> ..bn0       //   b0 += 0x8000;
-add ..an0, ..bn0 -> ..an0        //   a0 += b0;
-jl ..an0, ..bn0 ?~not_an1_carry  //   a0_carry = a0 < b0; }
-.:an0_carry:                     // if(a0_carry) {
-add ..bn1, 1 -> ..bn1            //   b1 ++;
-je ..bn1, 0x0000 ?~not_an1_carry //   if(b1 == 0x0000) {
-add ..an1, 0x8000 -> ..an1       //     a1 += 0x8000;
-je 0, 0 ?..an1_carry             //     a1_carry = true; } }
-not_an1_carry:                   // if(!a1_carry) {
-
+	.MACROPARAM an0
+	.MACROPARAM bn0
+	.MACROPARAM an1
+	.MACROPARAM bn1
+	.MACROPARAM an0_carry
+	.MACROPARAM an1_carry
+	                                 // <from previous> if(!a0_carry) { 
+	add ..bn0, 0x8000 -> ..bn0       //   b0 += 0x8000;
+	add ..an0, ..bn0 -> ..an0        //   a0 += b0;
+	jl ..an0, ..bn0 ?~not_an1_carry  //   a0_carry = a0 < b0; }
+	.:an0_carry:                     // if(a0_carry) {
+	add ..bn1, 1 -> ..bn1            //   b1 ++;
+	je ..bn1, 0x0000 ?~not_an1_carry //   if(b1 == 0x0000) {
+	add ..an1, 0x8000 -> ..an1       //     a1 += 0x8000;
+	je 0, 0 ?..an1_carry             //     a1_carry = true; } }
+	not_an1_carry:                   // if(!a1_carry) {
 .ENDMACRO
-
 .MACRO add_simulcarry_vars_last
-.MACROPARAM an0
-.MACROPARAM bn0
-.MACROPARAM an0_carry
-
-// Do the final add and provide the an0_carry label (without letting it do anything)
-add ..an0, ..bn0 -> ..an0
-.:an0_carry:
-
+	.MACROPARAM an0
+	.MACROPARAM bn0
+	.MACROPARAM an0_carry
+	
+	// Do the final add and provide the an0_carry label (without letting it do anything)
+	add ..an0, ..bn0 -> ..an0
+	.:an0_carry:
 .ENDMACRO
-
 .MACRO add4_vars
-.MACROPARAM a0
-.MACROPARAM a1
-.MACROPARAM a2
-.MACROPARAM a3
-.MACROPARAM b0
-.MACROPARAM b1
-.MACROPARAM b2
-.MACROPARAM b3
-
-.add_simulcarry_vars_0x8000 ..a0, ..b0, ..a1, ..b1, a0_carry, a1_carry
-.add_simulcarry_vars_0x8000 ..a1, ..b1, ..a2, ..b2, a1_carry, a2_carry
-.add_simulcarry_vars_0x8000 ..a2, ..b2, ..a3, ..b3, a2_carry, a3_carry
-.add_simulcarry_vars_last   ..a3, ..b3,             a3_carry
-
-add ..a0, 0x8000 -> ..a0
-add ..a1, 0x8000 -> ..a1
-add ..a2, 0x8000 -> ..a2
-
+	.MACROPARAM a0
+	.MACROPARAM a1
+	.MACROPARAM a2
+	.MACROPARAM a3
+	.MACROPARAM b0
+	.MACROPARAM b1
+	.MACROPARAM b2
+	.MACROPARAM b3
+	
+	.add_simulcarry_vars_0x8000 ..a0, ..b0, ..a1, ..b1, a0_carry, a1_carry
+	.add_simulcarry_vars_0x8000 ..a1, ..b1, ..a2, ..b2, a1_carry, a2_carry
+	.add_simulcarry_vars_0x8000 ..a2, ..b2, ..a3, ..b3, a2_carry, a3_carry
+	.add_simulcarry_vars_last   ..a3, ..b3,             a3_carry
+	
+	add ..a0, 0x8000 -> ..a0
+	add ..a1, 0x8000 -> ..a1
+	add ..a2, 0x8000 -> ..a2
 .ENDMACRO
 
 add 0, 2 -> g0
@@ -227,75 +222,68 @@ addend:
 
 print "\n\n--- Testing add4_const\n"
 .MACRO add_simulcarry_consts_0x8000
-.MACROPARAM an0
-.MACROPARAM bn0
-.MACROPARAM an1
-.MACROPARAM bn1
-.MACROPARAM an0_justcheck
-.MACROPARAM an0_carry
-.MACROPARAM an1_justcheck
-.MACROPARAM an1_carry
-                                         // <from previous> if(!a0_justcheck && !a0_carry)
-add ..an0, (..bn0 + 0x8000) & 0xffff -> ..an0       //   a0 += b0 + 0x8000;
-.:an0_justcheck:                         // if(!a0_carry)
-jl ..an0, (..bn0 + 0x8000) & 0xffff ?~not_an0_carry //   a0_carry = a0 < (byte) (b0 + 0x8000);
-.:an0_carry:                             // if(a0_carry) {
-add ..an1, (..bn1 + 0x8001) & 0xffff -> ..an1       //     a1 += b1 + 0x8001;
-//TODO if we ever support that, we could make this a compile-time check
-je ..bn1, 0xffff ?..an1_carry            //   if(b1 == (byte) 0xffff) a1_carry = true;
-je 0, 0 ?..an1_justcheck                 //   a1_justcheck = true; }
-not_an0_carry:                           // if(!a1_justcheck && !a1_carry)
-
+	.MACROPARAM an0
+	.MACROPARAM bn0
+	.MACROPARAM an1
+	.MACROPARAM bn1
+	.MACROPARAM an0_justcheck
+	.MACROPARAM an0_carry
+	.MACROPARAM an1_justcheck
+	.MACROPARAM an1_carry
+	                                         // <from previous> if(!a0_justcheck && !a0_carry)
+	add ..an0, (..bn0 + 0x8000) & 0xffff -> ..an0       //   a0 += b0 + 0x8000;
+	.:an0_justcheck:                         // if(!a0_carry)
+	jl ..an0, (..bn0 + 0x8000) & 0xffff ?~not_an0_carry //   a0_carry = a0 < (byte) (b0 + 0x8000);
+	.:an0_carry:                             // if(a0_carry) {
+	add ..an1, (..bn1 + 0x8001) & 0xffff -> ..an1       //     a1 += b1 + 0x8001;
+	//TODO if we ever support that, we could make this a compile-time check
+	je ..bn1, 0xffff ?..an1_carry            //   if(b1 == (byte) 0xffff) a1_carry = true;
+	je 0, 0 ?..an1_justcheck                 //   a1_justcheck = true; }
+	not_an0_carry:                           // if(!a1_justcheck && !a1_carry)
 .ENDMACRO
-
 .MACRO add_simulcarry_consts_last
-.MACROPARAM an0
-.MACROPARAM bn0
-.MACROPARAM an0_justcheck
-.MACROPARAM an0_carry
-
-// Do the final add and provide the an0_carry and an0_justcheck labels (without letting them do anything)
-add ..an0, (..bn0 + 0x8000) & 0xffff -> ..an0
-.:an0_justcheck:
-.:an0_carry:
-
+	.MACROPARAM an0
+	.MACROPARAM bn0
+	.MACROPARAM an0_justcheck
+	.MACROPARAM an0_carry
+	
+	// Do the final add and provide the an0_carry and an0_justcheck labels (without letting them do anything)
+	add ..an0, (..bn0 + 0x8000) & 0xffff -> ..an0
+	.:an0_justcheck:
+	.:an0_carry:
 .ENDMACRO
-
 .MACRO add4_consts
-.MACROPARAM a0
-.MACROPARAM a1
-.MACROPARAM a2
-.MACROPARAM a3
-.MACROPARAM b0
-.MACROPARAM b1
-.MACROPARAM b2
-.MACROPARAM b3
-
-.add_simulcarry_consts_0x8000 ..a0, ..b0, ..a1, ..b1, a0_carry, a0_justcheck, a1_carry, a1_justcheck
-.add_simulcarry_consts_0x8000 ..a1, ..b1, ..a2, ..b2, a1_carry, a1_justcheck, a2_carry, a2_justcheck
-.add_simulcarry_consts_0x8000 ..a2, ..b2, ..a3, ..b3, a2_carry, a2_justcheck, a3_carry, a3_justcheck
-.add_simulcarry_consts_last   ..a3, ..b3,             a3_carry, a3_justcheck
-
-add ..a0, 0x8000 -> ..a0
-add ..a1, 0x8000 -> ..a1
-add ..a2, 0x8000 -> ..a2
-add ..a3, 0x8000 -> ..a3
-
+	.MACROPARAM a0
+	.MACROPARAM a1
+	.MACROPARAM a2
+	.MACROPARAM a3
+	.MACROPARAM b0
+	.MACROPARAM b1
+	.MACROPARAM b2
+	.MACROPARAM b3
+	
+	.add_simulcarry_consts_0x8000 ..a0, ..b0, ..a1, ..b1, a0_carry, a0_justcheck, a1_carry, a1_justcheck
+	.add_simulcarry_consts_0x8000 ..a1, ..b1, ..a2, ..b2, a1_carry, a1_justcheck, a2_carry, a2_justcheck
+	.add_simulcarry_consts_0x8000 ..a2, ..b2, ..a3, ..b3, a2_carry, a2_justcheck, a3_carry, a3_justcheck
+	.add_simulcarry_consts_last   ..a3, ..b3,             a3_carry, a3_justcheck
+	
+	add ..a0, 0x8000 -> ..a0
+	add ..a1, 0x8000 -> ..a1
+	add ..a2, 0x8000 -> ..a2
+	add ..a3, 0x8000 -> ..a3
 .ENDMACRO
-
 .MACRO add4_const
-.MACROPARAM a0
-.MACROPARAM a1
-.MACROPARAM a2
-.MACROPARAM a3
-.MACROPARAM b
-
-.add4_consts ..a0, ..a1, ..a2, ..a3,
-	(..b >> 0x00) & 0xffff, 
-	(..b >> 0x10) & 0xffff, 
-	(..b >> 0x20) & 0xffff, 
-	(..b >> 0x30) & 0xffff
-
+	.MACROPARAM a0
+	.MACROPARAM a1
+	.MACROPARAM a2
+	.MACROPARAM a3
+	.MACROPARAM b
+	
+	.add4_consts ..a0, ..a1, ..a2, ..a3,
+		(..b >> 0x00) & 0xffff, 
+		(..b >> 0x10) & 0xffff, 
+		(..b >> 0x20) & 0xffff, 
+		(..b >> 0x30) & 0xffff
 .ENDMACRO
 
 add 0, 2 -> g0
