@@ -15,7 +15,6 @@ import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.Re
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReference;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedUnaryExpression;
-import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequenceElement;
@@ -44,7 +43,7 @@ public class ZAssemblerUtils
 				case NumberLiteral l -> l.value();
 				case CharLiteral l -> BigInteger.valueOf(l.value());
 			};
-			case ResolvedLabelReference labelRef -> valueReferenceResolver.resolveAbsoluteOrNull(new LabelLocation(labelRef.macroContext().refId(), labelRef.name()));
+			case ResolvedLabelReference labelRef -> labelRef.macroContext().resolveLabelRef(labelRef.name(), valueReferenceResolver);
 			case ResolvedBinaryExpression expr ->
 			{
 				BigInteger lhs = integralValueOrNull(expr.lhs(), valueReferenceResolver);
