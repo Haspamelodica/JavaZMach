@@ -53,7 +53,9 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 			if(resolved != null)
 				return resolved;
 		}
-		return null;
+		// Label can't be found. This'll return null, but also emit the correct error diagnostic.
+		// This makes future error messages less confusing.
+		return valueReferenceResolver.resolveAbsoluteOrNull(new LabelLocation(refId(), labelName));
 	}
 
 	public AssembledLabelDeclaration resolveAssembledLabelDeclaration(MacroParamLabelDeclaration labelDeclaration)
