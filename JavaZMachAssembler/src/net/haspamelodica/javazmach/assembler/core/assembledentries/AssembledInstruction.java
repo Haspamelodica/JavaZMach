@@ -67,11 +67,20 @@ public final class AssembledInstruction implements AssembledEntry
 			defaultError("Opcode " + instruction.opcode() + " unknown");
 		}
 		if(opcode.isStoreOpcode != instruction.storeTarget().isPresent())
-			defaultError("Opcode " + opcode + " is store, but no store target was given: " + instruction);
+			if(opcode.isStoreOpcode)
+				defaultError("Opcode " + opcode + " is store, but no store target was given: " + instruction);
+			else
+				defaultError("Opcode " + opcode + " is not store, but a store target was given: " + instruction);
 		if(opcode.isBranchOpcode != instruction.branchInfo().isPresent())
-			defaultError("Opcode " + opcode + " is branch, but no branch info was given: " + instruction);
+			if(opcode.isBranchOpcode)
+				defaultError("Opcode " + opcode + " is branch, but no branch info was given: " + instruction);
+			else
+				defaultError("Opcode " + opcode + " is not branch, but branch info was given: " + instruction);
 		if(opcode.isTextOpcode != instruction.text().isPresent())
-			defaultError("Opcode " + opcode + " is text, but no text was given: " + instruction);
+			if(opcode.isTextOpcode)
+				defaultError("Opcode " + opcode + " is text, but no text was given: " + instruction);
+			else
+				defaultError("Opcode " + opcode + " is not text, but text was given: " + instruction);
 
 		List<Operand> operandsUnassembled = instruction.operands();
 
