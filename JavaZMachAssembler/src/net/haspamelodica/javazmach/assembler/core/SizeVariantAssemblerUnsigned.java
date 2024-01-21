@@ -11,6 +11,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
+import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
+
 // TODO better name
 public final class SizeVariantAssemblerUnsigned<SIZE>
 {

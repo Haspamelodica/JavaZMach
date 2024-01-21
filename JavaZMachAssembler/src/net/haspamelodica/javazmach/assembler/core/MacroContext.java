@@ -6,18 +6,21 @@ import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.integra
 import java.math.BigInteger;
 import java.util.Map;
 
-import net.haspamelodica.javazmach.assembler.model.IntegralMacroArgument;
-import net.haspamelodica.javazmach.assembler.model.IntegralValue;
-import net.haspamelodica.javazmach.assembler.model.LabelReferenceMacroArgument;
-import net.haspamelodica.javazmach.assembler.model.MacroArgument;
-import net.haspamelodica.javazmach.assembler.model.MacroParam;
-import net.haspamelodica.javazmach.assembler.model.MacroParamLabelDeclaration;
-import net.haspamelodica.javazmach.assembler.model.MacroParamRef;
-import net.haspamelodica.javazmach.assembler.model.Operand;
-import net.haspamelodica.javazmach.assembler.model.ResolvedMacroArgument;
-import net.haspamelodica.javazmach.assembler.model.ResolvedOperand;
-import net.haspamelodica.javazmach.assembler.model.StoreTarget;
-import net.haspamelodica.javazmach.assembler.model.Variable;
+import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledLabelDeclaration;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
+import net.haspamelodica.javazmach.assembler.model.entries.MacroParamLabelDeclaration;
+import net.haspamelodica.javazmach.assembler.model.values.IntegralMacroArgument;
+import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
+import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceMacroArgument;
+import net.haspamelodica.javazmach.assembler.model.values.MacroArgument;
+import net.haspamelodica.javazmach.assembler.model.values.MacroParam;
+import net.haspamelodica.javazmach.assembler.model.values.MacroParamRef;
+import net.haspamelodica.javazmach.assembler.model.values.Operand;
+import net.haspamelodica.javazmach.assembler.model.values.ResolvedMacroArgument;
+import net.haspamelodica.javazmach.assembler.model.values.ResolvedOperand;
+import net.haspamelodica.javazmach.assembler.model.values.StoreTarget;
+import net.haspamelodica.javazmach.assembler.model.values.Variable;
 
 public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithContext> args, MacroContext outerMacroContext)
 {

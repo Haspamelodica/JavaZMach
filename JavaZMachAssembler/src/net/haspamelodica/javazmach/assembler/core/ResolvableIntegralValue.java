@@ -7,7 +7,8 @@ import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.
 import java.math.BigInteger;
 import java.util.Optional;
 
-import net.haspamelodica.javazmach.assembler.model.IntegralValue;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
+import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
 
 public class ResolvableIntegralValue
 {

@@ -5,7 +5,9 @@ import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.integra
 import java.math.BigInteger;
 import java.util.function.Function;
 
-import net.haspamelodica.javazmach.assembler.model.IntegralValue;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.ValueReference;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
+import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
 
 public record AssemblerIntegralValue(Function<ValueReferenceResolver, BigInteger> valueFunction)
 {
