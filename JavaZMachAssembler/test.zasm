@@ -283,11 +283,26 @@ add ..a3, 0x8000 -> ..a3
 
 .ENDMACRO
 
+.MACRO add4_const
+.MACROPARAM a0
+.MACROPARAM a1
+.MACROPARAM a2
+.MACROPARAM a3
+.MACROPARAM b
+
+.add4_consts ..a0, ..a1, ..a2, ..a3,
+	(..b >> 0x00) & 0xffff, 
+	(..b >> 0x10) & 0xffff, 
+	(..b >> 0x20) & 0xffff, 
+	(..b >> 0x30) & 0xffff
+
+.ENDMACRO
+
 add 0, 2 -> g0
 add 0, 6565 -> g1
 add 0, 321 -> g2
 add 0, 0 -> g3
-.add4_consts g0, g1, g2, g3, 0xffff, 0xffff, 123, 0
+.add4_const g0, g1, g2, g3, 0x7bffffffff
 je g0, 1 ?~addconstfail
 je g1, 6565 ?~addconstfail
 je g2, 445 ?~addconstfail
@@ -298,7 +313,7 @@ add 0, 1 -> g0
 add 0, 789 -> g1
 add 0, 456 -> g2
 add 0, 123 -> g3
-.add4_consts g0, g1, g2, g3, 0xffff, 0xffff, 0xffff, 321
+.add4_const g0, g1, g2, g3, 0x141ffffffffffff
 je g0, 0 ?~addconstfail
 je g1, 789 ?~addconstfail
 je g2, 456 ?~addconstfail

@@ -53,6 +53,7 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 			// then the inner macro's a should resolve to the value of the outer macro's a.
 			//TODO this is not entirely clean. The route used with Operand / ResolvedOperand would be cleaner:
 			// introduce a ResolvedIntegralValue and let a ResolvedOperand not permit IntegralValue, but ResolvedIntegralValue.
+			//TODO not correct - see test.zasm
 			case IntegralMacroArgument a -> integralValueOrNull(outerMacroContext(), ival(a), valueReferenceResolver);
 		};
 	}
