@@ -48,6 +48,9 @@
 
 
 entry:
+
+
+print "\n\n--- Testing verify / checksum\n"
 verify ? checksum_match
 print "checksum wrong!\n"
 // Unfortunately, the unconditional branch is asinine to use.
@@ -55,10 +58,15 @@ jz 0 ? checksum_after
 checksum_match:
 print "checksum verified!\n"
 checksum_after:
+
+
+print "\n\n--- Basic experiments\n"
 call testroutine -> sp
 print_obj 1
 print "\n"
 
+
+print "\n\n--- Testing attrs\n"
 test_attr 1, 4 ? attr4_set
 print "obj1.attribute4 is unset! (incorrect)\n"
 jz 0 ? attr4_after
@@ -74,13 +82,14 @@ print "obj1.attribute2 is set! (incorrect)\n"
 attr2_after:
 
 
+print "\n\n--- Testing macro calls\n"
 .MACRO testmacro
 .MACROPARAM theparam
 .MACROPARAM scratchreg1
 .MACROPARAM scratchreg2
 print "Macro called with arg "
 print_num ..theparam
-new_line
+print ". "
 add 0, ..theparam -> ..scratchreg1
 loop:
 call localroutine -> ..scratchreg2
@@ -96,11 +105,12 @@ rtrue
 afterlocalroutine:
 .ENDMACRO
 
-print "before macro calls"
-new_line
 add 0, 2 -> g1
+print "Expecting arg 1 and one loop:    "
 .testmacro 1, g0, g2
+print "Expecting arg 2 and two loops:   "
 .testmacro g1, g0, g2
+print "Expecting arg 3 and three loops: "
 .testmacro 3, g0, g1
 
 
@@ -120,11 +130,13 @@ new_line
 .innermacro ..entry, ..a * 2
 .ENDMACRO
 
+print "Expecting 11: "
 jz 0 ?outermacroentry
-// This should print 11.
+print "Shouldn't happen 2!"
 .outermacro outermacroentry, 5
 
 
+print "\n\n--- Testing add4_vars\n"
 .MACRO add_simulcarry_vars_0x8000
 .MACROPARAM an0
 .MACROPARAM bn0
@@ -181,24 +193,41 @@ add 0, 2 -> g0
 add 0, 6565 -> g1
 add 0, 321 -> g2
 add 0, 0 -> g3
-
 add 0, 0xffff -> g4
 add 0, 0xffff -> g5
 add 0, 123 -> g6
 add 0, 0 -> g7
 .add4_vars g0, g1, g2, g3, g4, g5, g6, g7
-
 je g0, 1 ?~addfail
 je g1, 6565 ?~addfail
 je g2, 445 ?~addfail
 je g3, 0 ?~addfail
+print "First add check correct\n"
 
+add 0, 1 -> g0
+add 0, 789 -> g1
+add 0, 456 -> g2
+add 0, 123 -> g3
+add 0, 0xffff -> g4
+add 0, 0xffff -> g5
+add 0, 0xffff -> g6
+add 0, 321 -> g7
+.add4_vars g0, g1, g2, g3, g4, g5, g6, g7
+je g0, 0 ?~addfail
+je g1, 789 ?~addfail
+je g2, 456 ?~addfail
+je g3, 445 ?~addfail
+print "Second add check correct\n"
+
+jz 0 ?addend
 addfail:
 print "add4_vars had incorrect result (incorrect)\n"
 addend:
 
 
+print "\n\n--- Testing properties\n"
 call testproperties -> sp
+print "\n\n--- Testing printing buffer content\n"
 call testbuffer -> sp
 
 quit
@@ -242,4 +271,3 @@ rtrue
 print "Trying to print buffer content...\n"
 print_addr testbuffer2
 rtrue
-
