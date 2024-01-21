@@ -114,6 +114,16 @@ print "Expecting arg 3 and three loops: "
 .testmacro 3, g0, g1
 
 
+.MACRO testrefouter
+je 0, 0 ?testrefoutertarget
+.ENDMACRO
+
+.testrefouter
+print "shouldn't happen"
+testrefoutertarget:
+
+
+
 .MACRO innermacro
 .MACROPARAM entry
 .MACROPARAM a

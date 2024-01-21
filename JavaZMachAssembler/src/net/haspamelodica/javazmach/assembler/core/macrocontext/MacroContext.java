@@ -49,7 +49,7 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 	{
 		for(MacroContext context = this; context != null; context = context.outerMacroContext())
 		{
-			BigInteger resolved = valueReferenceResolver.resolveAbsoluteOrNull(new LabelLocation(context.refId(), labelName));
+			BigInteger resolved = valueReferenceResolver.tryResolveAbsoluteOrNull(new LabelLocation(context.refId(), labelName));
 			if(resolved != null)
 				return resolved;
 		}
