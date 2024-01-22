@@ -33,7 +33,6 @@ import net.haspamelodica.javazmach.assembler.model.entries.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.entries.MacroDeclaration;
 import net.haspamelodica.javazmach.assembler.model.entries.MacroEntry;
 import net.haspamelodica.javazmach.assembler.model.entries.MacroOrFileEntry;
-import net.haspamelodica.javazmach.assembler.model.entries.MacroParamLabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.entries.MacroReference;
 import net.haspamelodica.javazmach.assembler.model.entries.NamedValue;
 import net.haspamelodica.javazmach.assembler.model.entries.Routine;
@@ -105,7 +104,7 @@ public class ZAssembler
 	{
 		switch(entry)
 		{
-			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(macroContext, labelDeclaration.name()));
+			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(macroContext, labelDeclaration));
 			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(macroContext, instruction, version, opcodesByNameLowercase));
 			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(macroContext, routine, version));
 			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(macroContext, buffer, version));
@@ -135,7 +134,6 @@ public class ZAssembler
 			switch(entry)
 			{
 				case MacroOrFileEntry e -> add(e, macroContext);
-				case MacroParamLabelDeclaration e -> assembler.addEntry(macroContext.resolveAssembledLabelDeclaration(e));
 			}
 	}
 

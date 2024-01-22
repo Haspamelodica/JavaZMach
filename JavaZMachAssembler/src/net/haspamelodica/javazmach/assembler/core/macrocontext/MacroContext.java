@@ -6,7 +6,7 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.function.Function;
 
-import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledLabelDeclaration;
+import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledIdentifierDeclaration;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedBinaryExpression;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralLiteral;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
@@ -21,7 +21,9 @@ import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.Re
 import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.value.ReferredValue;
-import net.haspamelodica.javazmach.assembler.model.entries.MacroParamLabelDeclaration;
+import net.haspamelodica.javazmach.assembler.model.entries.IdentifierDeclaration;
+import net.haspamelodica.javazmach.assembler.model.entries.MacroParamIdentifierDeclaration;
+import net.haspamelodica.javazmach.assembler.model.entries.RegularIdentifierDeclaration;
 import net.haspamelodica.javazmach.assembler.model.values.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.values.IntegralLiteral;
 import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
@@ -75,15 +77,22 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 		return resolveLabel.apply(new LabelLocation(refId(), labelName));
 	}
 
-	public AssembledLabelDeclaration resolveAssembledLabelDeclaration(MacroParamLabelDeclaration labelDeclaration)
+	public AssembledIdentifierDeclaration resolve(IdentifierDeclaration identifierDeclaration)
 	{
-		MacroParam param = labelDeclaration.param();
-		ResolvedMacroArgumentWithContext resolved = resolveWithContext(param);
-		return switch(resolved.resolvedArgument())
+		return switch(identifierDeclaration)
 		{
-			case ResolvedIntegralValue a -> defaultError("Macro param used in label declaration was an IntegralValue: " + param.name());
-			case ResolvedLabelReference a -> new AssembledLabelDeclaration(a.macroContext(), a.name());
-			case ResolvedVariable a -> defaultError("Macro param used in label declaration was a variable: " + param.name());
+			case RegularIdentifierDeclaration i -> new AssembledIdentifierDeclaration(this, i.name());
+			case MacroParamIdentifierDeclaration i ->
+			{
+				MacroParam param = i.param();
+				ResolvedMacroArgumentWithContext resolved = resolveWithContext(param);
+				yield switch(resolved.resolvedArgument())
+				{
+					case ResolvedIntegralValue a -> defaultError("Macro param used in identifier declaration was an IntegralValue: " + param.name());
+					case ResolvedLabelReference a -> new AssembledIdentifierDeclaration(a.macroContext(), a.name());
+					case ResolvedVariable a -> defaultError("Macro param used in identifier declaration was a variable: " + param.name());
+				};
+			}
 		};
 	}
 

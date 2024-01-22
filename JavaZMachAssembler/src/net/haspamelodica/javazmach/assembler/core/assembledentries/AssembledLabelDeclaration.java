@@ -2,13 +2,20 @@ package net.haspamelodica.javazmach.assembler.core.assembledentries;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
-import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
+import net.haspamelodica.javazmach.assembler.model.entries.LabelDeclaration;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public record AssembledLabelDeclaration(MacroContext macroContext, String label) implements AssembledEntry
+public final class AssembledLabelDeclaration implements AssembledEntry
 {
+	private final AssembledIdentifierDeclaration ident;
+
+	public AssembledLabelDeclaration(MacroContext macroContext, LabelDeclaration labelDeclaration)
+	{
+		this.ident = macroContext.resolve(labelDeclaration.ident());
+	}
+
 	@Override
 	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
@@ -19,6 +26,6 @@ public record AssembledLabelDeclaration(MacroContext macroContext, String label)
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		// nothing to append - only emit location
-		locationEmitter.emitLocationHere(new LabelLocation(macroContext.refId(), label));
+		locationEmitter.emitLocationHere(ident.asLabelLocation());
 	}
 }

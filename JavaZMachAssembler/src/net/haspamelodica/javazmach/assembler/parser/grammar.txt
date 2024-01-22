@@ -22,9 +22,7 @@ MacroBody
  ->                      { macroBody[-1] = emptyMEList(); }
   | MacroBody MacroEntry { macroBody[-1] = appendMEList(macroBody[0], macroEntry[1]); } ;
 
-MacroEntry
- -> MacroOrFileEntry           { macroEntry[-1] = macroOrFileEntry[0]; } 
-  | MacroParamLabelDeclaration { macroEntry[-1] = macroParamLabelDeclaration[0]; } ;
+MacroEntry -> MacroOrFileEntry           { macroEntry[-1] = macroOrFileEntry[0]; } ;
 
 MacroOrFileEntry
  -> Routine          { macroOrFileEntry[-1] = routine[0]; }
@@ -63,17 +61,18 @@ MacroParamDecls
 HeaderEntry
  -> '.' 'zheader' 'ident' HeaderValue { headerEntry[-1] = HeaderEntry(str([2]), headerValue[3]); } ;
 
-NamedValue -> '.' 'value' 'ident' IntegralValue { namedValue[-1] = NamedValue(str([2]), value[3]); } ;
+NamedValue -> '.' 'value' IdentifierDeclaration IntegralValue { namedValue[-1] = NamedValue(identifierDeclaration[2], value[3]); } ;
 
 Buffer
- -> '.' 'buffer' MaybeBufferSize 'ident' MaybeByteSequence { buffer[-1] = Buffer(str([3]), bufferSize[2], optSeq[4]); } ;
+ -> '.' 'buffer' MaybeBufferSize IdentifierDeclaration MaybeByteSequence
+      { buffer[-1] = Buffer(identifierDeclaration[3], bufferSize[2], optSeq[4]); } ;
 
 MaybeBufferSize
  ->                      { bufferSize[-1] = optIntegralValueEmpty(); }
   | IntegralValue 'byte' { bufferSize[-1] = optIntegralValueOf(value[0]); } ;
 
 Routine
- -> '.' 'routine' 'ident' RoutineLocals { routine[-1] = Routine(str([2]), routineLocals[3]); } ;
+ -> '.' 'routine' IdentifierDeclaration RoutineLocals { routine[-1] = Routine(identifierDeclaration[2], routineLocals[3]); } ;
 
 ObjectTable
  -> '.' 'objects' Properties Objects { table[-1] = ZObjectTable(properties[2], objects[3]); };
@@ -139,8 +138,10 @@ DictionaryDataElement
  -> '.' 'data' NumberLiteral 'byte' HeaderValue { data[-1] = DictionaryDataElement(bigint[2], headerValue[4]); } ;
 
 RoutineLocals
- ->                                                      { routineLocals[-1] = emptyRLList(); }
-  | RoutineLocals '.' 'local' 'ident' MaybeIntegralValue { routineLocals[-1] = appendRLList(routineLocals[0], RoutineLocal(str([3]), valueOpt[4])); } ;
+ ->
+    { routineLocals[-1] = emptyRLList(); }
+  | RoutineLocals '.' 'local' IdentifierDeclaration MaybeIntegralValue
+    { routineLocals[-1] = appendRLList(routineLocals[0], RoutineLocal(identifierDeclaration[3], valueOpt[4])); } ;
 
 Section -> '.' 'section' SectionType MaybeIntegralValue { section[-1] = SectionDeclaration(sectionType[2], valueOpt[3]); } ;
 
@@ -157,11 +158,13 @@ HeaderValue
   | ByteSequenceElementNoIntegralLiteral { headerValue[-1] = ByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
   | ByteSequenceMin2                     { headerValue[-1] = sequence[0]; } ;
 
-LabelDeclaration -> 'ident' ':' { labelDeclaration[-1] = LabelDeclaration(str([0])); } ;
+LabelDeclaration -> IdentifierDeclaration ':' { labelDeclaration[-1] = LabelDeclaration(identifierDeclaration[0]); } ;
 
-// This syntax (".:ident:") is so weird just so that it is LR(2)-parseable.
-// The syntax "..ident:" would be much nicer - but not LR(2) (or even ambiguous? not sure).
-MacroParamLabelDeclaration -> ".:" 'ident' ':' { macroParamLabelDeclaration[-1] = MacroParamLabelDeclaration(MacroParam(str([2]))); } ;
+// This syntax (".:ident") is so weird just so that it is LR(2)-parseable.
+// The syntax "..ident" would be much nicer - but not LR(2) (or even ambiguous? not sure).
+IdentifierDeclaration
+ ->      'ident' { identifierDeclaration[-1] = RegularIdentifierDeclaration(str([0])); }
+  | ".:" 'ident' { identifierDeclaration[-1] = MacroParamIdentifierDeclaration(MacroParam(str([2]))); } ;
 
 Instruction -> Opcode MaybeForm Operands MaybeStoreTarget MaybeBranchInfo MaybeText { instruction[-1] =
     Instruction(str(str[0]), form[1], operands[2], optStoreTarget[3], branchInfo[4], text[5]); } ;

@@ -25,18 +25,19 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 import net.haspamelodica.javazmach.assembler.model.ExplicitSection;
-import net.haspamelodica.javazmach.assembler.model.RoutineLocal;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
 import net.haspamelodica.javazmach.assembler.model.entries.Buffer;
 import net.haspamelodica.javazmach.assembler.model.entries.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.entries.GlobalVarTable;
 import net.haspamelodica.javazmach.assembler.model.entries.HeaderEntry;
+import net.haspamelodica.javazmach.assembler.model.entries.IdentifierDeclaration;
 import net.haspamelodica.javazmach.assembler.model.entries.LabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.entries.MacroDeclaration;
 import net.haspamelodica.javazmach.assembler.model.entries.MacroEntry;
-import net.haspamelodica.javazmach.assembler.model.entries.MacroParamLabelDeclaration;
+import net.haspamelodica.javazmach.assembler.model.entries.MacroParamIdentifierDeclaration;
 import net.haspamelodica.javazmach.assembler.model.entries.MacroReference;
 import net.haspamelodica.javazmach.assembler.model.entries.NamedValue;
+import net.haspamelodica.javazmach.assembler.model.entries.RegularIdentifierDeclaration;
 import net.haspamelodica.javazmach.assembler.model.entries.Routine;
 import net.haspamelodica.javazmach.assembler.model.entries.SectionDeclaration;
 import net.haspamelodica.javazmach.assembler.model.entries.ZAssemblerFileEntry;
@@ -52,6 +53,7 @@ import net.haspamelodica.javazmach.assembler.model.entries.objecttable.Property;
 import net.haspamelodica.javazmach.assembler.model.entries.objecttable.ZAttribute;
 import net.haspamelodica.javazmach.assembler.model.entries.objecttable.ZObject;
 import net.haspamelodica.javazmach.assembler.model.entries.objecttable.ZObjectEntry;
+import net.haspamelodica.javazmach.assembler.model.entries.routine.RoutineLocal;
 import net.haspamelodica.javazmach.assembler.model.values.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.values.BranchTarget;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequence;
@@ -60,10 +62,11 @@ import net.haspamelodica.javazmach.assembler.model.values.CString;
 import net.haspamelodica.javazmach.assembler.model.values.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.values.GlobalVariable;
 import net.haspamelodica.javazmach.assembler.model.values.HeaderValue;
-import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceIntegralOnly;
-import net.haspamelodica.javazmach.assembler.model.values.LabelReference;
 import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
+import net.haspamelodica.javazmach.assembler.model.values.LabelReference;
+import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceIntegralOnly;
 import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceMacroArgument;
+import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceVariableOnly;
 import net.haspamelodica.javazmach.assembler.model.values.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.values.MacroArgument;
 import net.haspamelodica.javazmach.assembler.model.values.MacroParam;
@@ -74,7 +77,6 @@ import net.haspamelodica.javazmach.assembler.model.values.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.values.StackPointer;
 import net.haspamelodica.javazmach.assembler.model.values.StoreTarget;
 import net.haspamelodica.javazmach.assembler.model.values.UnaryExpression;
-import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceVariableOnly;
 import net.haspamelodica.javazmach.assembler.model.values.ZString;
 import net.haspamelodica.javazmach.assembler.model.values.zstrings.ZStringElement;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
@@ -251,8 +253,8 @@ public class ZAssemblerParserCache
 		functionsByName.put("HeaderEntry", TypedFunction.build(HeaderEntry::new, HeaderEntry.class, String.class, HeaderValue.class));
 		functionsByName.put("GlobalVarTable", TypedFunction.buildT(GlobalVarTable::new, GlobalVarTable.class, T_ListGlobal));
 		functionsByName.put("Global", TypedFunction.buildT(Global::new, Global.class, String.class, T_OptIntegralValue));
-		functionsByName.put("Routine", TypedFunction.buildT(Routine::new, Routine.class, String.class, T_ListRoutineLocal));
-		functionsByName.put("RoutineLocal", TypedFunction.buildT(RoutineLocal::new, RoutineLocal.class, String.class, T_OptIntegralValue));
+		functionsByName.put("Routine", TypedFunction.buildT(Routine::new, Routine.class, IdentifierDeclaration.class, T_ListRoutineLocal));
+		functionsByName.put("RoutineLocal", TypedFunction.buildT(RoutineLocal::new, RoutineLocal.class, IdentifierDeclaration.class, T_OptIntegralValue));
 		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, BigInteger.class, ByteSequence.class));
 		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
 		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, T_OptString, ZString.class, T_ListObjectEntry));
@@ -263,7 +265,7 @@ public class ZAssemblerParserCache
 		functionsByName.put("SectionDeclaration", TypedFunction.buildT(SectionDeclaration::new,
 				SectionDeclaration.class, ExplicitSection.class, T_OptIntegralValue));
 		functionsByName.put("ZAttribute", TypedFunction.build(ZAttribute::new, ZAttribute.class, BigInteger.class));
-		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, String.class));
+		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, IdentifierDeclaration.class));
 		functionsByName.put("Instruction", TypedFunction.buildT(ZAssemblerInstruction::new,
 				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptStoreTarget, T_OptBranchInfo, T_OptZString));
 		functionsByName.put("BranchInfo", TypedFunction.buildT(BranchInfo::new,
@@ -276,16 +278,14 @@ public class ZAssemblerParserCache
 		functionsByName.put("LocalVariable", TypedFunction.build(LocalVariable::new, LocalVariable.class, Integer.class));
 		functionsByName.put("GlobalVariable", TypedFunction.build(GlobalVariable::new, GlobalVariable.class, Integer.class));
 		functionsByName.put("Buffer", TypedFunction.buildT(Buffer::new,
-				Buffer.class, String.class, T_OptIntegralValue, T_OptByteSequence));
-		functionsByName.put("NamedValue", TypedFunction.build(NamedValue::new, NamedValue.class, String.class, IntegralValue.class));
+				Buffer.class, IdentifierDeclaration.class, T_OptIntegralValue, T_OptByteSequence));
+		functionsByName.put("NamedValue", TypedFunction.build(NamedValue::new, NamedValue.class, IdentifierDeclaration.class, IntegralValue.class));
 		functionsByName.put("MacroDeclaration", TypedFunction.buildT(MacroDeclaration::new,
 				MacroDeclaration.class, String.class, T_ListMacroParamDecl, T_ListMacroEntry));
 		functionsByName.put("MacroParamDecl", TypedFunction.build(MacroParamDecl::new, MacroParamDecl.class, String.class));
 		functionsByName.put("MacroReference", TypedFunction.buildT(MacroReference::new, MacroReference.class, String.class, T_ListOperand));
 		functionsByName.put("MacroParam", TypedFunction.build(MacroParam::new, MacroParam.class, String.class));
 		functionsByName.put("MacroParamRef", TypedFunction.build(MacroParamRef::new, MacroParamRef.class, MacroParam.class));
-		functionsByName.put("MacroParamLabelDeclaration", TypedFunction.build(MacroParamLabelDeclaration::new,
-				MacroParamLabelDeclaration.class, MacroParam.class));
 		functionsByName.put("LabelReferenceMacroArgument", TypedFunction.build(LabelReferenceMacroArgument::new,
 				LabelReferenceMacroArgument.class, String.class));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
@@ -297,6 +297,10 @@ public class ZAssemblerParserCache
 				BinaryExpression.class, IntegralValue.class, BinaryExpression.Op.class, IntegralValue.class));
 		functionsByName.put("UnaryExpression", TypedFunction.build(UnaryExpression::new,
 				UnaryExpression.class, UnaryExpression.Op.class, IntegralValue.class));
+		functionsByName.put("RegularIdentifierDeclaration", TypedFunction.build(RegularIdentifierDeclaration::new,
+				RegularIdentifierDeclaration.class, String.class));
+		functionsByName.put("MacroParamIdentifierDeclaration", TypedFunction.build(MacroParamIdentifierDeclaration::new,
+				MacroParamIdentifierDeclaration.class, MacroParam.class));
 		functionsByName.put("NumberLiteral", TypedFunction.build(NumberLiteral::new, NumberLiteral.class, BigInteger.class));
 		functionsByName.put("CharLiteral", TypedFunction.build(CharLiteral::new, CharLiteral.class, Character.class));
 		functionsByName.put("StringLiteral", TypedFunction.build(CString::new, CString.class, String.class));

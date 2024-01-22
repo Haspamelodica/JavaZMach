@@ -10,7 +10,6 @@ import java.util.List;
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
 import net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
-import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.entries.Routine;
@@ -19,20 +18,16 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public final class AssembledRoutineHeader implements AssembledEntry
 {
-	private final int macroRefId;
+	private final boolean							writeInitialValues;
+	private final int								alignmentBitCount;
+	private final AssembledIdentifierDeclaration	ident;
 
-	private final boolean	writeInitialValues;
-	private final int		alignmentBitCount;
-	private final String	name;
-
-	private static record AssembledLocalVariable(String name, ResolvableIntegralValue initialValue)
+	private static record AssembledLocalVariable(AssembledIdentifierDeclaration ident, ResolvableIntegralValue initialValue)
 	{}
 	private final List<AssembledLocalVariable> locals;
 
 	public AssembledRoutineHeader(MacroContext macroContext, Routine routine, int version)
 	{
-		this.macroRefId = macroContext.refId();
-
 		if(routine.locals().size() > 15)
 			defaultError("More than 15 local variables declared");
 
@@ -51,9 +46,10 @@ public final class AssembledRoutineHeader implements AssembledEntry
 			case 8 -> 3; // alignment 8
 			default -> throw new IllegalArgumentException("Unknown version: " + version);
 		};
-		this.name = routine.name();
+		this.ident = macroContext.resolve(routine.ident());
 		this.locals = routine.locals().stream()
-				.map(l -> new AssembledLocalVariable(l.name(), resolvableIntValOrZero(l.initialValue().map(macroContext::resolve))))
+				.map(l -> new AssembledLocalVariable(macroContext.resolve(l.ident()),
+						resolvableIntValOrZero(l.initialValue().map(macroContext::resolve))))
 				.toList();
 	}
 
@@ -68,19 +64,19 @@ public final class AssembledRoutineHeader implements AssembledEntry
 	{
 
 		memSeq.alignToBytes(1 << alignmentBitCount);
-		locationEmitter.emitLocationHere(new LabelLocation(macroRefId, name), a -> a.shiftRight(alignmentBitCount));
+		locationEmitter.emitLocationHere(ident.asLabelLocation(), a -> a.shiftRight(alignmentBitCount));
 		// no need to check whether this fits into a byte - locals count is checked in the constructor.
 		memSeq.writeNextByte(locals.size());
 		for(int localI = 0; localI < locals.size(); localI ++)
 		{
 			AssembledLocalVariable local = locals.get(localI);
-			locationEmitter.emitLocation(new LabelLocation(macroRefId, local.name()), new LocalVariable(localI));
+			locationEmitter.emitLocation(local.ident().asLabelLocation(), new LocalVariable(localI));
 			BigInteger initialValue = local.initialValue().resolvedValueOrZero();
 			if(writeInitialValues)
 				memSeq.writeNextWord(bigintIntChecked(16, initialValue,
-						i -> "Initial value for local variable " + local.name() + " too large: " + i, diagnosticHandler));
+						i -> "Initial value for local variable " + local.ident().name() + " too large: " + i, diagnosticHandler));
 			else if(initialValue.signum() != 0)
-				diagnosticHandler.error("Initial value for local variable " + local.name() + " is not 0: " + initialValue);
+				diagnosticHandler.error("Initial value for local variable " + local.ident().name() + " is not 0: " + initialValue);
 		}
 	}
 }

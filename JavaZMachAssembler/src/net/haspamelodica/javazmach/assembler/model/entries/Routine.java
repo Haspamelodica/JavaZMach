@@ -2,13 +2,13 @@ package net.haspamelodica.javazmach.assembler.model.entries;
 
 import java.util.List;
 
-import net.haspamelodica.javazmach.assembler.model.RoutineLocal;
+import net.haspamelodica.javazmach.assembler.model.entries.routine.RoutineLocal;
 
-public record Routine(String name, List<RoutineLocal> locals) implements MacroOrFileEntry
+public record Routine(IdentifierDeclaration ident, List<RoutineLocal> locals) implements MacroOrFileEntry
 {
-	public Routine(String name, List<RoutineLocal> locals)
+	public Routine(IdentifierDeclaration ident, List<RoutineLocal> locals)
 	{
-		this.name = name;
+		this.ident = ident;
 		this.locals = List.copyOf(locals);
 	}
 }
