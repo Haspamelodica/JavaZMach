@@ -1,5 +1,5 @@
 package net.haspamelodica.javazmach.assembler.model.values;
 
-public sealed interface IntegralValue extends HeaderValue, IntegralMacroArgument, BranchTarget, Operand
-		permits IntegralLiteral, LabelReference, BinaryExpression, UnaryExpression, MacroParamRef
+public sealed interface IntegralValue extends HeaderValue, MacroArgument, BranchTarget, Operand
+		permits IntegralLiteral, LabelReferenceIntegralOnly, BinaryExpression, UnaryExpression, MacroParamRef
 {}

@@ -13,8 +13,11 @@ import java.util.function.Function;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedBinaryExpression;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralLiteral;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
-import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReference;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReferenceIntegralOnly;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReferenceVariableOnly;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedUnaryExpression;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedVariable;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedVariableConstant;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequenceElement;
@@ -34,6 +37,15 @@ import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssemblerUtils
 {
+	public static Variable variableOrNull(ResolvedVariable variable, ValueReferenceResolver valueReferenceResolver)
+	{
+		return switch(variable)
+		{
+			case ResolvedVariableConstant s -> s.variable();
+			case ResolvedLabelReferenceVariableOnly s -> s.macroContext().resolveLabelVariable(s.name(), valueReferenceResolver);
+		};
+	}
+
 	public static BigInteger integralValueOrNull(ResolvedIntegralValue value, ValueReferenceResolver valueReferenceResolver)
 	{
 		return switch(value)
@@ -43,7 +55,7 @@ public class ZAssemblerUtils
 				case NumberLiteral l -> l.value();
 				case CharLiteral l -> BigInteger.valueOf(l.value());
 			};
-			case ResolvedLabelReference labelRef -> labelRef.macroContext().resolveLabelRef(labelRef.name(), valueReferenceResolver);
+			case ResolvedLabelReferenceIntegralOnly l -> l.macroContext().resolveLabelIntegral(l.name(), valueReferenceResolver);
 			case ResolvedBinaryExpression expr ->
 			{
 				BigInteger lhs = integralValueOrNull(expr.lhs(), valueReferenceResolver);
@@ -127,7 +139,7 @@ public class ZAssemblerUtils
 		return value;
 	}
 
-	public static int varnumByteAndUpdateRoutine(Variable variable)
+	public static int varnumByte(Variable variable)
 	{
 		return switch(variable)
 		{
@@ -138,7 +150,6 @@ public class ZAssemblerUtils
 					yield defaultError("Local variable out of range: " + var.index());
 				defaultWarning("local variable indices not yet checked against routine");
 				//TODO check against current routine once those are implemented
-				//TODO update routine once implemented
 				yield var.index() + 0x1;
 			}
 			case GlobalVariable var ->

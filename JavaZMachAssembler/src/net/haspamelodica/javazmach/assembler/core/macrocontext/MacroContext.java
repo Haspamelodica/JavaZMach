@@ -4,27 +4,31 @@ import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defau
 
 import java.math.BigInteger;
 import java.util.Map;
+import java.util.function.Function;
 
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledLabelDeclaration;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedBinaryExpression;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralLiteral;
-import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralMacroArgument;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReference;
-import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReferenceMacroArgument;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReferenceIntegralOnly;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReferenceVariableOnly;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedMacroArgument;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedOperand;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedUnaryExpression;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedVariable;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedVariableConstant;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.value.ReferredValue;
 import net.haspamelodica.javazmach.assembler.model.entries.MacroParamLabelDeclaration;
 import net.haspamelodica.javazmach.assembler.model.values.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.values.IntegralLiteral;
-import net.haspamelodica.javazmach.assembler.model.values.IntegralMacroArgument;
 import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.values.LabelReference;
+import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceIntegralOnly;
 import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceMacroArgument;
+import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceVariableOnly;
 import net.haspamelodica.javazmach.assembler.model.values.MacroArgument;
 import net.haspamelodica.javazmach.assembler.model.values.MacroParam;
 import net.haspamelodica.javazmach.assembler.model.values.MacroParamRef;
@@ -45,17 +49,30 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 		this.outerMacroContext = outerMacroContext;
 	}
 
-	public BigInteger resolveLabelRef(String labelName, ValueReferenceResolver valueReferenceResolver)
+	public ReferredValue resolveLabel(String labelName, ValueReferenceResolver valueReferenceResolver)
+	{
+		return resolveLabelGeneric(labelName, valueReferenceResolver::resolveAbsoluteOrNull, valueReferenceResolver::tryResolveAbsoluteOrNull);
+	}
+	public BigInteger resolveLabelIntegral(String labelName, ValueReferenceResolver valueReferenceResolver)
+	{
+		return resolveLabelGeneric(labelName, valueReferenceResolver::resolveAbsoluteOrNullIntegral, valueReferenceResolver::tryResolveAbsoluteOrNullIntegral);
+	}
+	public Variable resolveLabelVariable(String labelName, ValueReferenceResolver valueReferenceResolver)
+	{
+		return resolveLabelGeneric(labelName, valueReferenceResolver::resolveAbsoluteOrNullVariable, valueReferenceResolver::tryResolveAbsoluteOrNullVariable);
+	}
+
+	private <R> R resolveLabelGeneric(String labelName, Function<LabelLocation, R> resolveLabel, Function<LabelLocation, R> tryResolveLabel)
 	{
 		for(MacroContext context = this; context != null; context = context.outerMacroContext())
 		{
-			BigInteger resolved = valueReferenceResolver.tryResolveAbsoluteOrNull(new LabelLocation(context.refId(), labelName));
+			R resolved = tryResolveLabel.apply(new LabelLocation(context.refId(), labelName));
 			if(resolved != null)
 				return resolved;
 		}
 		// Label can't be found. This'll return null, but also emit the correct error diagnostic.
 		// This makes future error messages less confusing.
-		return valueReferenceResolver.resolveAbsoluteOrNull(new LabelLocation(refId(), labelName));
+		return resolveLabel.apply(new LabelLocation(refId(), labelName));
 	}
 
 	public AssembledLabelDeclaration resolveAssembledLabelDeclaration(MacroParamLabelDeclaration labelDeclaration)
@@ -64,26 +81,19 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 		ResolvedMacroArgumentWithContext resolved = resolveWithContext(param);
 		return switch(resolved.resolvedArgument())
 		{
+			case ResolvedIntegralValue a -> defaultError("Macro param used in label declaration was an IntegralValue: " + param.name());
+			case ResolvedLabelReference a -> new AssembledLabelDeclaration(a.macroContext(), a.name());
 			case ResolvedVariable a -> defaultError("Macro param used in label declaration was a variable: " + param.name());
-			case ResolvedIntegralMacroArgument arg -> switch(arg)
-			{
-				case ResolvedIntegralValue a -> defaultError("Macro param used in label declaration was an IntegralValue: " + param.name());
-				case ResolvedLabelReferenceMacroArgument a -> new AssembledLabelDeclaration(a.labelReference().macroContext(), a.labelReference().name());
-			};
 		};
 	}
 
-	public Variable resolveStoreTarget(StoreTarget storeTarget)
+	public ResolvedVariable resolve(StoreTarget storeTarget)
 	{
 		return switch(storeTarget)
 		{
-			case Variable a -> a;
-			case MacroParam param -> switch(resolve(param))
-			{
-				case ResolvedVariable a -> a.variable();
-				case ResolvedIntegralMacroArgument a -> defaultError("Macro param used as store target was an integral value: "
-						+ param.name() + ": " + a);
-			};
+			case Variable s -> new ResolvedVariableConstant(s);
+			case LabelReferenceVariableOnly o -> new ResolvedLabelReferenceVariableOnly(this, o.name());
+			case MacroParam param -> resolveParamVariable(param);
 		};
 	}
 
@@ -92,11 +102,13 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 		return switch(operand)
 		{
 			case IntegralValue o -> resolve(o);
-			case Variable o -> new ResolvedVariable(o);
+			case Variable o -> new ResolvedVariableConstant(o);
+			case LabelReference o -> new ResolvedLabelReference(this, o.name());
 			case MacroParam param -> switch(resolve(param))
 			{
-				case ResolvedIntegralMacroArgument o -> ival(o);
+				case ResolvedIntegralValue o -> o;
 				case ResolvedVariable o -> o;
+				case ResolvedLabelReference o -> o;
 			};
 		};
 	}
@@ -105,18 +117,10 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 	{
 		return switch(argument)
 		{
-			case IntegralMacroArgument a -> new ResolvedMacroArgumentWithContext(this, resolve(a));
-			case Variable a -> new ResolvedMacroArgumentWithContext(this, new ResolvedVariable(a));
+			case IntegralValue a -> new ResolvedMacroArgumentWithContext(this, resolve(a));
+			case Variable a -> new ResolvedMacroArgumentWithContext(this, new ResolvedVariableConstant(a));
+			case LabelReferenceMacroArgument a -> new ResolvedMacroArgumentWithContext(this, new ResolvedLabelReference(this, a.name()));
 			case MacroParam a -> resolveWithContext(a);
-		};
-	}
-
-	public ResolvedIntegralMacroArgument resolve(IntegralMacroArgument argument)
-	{
-		return switch(argument)
-		{
-			case IntegralValue a -> resolve(a);
-			case LabelReferenceMacroArgument a -> new ResolvedLabelReferenceMacroArgument(new ResolvedLabelReference(this, a.labelReference().name()));
 		};
 	}
 
@@ -125,7 +129,7 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 		return switch(integralValue)
 		{
 			case IntegralLiteral v -> new ResolvedIntegralLiteral(v);
-			case LabelReference v -> new ResolvedLabelReference(this, v.name());
+			case LabelReferenceIntegralOnly v -> new ResolvedLabelReferenceIntegralOnly(this, v.name());
 			case BinaryExpression v -> new ResolvedBinaryExpression(resolve(v.lhs()), v.op(), resolve(v.rhs()));
 			case UnaryExpression v -> new ResolvedUnaryExpression(v.op(), resolve(v.operand()));
 			case MacroParamRef v -> resolveParamIntegral(v.param());
@@ -136,18 +140,21 @@ public record MacroContext(int refId, Map<String, ResolvedMacroArgumentWithConte
 	{
 		return switch(resolve(param))
 		{
+			case ResolvedIntegralValue v -> v;
 			case ResolvedVariable v -> defaultError("Macro param used as integral value was a variable: "
 					+ param.name() + ": " + v);
-			case ResolvedIntegralMacroArgument value -> ival(value);
+			case ResolvedLabelReference v -> new ResolvedLabelReferenceIntegralOnly(v.macroContext(), v.name());
 		};
 	}
 
-	private ResolvedIntegralValue ival(ResolvedIntegralMacroArgument value)
+	public ResolvedVariable resolveParamVariable(MacroParam param)
 	{
-		return switch(value)
+		return switch(resolve(param))
 		{
-			case ResolvedIntegralValue v -> v;
-			case ResolvedLabelReferenceMacroArgument v -> v.labelReference();
+			case ResolvedIntegralValue s -> defaultError("Macro param used as store target was an integral value: "
+					+ param.name() + ": " + s);
+			case ResolvedVariable s -> s;
+			case ResolvedLabelReference s -> new ResolvedLabelReferenceVariableOnly(s.macroContext(), s.name());
 		};
 	}
 

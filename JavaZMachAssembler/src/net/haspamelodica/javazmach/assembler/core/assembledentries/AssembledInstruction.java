@@ -3,7 +3,7 @@ package net.haspamelodica.javazmach.assembler.core.assembledentries;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.appendZString;
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.varnumByteAndUpdateRoutine;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.varnumByte;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.versionRangeString;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.EXTENDED;
 import static net.haspamelodica.javazmach.core.instructions.OpcodeForm.LONG;
@@ -18,19 +18,21 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
+import net.haspamelodica.javazmach.assembler.core.ResolvableVariable;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledBranchInfo;
-import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledImmediateOperand;
+import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledIntegralOperand;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledOperand;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledVariableOperand;
+import net.haspamelodica.javazmach.assembler.core.assembledentries.instruction.AssembledIntegralOrVariableOperand;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedLabelReference;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedVariable;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.BranchOriginLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.entries.ZAssemblerInstruction;
 import net.haspamelodica.javazmach.assembler.model.values.Operand;
-import net.haspamelodica.javazmach.assembler.model.values.Variable;
 import net.haspamelodica.javazmach.assembler.model.values.ZString;
 import net.haspamelodica.javazmach.core.instructions.Opcode;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
@@ -43,7 +45,7 @@ public final class AssembledInstruction implements AssembledEntry
 	private final Opcode						opcode;
 	private final Optional<OpcodeForm>			formOverride;
 	private final List<AssembledOperand>		operands;
-	private final Optional<Variable>			storeTarget;
+	private final Optional<ResolvableVariable>	storeTarget;
 	private final Optional<AssembledBranchInfo>	branchInfo;
 	private final Optional<ZString>				text;
 
@@ -111,10 +113,11 @@ public final class AssembledInstruction implements AssembledEntry
 		boolean formOverriddenToLONG = formOverride.isPresent() && formOverride.get() == LONG;
 		this.operands = instruction.operands().stream().map(o -> switch(macroContext.resolve(o))
 		{
-			case ResolvedIntegralValue value -> new AssembledImmediateOperand(value, formOverriddenToLONG);
-			case ResolvedVariable variable -> new AssembledVariableOperand(variable.variable());
+			case ResolvedIntegralValue value -> new AssembledIntegralOperand(value, formOverriddenToLONG);
+			case ResolvedVariable variable -> new AssembledVariableOperand(variable);
+			case ResolvedLabelReference label -> new AssembledIntegralOrVariableOperand(label, formOverriddenToLONG);
 		}).toList();
-		this.storeTarget = instruction.storeTarget().map(macroContext::resolveStoreTarget);
+		this.storeTarget = instruction.storeTarget().map(macroContext::resolve).map(ResolvableVariable::new);
 		this.branchInfo = instruction.branchInfo().map(branchInfo -> new AssembledBranchInfo(macroContext, branchInfo, new BranchOriginLocation(this)));
 		this.text = instruction.text();
 	}
@@ -123,6 +126,7 @@ public final class AssembledInstruction implements AssembledEntry
 	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
 		operands.forEach(operand -> operand.updateResolvedValue(valueReferenceResolver));
+		storeTarget.ifPresent(storeTarget -> storeTarget.updateResolvedValue(valueReferenceResolver));
 		branchInfo.ifPresent(branchInfo -> branchInfo.updateResolvedTarget(valueReferenceResolver));
 	}
 
@@ -200,7 +204,7 @@ public final class AssembledInstruction implements AssembledEntry
 		}
 
 		operands.forEach(operand -> operand.append(memSeq, diagnosticHandler));
-		storeTarget.ifPresent(storeTarget -> memSeq.writeNextByte(varnumByteAndUpdateRoutine(storeTarget)));
+		storeTarget.ifPresent(storeTarget -> memSeq.writeNextByte(varnumByte(storeTarget.resolvedVariableOrSp())));
 		branchInfo.ifPresent(branchInfo -> branchInfo.appendChecked(memSeq, diagnosticHandler));
 		// Branches are relative to after the branch data.
 		locationEmitter.emitLocationHere(new BranchOriginLocation(this));

@@ -8,35 +8,21 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
-import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 
-public class ResolvableIntegralValue
+public class ResolvableIntegralValue extends ResolvableValue<BigInteger>
 {
-	private final AssemblerIntegralValue integralValue;
-
-	private BigInteger resolvedValue;
-
 	public ResolvableIntegralValue(ResolvedIntegralValue integralValue)
 	{
 		this(intVal(integralValue));
 	}
 	public ResolvableIntegralValue(AssemblerIntegralValue integralValue)
 	{
-		this.integralValue = integralValue;
+		super(integralValue::resolve, ZERO);
 	}
 
-	public void updateResolvedValue(ValueReferenceResolver valueReferenceResolver)
-	{
-		resolvedValue = integralValue.resolve(valueReferenceResolver);
-	}
-
-	public BigInteger resolvedValueOrNull()
-	{
-		return resolvedValue;
-	}
 	public BigInteger resolvedValueOrZero()
 	{
-		return resolvedValue == null ? ZERO : resolvedValue;
+		return resolvedValueOrDefault();
 	}
 
 	public static ResolvableIntegralValue resolvableIntValOrZero(Optional<ResolvedIntegralValue> value)

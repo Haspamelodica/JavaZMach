@@ -5,12 +5,18 @@ import java.util.function.Function;
 
 import net.haspamelodica.javazmach.assembler.core.valuereferences.SpecialLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.ValueReference;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.value.IntegralReferredValue;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.value.ReferredValue;
 
 public interface ValueReferenceEmitter extends SpecialLocationEmitter
 {
-	public void emitValueReference(ValueReference reference, BigInteger value);
+	public void emitValueReference(ValueReference reference, ReferredValue value);
 	public void emitValueReferenceHere(ValueReference reference, Function<BigInteger, BigInteger> addrToReferenceValue);
 
+	public default void emitValueReference(ValueReference reference, BigInteger value) {
+		emitValueReference(reference, new IntegralReferredValue(value));
+	}
+	
 	public default void emitLocationHere(ValueReference reference)
 	{
 		emitValueReferenceHere(reference, Function.identity());
@@ -21,7 +27,7 @@ public interface ValueReferenceEmitter extends SpecialLocationEmitter
 	// Oh well.
 
 	@Override
-	public default void emitLocation(SpecialLocation location, BigInteger value)
+	public default void emitLocation(SpecialLocation location, ReferredValue value)
 	{
 		emitValueReference((ValueReference) location, value);
 	}

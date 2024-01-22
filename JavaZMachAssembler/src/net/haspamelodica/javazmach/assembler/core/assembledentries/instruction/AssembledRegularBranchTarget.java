@@ -27,7 +27,7 @@ public class AssembledRegularBranchTarget implements AssembledBranchTarget
 					BigInteger resolvedTarget = integralValueOrNull(target, valueReferenceResolver);
 					if(resolvedTarget == null)
 						return null;
-					BigInteger resolvedBranchOrigin = valueReferenceResolver.resolveAbsoluteOrNull(branchOriginLocation);
+					BigInteger resolvedBranchOrigin = valueReferenceResolver.resolveAbsoluteOrNullIntegral(branchOriginLocation);
 					if(resolvedBranchOrigin == null)
 						return null;
 					return resolvedTarget.subtract(resolvedBranchOrigin).add(TWO);

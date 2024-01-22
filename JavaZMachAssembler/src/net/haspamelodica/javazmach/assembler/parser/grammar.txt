@@ -49,8 +49,8 @@ MacroArgumentsEndingComma
 
 MacroArgument
  -> IntegralValueNMPLR { macroArg[-1] = value[0]; }
-  | LabelReference     { macroArg[-1] = LabelReferenceMacroArgument(labelReference[0]); }
-  | Variable           { macroArg[-1] = variable[0]; }
+  | LabelReference     { macroArg[-1] = LabelReferenceMacroArgument(name[0]); }
+  | UnnamedVariable    { macroArg[-1] = variable[0]; }
   | MacroParam         { macroArg[-1] = macroParam[0]; } ;
 
 MacroDeclaration -> '.' 'macro' 'ident' MacroParamDecls MacroBody '.' 'endmacro'
@@ -195,17 +195,19 @@ OperandsEndingComma
   | OperandsEndingComma Operand ',' { operands[-1] = appendOperandList(operands[0], operand[1]); } ;
 
 Operand
- -> IntegralValueNMP { operand[-1] = value[0]; }
-  | Variable         { operand[-1] = variable[0]; }
-  | MacroParam       { operand[-1] = macroParam[0]; } ;
+ -> IntegralValueNMPLR               { operand[-1] = value[0]; }
+  | IntegralOrVariableLabelReference { operand[-1] = ivLabelReference[0]; }
+  | UnnamedVariable                  { operand[-1] = variable[0]; }
+  | MacroParam                       { operand[-1] = macroParam[0]; } ;
 
 MaybeStoreTarget
  ->                  { optStoreTarget[-1] = optStoreTargetEmpty(); }
   | '->' StoreTarget { optStoreTarget[-1] = optStoreTargetOf(storeTarget[1]); } ;
 
 StoreTarget
- -> Variable   { storeTarget[-1] = variable[0]; }
-  | MacroParam { storeTarget[-1] = macroParam[0]; } ;
+ -> UnnamedVariable        { storeTarget[-1] = variable[0]; }
+  | VariableLabelReference { storeTarget[-1] = vLabelReference[0]; }
+  | MacroParam             { storeTarget[-1] = macroParam[0]; } ;
 
 MaybeBranchInfo
  -> { branchInfo[-1] = optBranchInfoEmpty(); }
@@ -269,19 +271,14 @@ MacroParam -> ".." 'ident' { macroParam[-1] = MacroParam(str([2])); } ;
 
 // NoTilde variant disallows a ~ at the start.
 // Needed because otherwise the grammar would be ambiguous because of clash with branch-on-condition-false.
-// NMP (NoMacroParam) variant disallows the entire IntegralValue to be a single MacroParam.
-// Needed because otherwise the grammar would be ambiguous for Operands and MacroArguments - they handle MacroParams differently.
-// NLR (NoLabelReference) variant disallows the entire IntegralValue to be a single LabelReference.
-// Needed because otherwise the grammar would be ambiguous for MacroArguments - they handle LabelReferences differently.
+// NMPLR (NoMacroParamOrLabelReference) variant disallows the entire IntegralValue to be a single LabelReference or MacroParam.
+// Needed because otherwise the grammar would be ambiguous for Operands, StoreTargets and MacroArguments -
+// they handle LabelReferences and MacroParams differently.
 IntegralValue -> IExpr { value[-1] = value[0]; } ;
-IntegralValueNMP -> IExprNMP { value[-1] = value[0]; } ;
 IntegralValueNMPLR -> IExprNMPLR { value[-1] = value[0]; } ;
 IntegralValueNoTilde -> IExprNoTilde { value[-1] = value[0]; } ;
 
 IExpr -> IExprOr { value[-1] = value[0]; } ;
-IExprNMP
- -> IExprOrNMPLR { value[-1] = value[0]; }
-  | IExprLR      { value[-1] = value[0]; } ;
 IExprNMPLR -> IExprOrNMPLR { value[-1] = value[0]; } ;
 IExprNoTilde
  -> IExprOrNoTildeNMPLR { value[-1] = value[0]; }
@@ -385,19 +382,23 @@ IExprUnaryNoTildeNMPLR
   | '-' IExprUnary         { value[-1] = UnaryExpression(NEGATE(), value[1]); } ;
 
 IExprPrimaryNMPLR
- -> IntegralLiteral       { value[-1] = literal[0]; }
-  | '(' IExpr ')'         { value[-1] = value[1]; } ;
+ -> IntegralLiteral               { value[-1] = literal[0]; }
+  | '(' IExpr ')'                 { value[-1] = value[1]; } ;
 IExprMPLR
- -> IExprMP               { value[-1] = value[0]; }
-  | IExprLR               { value[-1] = value[0]; } ;
-IExprMP -> MacroParam     { value[-1] = MacroParamRef(macroParam[0]); } ;
-IExprLR -> LabelReference { value[-1] = labelReference[0]; } ;
+ -> IExprMP                       { value[-1] = value[0]; }
+  | IExprLR                       { value[-1] = value[0]; } ;
+IExprMP -> MacroParam             { value[-1] = MacroParamRef(macroParam[0]); } ;
+IExprLR -> IntegralLabelReference { value[-1] = iLabelReference[0]; } ;
 
-LabelReference -> 'ident' { labelReference[-1] = LabelReference(str([0])); } ;
+IntegralOrVariableLabelReference -> LabelReference { ivLabelReference[-1] = LabelReference            (name[0]); } ;
+IntegralLabelReference           -> LabelReference {  iLabelReference[-1] = LabelReferenceIntegralOnly(name[0]); } ;
+VariableLabelReference           -> LabelReference {  vLabelReference[-1] = LabelReferenceVariableOnly(name[0]); } ;
+
+LabelReference -> 'ident' {  name[-1] = str([0]); } ;
 
 // For better error handling, each terminal allows all digits,
 // and errors are catched in the function parseBigInt().
-Variable
+UnnamedVariable
  -> 'sp'          { variable[-1] = StackPointer(); }
   | 'lvar_dec'    { variable[-1] =  LocalVariable(int(parseBigInt(_1(), _10(), [0]))); }
   | 'lvar_hex_0x' { variable[-1] =  LocalVariable(int(parseBigInt(_3(), _16(), [0]))); }

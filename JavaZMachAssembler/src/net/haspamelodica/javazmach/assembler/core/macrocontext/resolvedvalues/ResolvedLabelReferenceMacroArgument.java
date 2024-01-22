@@ -1,4 +1,0 @@
-package net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues;
-
-public record ResolvedLabelReferenceMacroArgument(ResolvedLabelReference labelReference) implements ResolvedIntegralMacroArgument
-{}

@@ -60,8 +60,9 @@ import net.haspamelodica.javazmach.assembler.model.values.CString;
 import net.haspamelodica.javazmach.assembler.model.values.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.values.GlobalVariable;
 import net.haspamelodica.javazmach.assembler.model.values.HeaderValue;
-import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
+import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceIntegralOnly;
 import net.haspamelodica.javazmach.assembler.model.values.LabelReference;
+import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceMacroArgument;
 import net.haspamelodica.javazmach.assembler.model.values.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.values.MacroArgument;
@@ -73,6 +74,7 @@ import net.haspamelodica.javazmach.assembler.model.values.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.values.StackPointer;
 import net.haspamelodica.javazmach.assembler.model.values.StoreTarget;
 import net.haspamelodica.javazmach.assembler.model.values.UnaryExpression;
+import net.haspamelodica.javazmach.assembler.model.values.LabelReferenceVariableOnly;
 import net.haspamelodica.javazmach.assembler.model.values.ZString;
 import net.haspamelodica.javazmach.assembler.model.values.zstrings.ZStringElement;
 import net.haspamelodica.javazmach.core.instructions.OpcodeForm;
@@ -267,6 +269,10 @@ public class ZAssemblerParserCache
 		functionsByName.put("BranchInfo", TypedFunction.buildT(BranchInfo::new,
 				BranchInfo.class, Boolean.class, BranchTarget.class, T_OptBLO));
 		functionsByName.put("LabelReference", TypedFunction.build(LabelReference::new, LabelReference.class, String.class));
+		functionsByName.put("LabelReferenceIntegralOnly", TypedFunction.build(LabelReferenceIntegralOnly::new,
+				LabelReferenceIntegralOnly.class, String.class));
+		functionsByName.put("LabelReferenceVariableOnly", TypedFunction.build(LabelReferenceVariableOnly::new,
+				LabelReferenceVariableOnly.class, String.class));
 		functionsByName.put("LocalVariable", TypedFunction.build(LocalVariable::new, LocalVariable.class, Integer.class));
 		functionsByName.put("GlobalVariable", TypedFunction.build(GlobalVariable::new, GlobalVariable.class, Integer.class));
 		functionsByName.put("Buffer", TypedFunction.buildT(Buffer::new,
@@ -281,7 +287,7 @@ public class ZAssemblerParserCache
 		functionsByName.put("MacroParamLabelDeclaration", TypedFunction.build(MacroParamLabelDeclaration::new,
 				MacroParamLabelDeclaration.class, MacroParam.class));
 		functionsByName.put("LabelReferenceMacroArgument", TypedFunction.build(LabelReferenceMacroArgument::new,
-				LabelReferenceMacroArgument.class, LabelReference.class));
+				LabelReferenceMacroArgument.class, String.class));
 		functionsByName.put("ZString", TypedFunction.buildT(ZString::new, ZString.class, T_ListZStringElement));
 		functionsByName.put("ZStringElement", TypedFunction.build(ZStringElement::new, ZStringElement.class, String.class));
 		functionsByName.put("CString", TypedFunction.buildT(CString::new, CString.class, String.class));

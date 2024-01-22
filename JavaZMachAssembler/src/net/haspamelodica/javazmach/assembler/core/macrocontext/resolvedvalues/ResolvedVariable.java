@@ -1,6 +1,5 @@
 package net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues;
 
-import net.haspamelodica.javazmach.assembler.model.values.Variable;
-
-public record ResolvedVariable(Variable variable) implements ResolvedMacroArgument, ResolvedOperand
+public sealed interface ResolvedVariable extends ResolvedMacroArgument, ResolvedOperand
+		permits ResolvedVariableConstant, ResolvedLabelReferenceVariableOnly
 {}

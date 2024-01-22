@@ -1,17 +1,27 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries.instruction;
 
-import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.varnumByteAndUpdateRoutine;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.varnumByte;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
+import net.haspamelodica.javazmach.assembler.core.ResolvableVariable;
+import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedVariable;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
-import net.haspamelodica.javazmach.assembler.model.values.Variable;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public record AssembledVariableOperand(Variable variable) implements AssembledOperand
+public final class AssembledVariableOperand implements AssembledOperand
 {
+	private final ResolvableVariable variable;
+
+	public AssembledVariableOperand(ResolvedVariable variable)
+	{
+		this.variable = new ResolvableVariable(variable);
+	}
+
 	@Override
 	public void updateResolvedValue(ValueReferenceResolver valueReferenceResolver)
-	{}
+	{
+		variable.updateResolvedValue(valueReferenceResolver);
+	}
 
 	@Override
 	public boolean typeEncodeableOneBit()
@@ -34,6 +44,6 @@ public record AssembledVariableOperand(Variable variable) implements AssembledOp
 	@Override
 	public void append(SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
-		memSeq.writeNextByte(varnumByteAndUpdateRoutine(variable));
+		memSeq.writeNextByte(varnumByte(variable.resolvedVariableOrSp()));
 	}
 }

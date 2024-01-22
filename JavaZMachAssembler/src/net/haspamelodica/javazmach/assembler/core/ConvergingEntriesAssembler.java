@@ -37,6 +37,7 @@ import net.haspamelodica.javazmach.assembler.core.valuereferences.ExplicitSectio
 import net.haspamelodica.javazmach.assembler.core.valuereferences.ValueReference;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceManager;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceManagerImpl;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.value.ReferredValue;
 import net.haspamelodica.javazmach.assembler.model.ExplicitSection;
 import net.haspamelodica.javazmach.assembler.model.Section;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
@@ -65,7 +66,7 @@ public class ConvergingEntriesAssembler
 
 	public byte[] assembleUntilConvergence()
 	{
-		Map<ValueReference, BigInteger> locations = new HashMap<>();
+		Map<ValueReference, ReferredValue> locations = new HashMap<>();
 		List<Diagnostic> diagnostics;
 		for(boolean isFirst = true;; isFirst = false)
 		{
@@ -116,8 +117,8 @@ public class ConvergingEntriesAssembler
 		{}
 		Map<Section, BigIntegerSummary> sectionTypeSummaries = entries
 				.stream()
-				.map(e -> new SectionTypeHint(locationManager.resolveAbsoluteOrNull(new EntryStartLocation(e)),
-						locationManager.resolveAbsoluteOrNull(new EntryEndLocation(e)), switch(e)
+				.map(e -> new SectionTypeHint(locationManager.resolveAbsoluteOrNullIntegral(new EntryStartLocation(e)),
+						locationManager.resolveAbsoluteOrNullIntegral(new EntryEndLocation(e)), switch(e)
 						{
 							case AssembledHeader entry -> DYNAMIC;
 							case AssembledInstruction entry -> HIGH;
@@ -140,8 +141,8 @@ public class ConvergingEntriesAssembler
 		BigIntegerSummary dynamicSummary = sectionTypeSummaries.get(DYNAMIC);
 		BigIntegerSummary staticSummary = sectionTypeSummaries.get(STATIC);
 		BigIntegerSummary highSummary = sectionTypeSummaries.get(HIGH);
-		BigInteger staticExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(ExplicitSection.STATIC));
-		BigInteger highExplicitStart = locationManager.tryResolveAbsoluteOrNull(new ExplicitSectionLocation(ExplicitSection.HIGH));
+		BigInteger staticExplicitStart = locationManager.tryResolveAbsoluteOrNullIntegral(new ExplicitSectionLocation(ExplicitSection.STATIC));
+		BigInteger highExplicitStart = locationManager.tryResolveAbsoluteOrNullIntegral(new ExplicitSectionLocation(ExplicitSection.HIGH));
 
 		BigInteger dynamicEntriesEnd = dynamicSummary != null ? dynamicSummary.max() : ZERO;
 

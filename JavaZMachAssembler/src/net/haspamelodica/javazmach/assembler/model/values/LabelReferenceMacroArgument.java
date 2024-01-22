@@ -1,4 +1,4 @@
 package net.haspamelodica.javazmach.assembler.model.values;
 
-public record LabelReferenceMacroArgument(LabelReference labelReference) implements IntegralMacroArgument
+public record LabelReferenceMacroArgument(String name) implements MacroArgument
 {}

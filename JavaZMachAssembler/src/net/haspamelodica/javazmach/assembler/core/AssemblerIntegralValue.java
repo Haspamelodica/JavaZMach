@@ -26,7 +26,7 @@ public record AssemblerIntegralValue(Function<ValueReferenceResolver, BigInteger
 	}
 	public static AssemblerIntegralValue intLoc(ValueReference location)
 	{
-		return intFunc(r -> r.resolveAbsoluteOrNull(location));
+		return intFunc(r -> r.resolveAbsoluteOrNullIntegral(location));
 	}
 	public static AssemblerIntegralValue intConst(BigInteger value)
 	{

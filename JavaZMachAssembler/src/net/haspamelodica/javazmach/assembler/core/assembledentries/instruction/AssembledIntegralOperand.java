@@ -11,11 +11,11 @@ import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.Re
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public final class AssembledImmediateOperand implements AssembledOperand
+public final class AssembledIntegralOperand implements AssembledOperand
 {
 	private final SizeVariantAssemblerUnsigned<Boolean> value;
 
-	public AssembledImmediateOperand(ResolvedIntegralValue value, boolean forcedSmallBecauseLONGForm)
+	public AssembledIntegralOperand(ResolvedIntegralValue value, boolean forcedSmallBecauseLONGForm)
 	{
 		this.value = new SizeVariantAssemblerUnsigned<>(intVal(value), List.of(true, false),
 				forcedSmallBecauseLONGForm ? Optional.of(true) : Optional.empty(),
