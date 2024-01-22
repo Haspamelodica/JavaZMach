@@ -91,8 +91,6 @@ public class ConvergingEntriesAssembler
 		for(Diagnostic diagnostic : diagnostics)
 			defaultEmit(diagnostic);
 
-		locations.entrySet().forEach(e -> System.out.println(e.getKey() + ": " + e.getValue()));
-
 		return mem.data();
 	}
 
