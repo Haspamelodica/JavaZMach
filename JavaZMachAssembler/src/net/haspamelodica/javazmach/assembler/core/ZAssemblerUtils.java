@@ -195,6 +195,10 @@ public class ZAssemblerUtils
 		// +2 to round up
 		return (zchars.size() + 2) / 3;
 	}
+	public static int wordLengthToZStringLength(int wordLength)
+	{
+		return wordLength * 3;
+	}
 
 	public static List<Byte> toZChars(ZString text, int version)
 	{

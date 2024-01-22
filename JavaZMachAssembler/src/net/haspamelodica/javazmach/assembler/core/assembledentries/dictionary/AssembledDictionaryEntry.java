@@ -1,9 +1,9 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries.dictionary;
 
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
@@ -18,10 +18,9 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public class AssembledDictionaryEntry
 {
-	private final static int						KEY_LENGTH_V1_TO_V3			= 4;
-	private final static int						KEY_LENGTH_V4_TO_V6			= 6;
-	private final static int						KEY_ZCHAR_LENGTH_V1_TO_V3	= 6;
-	private final static int						KEY_ZCHAR_LENGTH_V4_TO_V6	= 9;
+	private final static int	KEY_WORD_LENGTH_V1_TO_V3	= 2;
+	private final static int	KEY_WORD_LENGTH_V4_PLUS		= 3;
+
 	private final List<Byte>						keyZChars;
 	private List<AssembledDictionaryDataElement>	elements;
 	private int										totalSize;
@@ -36,16 +35,8 @@ public class AssembledDictionaryEntry
 				case ByteSequence value -> new AssembledDictionaryByteSequenceData(value, e.size(), version);
 			};
 		}).toList();
-		int zCharLength;
-		if(version >= 1 || version <= 3)
-		{
-			totalSize = KEY_LENGTH_V1_TO_V3;
-			zCharLength = KEY_ZCHAR_LENGTH_V1_TO_V3;
-		} else
-		{
-			totalSize = KEY_LENGTH_V4_TO_V6;
-			zCharLength = KEY_ZCHAR_LENGTH_V4_TO_V6;
-		}
+		totalSize = version <= 3 ? KEY_WORD_LENGTH_V1_TO_V3 : KEY_WORD_LENGTH_V4_PLUS;
+		int zCharLength = wordLengthToZStringLength(totalSize);
 		for(AssembledDictionaryDataElement d : this.elements)
 		{
 			totalSize += d.getSize();
@@ -56,15 +47,16 @@ public class AssembledDictionaryEntry
 			}
 		}
 
-		List<Byte> zChars = ZAssemblerUtils.toZChars(key, version);
+		List<Byte> zChars = toZChars(key, version);
 		if(zChars.size() < zCharLength)
 		{
 			zChars = new ArrayList<>(zChars);
-			zChars.add(Byte.valueOf((byte) 5));
-			zChars = Collections.unmodifiableList(zChars);
+			while(zChars.size() < zCharLength)
+				zChars.add((byte) 5);
+			zChars = List.copyOf(zChars);
 		} else if(zChars.size() > zCharLength)
 		{
-			DiagnosticHandler.defaultError("Dictionary entry key is too long for version %d. Expected %d characters, got %d".formatted(version, zCharLength, zChars.size()));
+			defaultError("Dictionary entry key is too long for version %d. Expected %d characters, got %d".formatted(version, zCharLength, zChars.size()));
 		}
 		this.keyZChars = zChars;
 	}
