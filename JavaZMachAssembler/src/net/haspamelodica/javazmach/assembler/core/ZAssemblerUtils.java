@@ -141,6 +141,10 @@ public class ZAssemblerUtils
 
 	public static int varnumByte(Variable variable)
 	{
+		// It's not wanted to check if these are in range and emit a diagnostic otherwise:
+		// All in-range variables have an ident,
+		// so referring to variables with a variable literal is only necessary to deliberately access out-of-range variables,
+		// which means that a diagnostic there would be counterproductive.
 		return switch(variable)
 		{
 			case StackPointer var -> 0;
@@ -148,13 +152,10 @@ public class ZAssemblerUtils
 			{
 				if(var.index() < 0 || var.index() > 0x0f)
 					yield defaultError("Local variable out of range: " + var.index());
-				defaultWarning("local variable indices not yet checked against routine");
-				//TODO check against current routine once those are implemented
 				yield var.index() + 0x1;
 			}
 			case GlobalVariable var ->
 			{
-				//TODO check against global variable table length
 				if(var.index() < 0 || var.index() > 0xef)
 					yield defaultError("Global variable out of range: " + var.index());
 				yield var.index() + 0x10;

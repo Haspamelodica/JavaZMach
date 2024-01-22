@@ -7,16 +7,23 @@ import net.haspamelodica.javazmach.assembler.core.valuereferences.SpecialLocatio
 import net.haspamelodica.javazmach.assembler.core.valuereferences.ValueReference;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.value.IntegralReferredValue;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.value.ReferredValue;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.value.VariableReferredValue;
+import net.haspamelodica.javazmach.assembler.model.values.Variable;
 
 public interface ValueReferenceEmitter extends SpecialLocationEmitter
 {
 	public void emitValueReference(ValueReference reference, ReferredValue value);
 	public void emitValueReferenceHere(ValueReference reference, Function<BigInteger, BigInteger> addrToReferenceValue);
 
-	public default void emitValueReference(ValueReference reference, BigInteger value) {
+	public default void emitValueReference(ValueReference reference, BigInteger value)
+	{
 		emitValueReference(reference, new IntegralReferredValue(value));
 	}
-	
+	public default void emitValueReference(ValueReference reference, Variable value)
+	{
+		emitValueReference(reference, new VariableReferredValue(value));
+	}
+
 	public default void emitLocationHere(ValueReference reference)
 	{
 		emitValueReferenceHere(reference, Function.identity());

@@ -37,7 +37,8 @@ public final class AssembledGlobals implements AssembledEntry
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		locationEmitter.emitLocationHere(SpecialDataStructureLocation.GLOBAL_VAR_TABLE);
-		this.globals.forEach(g -> g.append(locationEmitter, memSeq, diagnosticHandler));
+		for(int i = 0; i < globals.size(); i ++)
+			globals.get(i).append(i, locationEmitter, memSeq, diagnosticHandler);
 		for(int i = this.globals.size(); i < GLOBALS_COUNT; i ++)
 		{
 			// tbd: the spec says that the globals table is 240 words in

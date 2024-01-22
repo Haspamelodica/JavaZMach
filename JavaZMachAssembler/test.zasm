@@ -29,7 +29,7 @@
 .GLOBALS
 .GLOBAL bsdf entry
 .GLOBAL csdf 0
-.GLOBAL dsdf
+.GLOBAL someglobal 5463
 
 .BUFFER 16 BYTE testbuffer1
 .BUFFER testbuffer2 "This is the buffer content.\n"
@@ -60,7 +60,8 @@ checksum_after:
 
 
 print "\n\n--- Basic experiments\n"
-call testroutine -> sp
+call testroutine, 1234 -> sp
+print "The someglobal (should be 5463): "  print_num someglobal  new_line
 print_obj 1
 print "\n"
 
@@ -335,8 +336,12 @@ quit
 .SECTION high
 
 .ROUTINE testroutine
-.LOCAL asdf
+.LOCAL testroutinelocal
 print "Hello from testroutine!\n"
+je testroutinelocal, 1234 ?testroutinesuccess
+print "testroutine argument wasn't 1234 (incorrect)"
+testroutinesuccess:
+print "testroutine argument was 1234 (correct)"  new_line
 rtrue
 
 .ROUTINE testproperties

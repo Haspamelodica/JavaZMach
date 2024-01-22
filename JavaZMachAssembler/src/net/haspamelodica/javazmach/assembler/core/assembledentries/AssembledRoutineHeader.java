@@ -14,6 +14,7 @@ import net.haspamelodica.javazmach.assembler.core.valuereferences.LabelLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.entries.Routine;
+import net.haspamelodica.javazmach.assembler.model.values.LocalVariable;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public final class AssembledRoutineHeader implements AssembledEntry
@@ -65,12 +66,15 @@ public final class AssembledRoutineHeader implements AssembledEntry
 	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
+
 		memSeq.alignToBytes(1 << alignmentBitCount);
 		locationEmitter.emitLocationHere(new LabelLocation(macroRefId, name), a -> a.shiftRight(alignmentBitCount));
 		// no need to check whether this fits into a byte - locals count is checked in the constructor.
 		memSeq.writeNextByte(locals.size());
-		for(AssembledLocalVariable local : locals)
+		for(int localI = 0; localI < locals.size(); localI ++)
 		{
+			AssembledLocalVariable local = locals.get(localI);
+			locationEmitter.emitLocation(new LabelLocation(macroRefId, local.name()), new LocalVariable(localI));
 			BigInteger initialValue = local.initialValue().resolvedValueOrZero();
 			if(writeInitialValues)
 				memSeq.writeNextWord(bigintIntChecked(16, initialValue,
