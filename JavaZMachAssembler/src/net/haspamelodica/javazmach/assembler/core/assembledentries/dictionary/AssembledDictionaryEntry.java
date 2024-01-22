@@ -35,8 +35,9 @@ public class AssembledDictionaryEntry
 				case ByteSequence value -> new AssembledDictionaryByteSequenceData(value, e.size(), version);
 			};
 		}).toList();
-		totalSize = version <= 3 ? KEY_WORD_LENGTH_V1_TO_V3 : KEY_WORD_LENGTH_V4_PLUS;
-		int zCharLength = wordLengthToZStringLength(totalSize);
+		int wordSize = version <= 3 ? KEY_WORD_LENGTH_V1_TO_V3 : KEY_WORD_LENGTH_V4_PLUS;
+		totalSize = wordSize * 2;
+		int zCharLength = wordLengthToZStringLength(wordSize);
 		for(AssembledDictionaryDataElement d : this.elements)
 		{
 			totalSize += d.getSize();
