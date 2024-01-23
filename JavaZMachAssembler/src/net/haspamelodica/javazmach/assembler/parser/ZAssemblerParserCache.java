@@ -255,7 +255,7 @@ public class ZAssemblerParserCache
 		functionsByName.put("Global", TypedFunction.buildT(Global::new, Global.class, String.class, T_OptIntegralValue));
 		functionsByName.put("Routine", TypedFunction.buildT(Routine::new, Routine.class, IdentifierDeclaration.class, T_ListRoutineLocal));
 		functionsByName.put("RoutineLocal", TypedFunction.buildT(RoutineLocal::new, RoutineLocal.class, IdentifierDeclaration.class, T_OptIntegralValue));
-		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, BigInteger.class, ByteSequence.class));
+		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, IntegralValue.class, ByteSequence.class));
 		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
 		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, T_OptString, ZString.class, T_ListObjectEntry));
 		functionsByName.put("Dictionary", TypedFunction.buildT(Dictionary::new, Dictionary.class, T_ListChar, T_ListDictionaryEntry));
@@ -264,7 +264,7 @@ public class ZAssemblerParserCache
 				DictionaryDataElement.class, BigInteger.class, HeaderValue.class));
 		functionsByName.put("SectionDeclaration", TypedFunction.buildT(SectionDeclaration::new,
 				SectionDeclaration.class, ExplicitSection.class, T_OptIntegralValue));
-		functionsByName.put("ZAttribute", TypedFunction.build(ZAttribute::new, ZAttribute.class, BigInteger.class));
+		functionsByName.put("ZAttribute", TypedFunction.build(ZAttribute::new, ZAttribute.class, IntegralValue.class));
 		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, IdentifierDeclaration.class));
 		functionsByName.put("Instruction", TypedFunction.buildT(ZAssemblerInstruction::new,
 				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptStoreTarget, T_OptBranchInfo, T_OptZString));

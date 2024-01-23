@@ -82,7 +82,7 @@ Properties
  | { properties[-1] = emptyPropList(); };
 
 Property
- -> '.' 'property' NumberLiteral ByteSequence { property[-1] = Property(bigint[2], sequence[3]); };
+ -> '.' 'property' IntegralValue ByteSequence { property[-1] = Property(value[2], sequence[3]); };
 
 Objects
  -> Objects Object { objects[-1] = appendObjList(objects[0], object[1]); }
@@ -106,7 +106,7 @@ ObjectEntry
  |  Property { element[-1] = property[0]; };
 
 Attribute
- -> '.' 'attribute' NumberLiteral { attribute[-1] = ZAttribute(bigint[2]); };
+ -> '.' 'attribute' IntegralValue { attribute[-1] = ZAttribute(value[2]); };
 
 GlobalVarTable
  -> '.' 'globals' Globals { globals[-1] = GlobalVarTable(globals[2]); } ;

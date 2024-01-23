@@ -35,6 +35,7 @@ public class AssembledZObject
 
 	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
+		attributes.updateResolvedValues(valueReferenceResolver);
 		propAddress = valueReferenceResolver.resolveAbsoluteOrNullIntegral(new PropertiesLocation(index));
 	}
 

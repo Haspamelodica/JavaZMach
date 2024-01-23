@@ -1,9 +1,16 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries.objecttable;
 
+import static net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext.GLOBAL_MACRO_CONTEXT;
+
+import java.math.BigInteger;
+
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
+import net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.entries.objecttable.Property;
+import net.haspamelodica.javazmach.assembler.model.values.ByteSequence;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public class AssembledProperty
@@ -13,13 +20,26 @@ public class AssembledProperty
 	private static final int	INDEX_BITS_V1TO3		= 5;
 	private static final int	INDEX_BITS_V4TO6		= 6;
 
-	private final Property	property;
-	private final int		version;
+	private final ResolvableIntegralValue	index;
+	private final ByteSequence				bytes;
+	private final int						version;
 
 	public AssembledProperty(Property property, int version)
 	{
-		this.property = property;
+		// object table is always in global context
+		this.index = new ResolvableIntegralValue(GLOBAL_MACRO_CONTEXT.resolve(property.index()));
+		this.bytes = property.bytes();
 		this.version = version;
+	}
+
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
+	{
+		index.updateResolvedValue(valueReferenceResolver);
+	}
+
+	public BigInteger resolvedIndexOrZero()
+	{
+		return index.resolvedValueOrZero();
 	}
 
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
@@ -35,9 +55,10 @@ public class AssembledProperty
 			}
 		};
 
-		int index = ZAssemblerUtils.bigintIntChecked(indexBits, property.index(),
+		int index = ZAssemblerUtils.bigintIntChecked(indexBits, resolvedIndexOrZero(),
 				b -> String.format("Property index %d is too large for version %d. Should occupy at most %d bits", b, version, indexBits), diagnosticHandler);
-		byte propertyBytes[] = ZAssemblerUtils.materializeByteSequence(property.bytes(), version, (error) -> String.format("Error in property %d: %s", index, error));
+		byte propertyBytes[] = ZAssemblerUtils.materializeByteSequence(bytes, version,
+				(error) -> String.format("Error in property %d: %s", index, error));
 		// See section 12.4
 		if(version >= 1 && version <= 3)
 		{
@@ -77,5 +98,4 @@ public class AssembledProperty
 			memSeq.writeNextByte(b);
 		}
 	}
-
 }

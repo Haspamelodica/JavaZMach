@@ -1,19 +1,19 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries.objecttable;
 
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
-import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.toZChars;
 import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.zStringWordLength;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
 import net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.PropertiesLocation;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
+import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.assembler.model.entries.objecttable.Property;
 import net.haspamelodica.javazmach.assembler.model.values.ZString;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
@@ -29,28 +29,7 @@ public class AssembledProperties
 
 	public AssembledProperties(List<Property> properties, ZString name, int objIndex, int version)
 	{
-		List<Property> sortedProperties = properties.stream().sorted((p1, p2) ->
-		{
-			// descending order (section 12.4)
-			return p2.index().compareTo(p1.index());
-		}).toList();
-		BigInteger lastProp = null;
-		List<AssembledProperty> assembledProperties = new ArrayList<AssembledProperty>();
-		// TODO: fix this weird propIndex that I added out of nowhere
-		for(Property p : sortedProperties)
-		{
-			AssembledProperty assembledProp = new AssembledProperty(p, version);
-			if(p.index() == lastProp)
-			{
-				// TODO: print object name
-				defaultWarning(String.format("Property with index %s multiply defined. Overwriting...", p.index().toString()));
-				assembledProperties.set(assembledProperties.size() - 1, assembledProp);
-			} else
-			{
-				assembledProperties.add(assembledProp);
-			}
-		}
-		this.properties = Collections.unmodifiableList(assembledProperties);
+		this.properties = properties.stream().map(p -> new AssembledProperty(p, version)).toList();
 		this.objIndex = objIndex;
 		nameZChars = toZChars(name, version);
 		nameLength = zStringWordLength(nameZChars);
@@ -60,6 +39,11 @@ public class AssembledProperties
 		}
 	}
 
+	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
+	{
+		properties.forEach(p -> p.updateResolvedValues(valueReferenceResolver));
+	}
+
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
 		locationEmitter.emitLocationHere(new PropertiesLocation(objIndex));
@@ -67,12 +51,20 @@ public class AssembledProperties
 		memSeq.writeNextByte(nameLength);
 		ZAssemblerUtils.appendZChars(memSeq, nameZChars);
 
-		for(AssembledProperty property : properties)
+
+		// descending order (section 12.4)
+		Stream<AssembledProperty> sortedProperties = properties.stream().sorted(Comparator.comparing(AssembledProperty::resolvedIndexOrZero));
+		BigInteger lastIndex = null;
+		for(AssembledProperty property : (Iterable<AssembledProperty>) sortedProperties::iterator)
 		{
-			property.append(locationEmitter, memSeq, diagnosticHandler);
+			BigInteger index = property.resolvedIndexOrZero();
+			if(lastIndex == null || !lastIndex.equals(index))
+				property.append(locationEmitter, memSeq, diagnosticHandler);
+			else
+				diagnosticHandler.warning("Property with index %d defined multiple times - keeping first value".formatted(index));
+			lastIndex = index;
 		}
 		// Terminate list of properties
 		memSeq.writeNextByte(0);
 	}
-
 }
