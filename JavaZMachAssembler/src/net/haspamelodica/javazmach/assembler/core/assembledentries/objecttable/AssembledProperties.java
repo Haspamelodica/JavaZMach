@@ -53,7 +53,8 @@ public class AssembledProperties
 
 
 		// descending order (section 12.4)
-		Stream<AssembledProperty> sortedProperties = properties.stream().sorted(Comparator.comparing(AssembledProperty::resolvedIndexOrZero));
+		Stream<AssembledProperty> sortedProperties = properties.stream()
+				.sorted(Comparator.comparing(AssembledProperty::resolvedIndexOrZero).reversed());
 		BigInteger lastIndex = null;
 		for(AssembledProperty property : (Iterable<AssembledProperty>) sortedProperties::iterator)
 		{
