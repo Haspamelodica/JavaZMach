@@ -56,7 +56,7 @@ public final class AssembledZObjectTable implements AssembledEntry
 		for(ZObject o : objects)
 		{
 			boolean hasSibling = ++ i != objects.size();
-			linearizeObjects(o, 0, hasSibling, assembledObjects, assembledProperties, version);
+			linearizeObjects(o, parentIndex, hasSibling, assembledObjects, assembledProperties, version);
 		}
 	}
 
