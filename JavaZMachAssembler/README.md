@@ -19,7 +19,7 @@ hence no clear scoping of variables is possible. An exception is made for names 
 ```
 
 Note that the condition of a conditional jump can be negated by prepending a tilde to the branch target,
-i.e., the instruction `je var ?~ label` jumps to `label` if `var` is **not** zero.
+i.e., the instruction `jz var ?~ label` jumps to `label` if `var` is **not** zero.
 
 ## Macros
 Macros can be called similarly to routines, but instead of performing a routine call, they simply insert their
