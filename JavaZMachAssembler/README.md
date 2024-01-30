@@ -8,6 +8,19 @@ The following instructions are weirdly encoded and not currently supported:
 inc, dec, inc_chk, dec_chk, store, pull, load, jump
 ```
 
+## Header Fields
+```
+.ZHEADER <field> <value>
+```
+
+The following header fields are set automatically and do not need to be explicitely specified:
+```
+FILE_LENGTH, FILE_CHECKSUM, VERSION, ALPHABET_TABLE, HIGH_MEM_BASE, DICTIONARY, OBJ_TABLE, GLOBAL_VAR_TABLE, STATIC_MEM_BASE
+```
+
+For this to work, the object table, globals and dictionary must be declared somewhere. They can, however, be left empty.
+The AlphabetTable is not yet supported and automatically set to 0.
+
 ## Labels and Names
 Labels and variable names must be unique. In particular, routine locals do not shadow globals, their names must differ.
 Even worse, locals in different routines may not have the same name. This is due to routines having no defined end point,
@@ -126,3 +139,9 @@ in the object tree.
 
 // body
 ```
+
+## Alphabet Table
+Not yet supported.
+
+## Abbreviation Table
+Not yet supported. Header field should be set to zero.
