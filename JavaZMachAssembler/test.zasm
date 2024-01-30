@@ -31,6 +31,7 @@
 .GLOBAL csdf 0
 .GLOBAL someglobal 5463
 
+.ALIGN 256
 .BUFFER 16 BYTE testbuffer1
 .BUFFER testbuffer2 "This is the buffer content.\n"
 

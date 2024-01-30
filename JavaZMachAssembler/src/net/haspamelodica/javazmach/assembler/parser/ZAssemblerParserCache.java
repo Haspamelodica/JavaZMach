@@ -26,6 +26,7 @@ import java.util.zip.InflaterInputStream;
 
 import net.haspamelodica.javazmach.assembler.model.ExplicitSection;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
+import net.haspamelodica.javazmach.assembler.model.entries.Alignment;
 import net.haspamelodica.javazmach.assembler.model.entries.Buffer;
 import net.haspamelodica.javazmach.assembler.model.entries.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.entries.GlobalVarTable;
@@ -54,6 +55,7 @@ import net.haspamelodica.javazmach.assembler.model.entries.objecttable.ZAttribut
 import net.haspamelodica.javazmach.assembler.model.entries.objecttable.ZObject;
 import net.haspamelodica.javazmach.assembler.model.entries.objecttable.ZObjectEntry;
 import net.haspamelodica.javazmach.assembler.model.entries.routine.RoutineLocal;
+import net.haspamelodica.javazmach.assembler.model.values.AlignmentValue;
 import net.haspamelodica.javazmach.assembler.model.values.BinaryExpression;
 import net.haspamelodica.javazmach.assembler.model.values.BranchTarget;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequence;
@@ -73,6 +75,7 @@ import net.haspamelodica.javazmach.assembler.model.values.MacroParam;
 import net.haspamelodica.javazmach.assembler.model.values.MacroParamRef;
 import net.haspamelodica.javazmach.assembler.model.values.NumberLiteral;
 import net.haspamelodica.javazmach.assembler.model.values.Operand;
+import net.haspamelodica.javazmach.assembler.model.values.SimpleAlignmentValue;
 import net.haspamelodica.javazmach.assembler.model.values.SimpleBranchTarget;
 import net.haspamelodica.javazmach.assembler.model.values.StackPointer;
 import net.haspamelodica.javazmach.assembler.model.values.StoreTarget;
@@ -256,6 +259,7 @@ public class ZAssemblerParserCache
 		functionsByName.put("Routine", TypedFunction.buildT(Routine::new, Routine.class, IdentifierDeclaration.class, T_ListRoutineLocal));
 		functionsByName.put("RoutineLocal", TypedFunction.buildT(RoutineLocal::new, RoutineLocal.class, IdentifierDeclaration.class, T_OptIntegralValue));
 		functionsByName.put("Property", TypedFunction.build(Property::new, Property.class, IntegralValue.class, ByteSequence.class));
+		functionsByName.put("Alignment", TypedFunction.build(Alignment::new, Alignment.class, AlignmentValue.class));
 		functionsByName.put("ZObjectTable", TypedFunction.buildT(ZObjectTable::new, ZObjectTable.class, T_ListProperty, T_ListObject));
 		functionsByName.put("ZObject", TypedFunction.buildT(ZObject::new, ZObject.class, T_OptString, ZString.class, T_ListObjectEntry));
 		functionsByName.put("Dictionary", TypedFunction.buildT(Dictionary::new, Dictionary.class, T_ListChar, T_ListDictionaryEntry));
@@ -329,6 +333,7 @@ public class ZAssemblerParserCache
 		functionsByName.put("MODULO", TypedFunction.build(() -> BinaryExpression.Op.MODULO, BinaryExpression.Op.class));
 		functionsByName.put("NEGATE", TypedFunction.build(() -> UnaryExpression.Op.NEGATE, UnaryExpression.Op.class));
 		functionsByName.put("BITWISE_NOT", TypedFunction.build(() -> UnaryExpression.Op.BITWISE_NOT, UnaryExpression.Op.class));
+		functionsByName.put("PACKED_ALIGNMENT", TypedFunction.build(() -> SimpleAlignmentValue.PACKED_ALIGNMENT, SimpleAlignmentValue.class));
 
 		// lists
 		functionsByName.put("emptyAEList", TypedFunction.buildT(ArrayList::new, T_ListZAssemblyFileEntry));

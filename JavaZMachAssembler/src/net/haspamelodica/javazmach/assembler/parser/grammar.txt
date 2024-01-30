@@ -30,7 +30,14 @@ MacroOrFileEntry
   | Instruction      { macroOrFileEntry[-1] = instruction[0]; }
   | Buffer           { macroOrFileEntry[-1] = buffer[0]; }
   | NamedValue       { macroOrFileEntry[-1] = namedValue[0]; }
-  | MacroReference   { macroOrFileEntry[-1] = macroReference[0]; } ;
+  | MacroReference   { macroOrFileEntry[-1] = macroReference[0]; }
+  | Alignment        { macroOrFileEntry[-1] = alignment[0]; } ;
+
+Alignment -> '.' 'align' AlignmentValue { alignment[-1] = Alignment(alignmentValue[2]); } ;
+
+AlignmentValue
+ -> 'packed'      { alignmentValue[-1] = PACKED_ALIGNMENT(); }
+  | IntegralValue { alignmentValue[-1] = value[0]; } ;
 
 MacroReference -> '.' 'ident' MacroArguments { macroReference[-1] = MacroReference(str([1]), macroArgs[2]); } ;
 

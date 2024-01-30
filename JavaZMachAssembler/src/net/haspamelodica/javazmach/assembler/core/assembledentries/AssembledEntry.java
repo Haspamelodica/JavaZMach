@@ -5,8 +5,9 @@ import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.Specia
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
 import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
-public sealed interface AssembledEntry permits AssembledInstruction, AssembledRoutineHeader, AssembledLabelDeclaration, AssembledZObjectTable,
-		AssembledGlobals, AssembledHeader, AssembledSectionDeclaration, AssembledDictionary, AssembledBuffer, AssembledNamedValue
+public sealed interface AssembledEntry permits AssembledInstruction, AssembledRoutineHeader, AssembledLabelDeclaration,
+		AssembledZObjectTable, AssembledGlobals, AssembledHeader, AssembledSectionDeclaration, AssembledDictionary,
+		AssembledBuffer, AssembledNamedValue, AssembledAlignment
 {
 	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver);
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler);

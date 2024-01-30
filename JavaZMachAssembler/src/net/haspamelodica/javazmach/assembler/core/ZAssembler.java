@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledAlignment;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledBuffer;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledDictionary;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledGlobals;
@@ -25,6 +26,7 @@ import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledZObj
 import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext.ResolvedMacroArgumentWithContext;
 import net.haspamelodica.javazmach.assembler.model.ZAssemblerFile;
+import net.haspamelodica.javazmach.assembler.model.entries.Alignment;
 import net.haspamelodica.javazmach.assembler.model.entries.Buffer;
 import net.haspamelodica.javazmach.assembler.model.entries.Dictionary;
 import net.haspamelodica.javazmach.assembler.model.entries.GlobalVarTable;
@@ -45,6 +47,8 @@ import net.haspamelodica.javazmach.core.instructions.Opcode;
 public class ZAssembler
 {
 	private final int					version;
+	private final int					packedAlignmentBitCount;
+	private final int					packedAlignment;
 	private final Map<String, Opcode>	opcodesByNameLowercase;
 
 	private final AssembledHeader				header;
@@ -56,6 +60,16 @@ public class ZAssembler
 	public ZAssembler(int version)
 	{
 		this.version = version;
+		// z1point1 §1.2.3
+		this.packedAlignmentBitCount = switch(version)
+		{
+			case 1, 2, 3 -> 1; // alignment 2
+			case 4, 5 -> 2; // alignment 4
+			case 6, 7 -> 2; // also alignment 4, although packed addresss are different here
+			case 8 -> 3; // alignment 8
+			default -> defaultError("Unknown version: " + version);
+		};
+		this.packedAlignment = 1 << packedAlignmentBitCount;
 		this.opcodesByNameLowercase = Arrays
 				.stream(Opcode.values())
 				.filter(o -> o != _unknown_instr)
@@ -106,10 +120,11 @@ public class ZAssembler
 		{
 			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(macroContext, labelDeclaration));
 			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(macroContext, instruction, version, opcodesByNameLowercase));
-			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(macroContext, routine, version));
+			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(macroContext, routine, version, packedAlignmentBitCount));
 			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(macroContext, buffer, version));
 			case NamedValue namedValue -> assembler.addEntry(new AssembledNamedValue(macroContext, namedValue));
 			case MacroReference macroReference -> addMacroReference(macroReference, macroContext);
+			case Alignment alignment -> assembler.addEntry(new AssembledAlignment(macroContext, alignment, packedAlignment));
 		}
 	}
 

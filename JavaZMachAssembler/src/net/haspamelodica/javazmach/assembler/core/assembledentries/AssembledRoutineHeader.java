@@ -26,7 +26,7 @@ public final class AssembledRoutineHeader implements AssembledEntry
 	{}
 	private final List<AssembledLocalVariable> locals;
 
-	public AssembledRoutineHeader(MacroContext macroContext, Routine routine, int version)
+	public AssembledRoutineHeader(MacroContext macroContext, Routine routine, int version, int packedAlignmentBitCount)
 	{
 		if(routine.locals().size() > 15)
 			defaultError("More than 15 local variables declared");
@@ -35,17 +35,11 @@ public final class AssembledRoutineHeader implements AssembledEntry
 		{
 			case 1, 2, 3, 4 -> true;
 			case 5, 6, 7, 8 -> false;
-			default -> throw new IllegalArgumentException("Unknown version: " + version);
+			default -> defaultError("Unknown version: " + version);
 		};
-		// z1point1 §1.2.3
-		this.alignmentBitCount = switch(version)
-		{
-			case 1, 2, 3 -> 1; // alignment 2
-			case 4, 5 -> 2; // alignment 4
-			case 6, 7 -> 2; // also alignment 4, although packed addresss are different here
-			case 8 -> 3; // alignment 8
-			default -> throw new IllegalArgumentException("Unknown version: " + version);
-		};
+		if(version == 6 || version == 7)
+			defaultError("Routines in V6-7 aren't supported yet because packed addresses are weird there");
+		this.alignmentBitCount = packedAlignmentBitCount;
 		this.ident = macroContext.resolve(routine.ident());
 		this.locals = routine.locals().stream()
 				.map(l -> new AssembledLocalVariable(macroContext.resolve(l.ident()),
@@ -64,6 +58,7 @@ public final class AssembledRoutineHeader implements AssembledEntry
 	{
 
 		memSeq.alignToBytes(1 << alignmentBitCount);
+		// this is incorrect for versions 6 and 7: packed addresses have a base there
 		locationEmitter.emitLocationHere(ident.asLabelLocation(), a -> a.shiftRight(alignmentBitCount));
 		// no need to check whether this fits into a byte - locals count is checked in the constructor.
 		memSeq.writeNextByte(locals.size());

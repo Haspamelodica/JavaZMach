@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledAlignment;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledBuffer;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledDictionary;
 import net.haspamelodica.javazmach.assembler.core.assembledentries.AssembledEntry;
@@ -126,11 +127,12 @@ public class ConvergingEntriesAssembler
 							case AssembledZObjectTable entry -> DYNAMIC;
 							case AssembledGlobals entry -> DYNAMIC;
 							case AssembledDictionary dictionary -> STATIC;
-							// labels, section declarations, buffers, named values by themselves aren't associated with any section type
+							// the entries below aren't associated with any section type by themselves
 							case AssembledLabelDeclaration entry -> null;
 							case AssembledSectionDeclaration entry -> null;
 							case AssembledBuffer entry -> null;
 							case AssembledNamedValue entry -> null;
+							case AssembledAlignment entry -> null;
 						}))
 				.filter(h -> h.type() != null)
 				.collect(Collectors.groupingBy(SectionTypeHint::type, Collectors.mapping(h -> new BigIntegerSummary(h.start(), h.end()),

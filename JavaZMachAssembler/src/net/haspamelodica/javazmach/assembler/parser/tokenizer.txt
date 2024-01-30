@@ -25,6 +25,8 @@ value = value|VALUE ;
 macro = macro|MACRO ;
 macroparam = macroparam|MACROPARAM ;
 endmacro = endmacro|ENDMACRO ;
+align = align|ALIGN ;
+packed = packed|PACKED ;
 
 : = : ;
 
