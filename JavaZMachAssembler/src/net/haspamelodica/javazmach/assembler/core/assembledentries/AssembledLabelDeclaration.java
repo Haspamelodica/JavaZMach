@@ -1,6 +1,11 @@
 package net.haspamelodica.javazmach.assembler.core.assembledentries;
 
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intConst;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.alignToBytes;
+import static net.haspamelodica.javazmach.assembler.core.ZAssemblerUtils.resolveAlignmentValue;
+
 import net.haspamelodica.javazmach.assembler.core.DiagnosticHandler;
+import net.haspamelodica.javazmach.assembler.core.ResolvableIntegralValue;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.SpecialLocationEmitter;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
@@ -9,23 +14,26 @@ import net.haspamelodica.javazmach.core.memory.SequentialMemoryWriteAccess;
 
 public final class AssembledLabelDeclaration implements AssembledEntry
 {
-	private final AssembledIdentifierDeclaration ident;
+	private final AssembledIdentifierDeclaration	ident;
+	private final ResolvableIntegralValue			alignment;
 
-	public AssembledLabelDeclaration(MacroContext macroContext, LabelDeclaration labelDeclaration)
+	public AssembledLabelDeclaration(MacroContext macroContext, LabelDeclaration labelDeclaration, int packedAlignment)
 	{
 		this.ident = macroContext.resolve(labelDeclaration.ident());
+		this.alignment = new ResolvableIntegralValue(labelDeclaration.alignment()
+				.map(a -> resolveAlignmentValue(a, macroContext, packedAlignment)).orElse(intConst(1)));
 	}
 
 	@Override
 	public void updateResolvedValues(ValueReferenceResolver valueReferenceResolver)
 	{
-		// nothing to do
+		alignment.updateResolvedValue(valueReferenceResolver);
 	}
 
 	@Override
 	public void append(SpecialLocationEmitter locationEmitter, SequentialMemoryWriteAccess memSeq, DiagnosticHandler diagnosticHandler)
 	{
-		// nothing to append - only emit location
-		locationEmitter.emitLocationHere(ident.asLabelLocation());
+		alignToBytes(memSeq, alignment, diagnosticHandler);
+		locationEmitter.emitLocationHere(ident.asLabelLocation(), l -> l.divide(alignment.resolvedValueOrZero()));
 	}
 }

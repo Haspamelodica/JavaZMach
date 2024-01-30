@@ -165,7 +165,12 @@ HeaderValue
   | ByteSequenceElementNoIntegralLiteral { headerValue[-1] = ByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
   | ByteSequenceMin2                     { headerValue[-1] = sequence[0]; } ;
 
-LabelDeclaration -> IdentifierDeclaration ':' { labelDeclaration[-1] = LabelDeclaration(identifierDeclaration[0]); } ;
+LabelDeclaration -> IdentifierDeclaration MaybeLabelAlignment ':'
+  { labelDeclaration[-1] = LabelDeclaration(identifierDeclaration[0], maybeAlignmentValue[1]); } ;
+
+MaybeLabelAlignment
+ ->                        { maybeAlignmentValue[-1] = optAlignmentValueEmpty(); }
+  | 'align' AlignmentValue { maybeAlignmentValue[-1] = optAlignmentValueOf(alignmentValue[1]); } ;
 
 // This syntax (".:ident") is so weird just so that it is LR(2)-parseable.
 // The syntax "..ident" would be much nicer - but not LR(2) (or even ambiguous? not sure).

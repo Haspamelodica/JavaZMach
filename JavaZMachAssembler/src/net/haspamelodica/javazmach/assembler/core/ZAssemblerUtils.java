@@ -1,5 +1,7 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intConst;
+import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intVal;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultWarning;
 
@@ -10,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedBinaryExpression;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralLiteral;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
@@ -19,13 +22,16 @@ import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.Re
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedVariable;
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedVariableConstant;
 import net.haspamelodica.javazmach.assembler.core.valuereferences.manager.ValueReferenceResolver;
+import net.haspamelodica.javazmach.assembler.model.values.AlignmentValue;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequence;
 import net.haspamelodica.javazmach.assembler.model.values.ByteSequenceElement;
 import net.haspamelodica.javazmach.assembler.model.values.CString;
 import net.haspamelodica.javazmach.assembler.model.values.CharLiteral;
 import net.haspamelodica.javazmach.assembler.model.values.GlobalVariable;
+import net.haspamelodica.javazmach.assembler.model.values.IntegralValue;
 import net.haspamelodica.javazmach.assembler.model.values.LocalVariable;
 import net.haspamelodica.javazmach.assembler.model.values.NumberLiteral;
+import net.haspamelodica.javazmach.assembler.model.values.SimpleAlignmentValue;
 import net.haspamelodica.javazmach.assembler.model.values.StackPointer;
 import net.haspamelodica.javazmach.assembler.model.values.Variable;
 import net.haspamelodica.javazmach.assembler.model.values.ZString;
@@ -37,6 +43,21 @@ import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssemblerUtils
 {
+	public static void alignToBytes(SequentialMemoryWriteAccess memSeq, ResolvableIntegralValue alignment, DiagnosticHandler diagnosticHandler)
+	{
+		memSeq.alignToBytes(bigintIntChecked(31, alignment.resolvedValueOrZero(),
+				a -> "Alignment doesn't fit in int: " + a, diagnosticHandler));
+	}
+
+	public static AssemblerIntegralValue resolveAlignmentValue(AlignmentValue alignment, MacroContext macroContext, int packedAlignment)
+	{
+		return switch(alignment)
+		{
+			case IntegralValue a -> intVal(macroContext.resolve(a));
+			case SimpleAlignmentValue a -> intConst(packedAlignment);
+		};
+	}
+
 	public static Variable variableOrNull(ResolvedVariable variable, ValueReferenceResolver valueReferenceResolver)
 	{
 		return switch(variable)

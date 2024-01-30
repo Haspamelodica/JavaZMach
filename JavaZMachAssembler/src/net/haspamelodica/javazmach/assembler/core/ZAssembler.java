@@ -118,7 +118,7 @@ public class ZAssembler
 	{
 		switch(entry)
 		{
-			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(macroContext, labelDeclaration));
+			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(macroContext, labelDeclaration, packedAlignment));
 			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(macroContext, instruction, version, opcodesByNameLowercase));
 			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(macroContext, routine, version, packedAlignmentBitCount));
 			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(macroContext, buffer, version));

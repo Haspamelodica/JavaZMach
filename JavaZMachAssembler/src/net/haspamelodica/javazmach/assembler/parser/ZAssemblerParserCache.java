@@ -247,6 +247,7 @@ public class ZAssemblerParserCache
 		ParameterizedType T_OptZString = new ParameterizedTypeImpl(null, Optional.class, ZString.class);
 		ParameterizedType T_OptByteSequence = new ParameterizedTypeImpl(null, Optional.class, ByteSequence.class);
 		ParameterizedType T_OptString = new ParameterizedTypeImpl(null, Optional.class, String.class);
+		ParameterizedType T_OptAlignmentValue = new ParameterizedTypeImpl(null, Optional.class, AlignmentValue.class);
 
 		Map<String, TypedFunction> functionsByName = new HashMap<>();
 
@@ -269,7 +270,8 @@ public class ZAssemblerParserCache
 		functionsByName.put("SectionDeclaration", TypedFunction.buildT(SectionDeclaration::new,
 				SectionDeclaration.class, ExplicitSection.class, T_OptIntegralValue));
 		functionsByName.put("ZAttribute", TypedFunction.build(ZAttribute::new, ZAttribute.class, IntegralValue.class));
-		functionsByName.put("LabelDeclaration", TypedFunction.build(LabelDeclaration::new, LabelDeclaration.class, IdentifierDeclaration.class));
+		functionsByName.put("LabelDeclaration", TypedFunction.buildT(LabelDeclaration::new,
+				LabelDeclaration.class, IdentifierDeclaration.class, T_OptAlignmentValue));
 		functionsByName.put("Instruction", TypedFunction.buildT(ZAssemblerInstruction::new,
 				ZAssemblerInstruction.class, String.class, T_OptForm, T_ListOperand, T_OptStoreTarget, T_OptBranchInfo, T_OptZString));
 		functionsByName.put("BranchInfo", TypedFunction.buildT(BranchInfo::new,
@@ -402,6 +404,8 @@ public class ZAssemblerParserCache
 		functionsByName.put("optByteSequenceOf", TypedFunction.buildT(Optional::of, T_OptByteSequence, ByteSequence.class));
 		functionsByName.put("optStringEmpty", TypedFunction.buildT(Optional::empty, T_OptString));
 		functionsByName.put("optStringOf", TypedFunction.buildT(Optional::of, T_OptString, String.class));
+		functionsByName.put("optAlignmentValueEmpty", TypedFunction.buildT(Optional::empty, T_OptAlignmentValue));
+		functionsByName.put("optAlignmentValueOf", TypedFunction.buildT(Optional::of, T_OptAlignmentValue, AlignmentValue.class));
 		functionsByName.put("optIntEmpty", TypedFunction.build(OptionalInt::empty, OptionalInt.class));
 		functionsByName.put("optIntOf", TypedFunction.build(OptionalInt::of, OptionalInt.class, Integer.class));
 
