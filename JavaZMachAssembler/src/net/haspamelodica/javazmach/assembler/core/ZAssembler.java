@@ -121,7 +121,7 @@ public class ZAssembler
 			case LabelDeclaration labelDeclaration -> assembler.addEntry(new AssembledLabelDeclaration(macroContext, labelDeclaration, packedAlignment));
 			case ZAssemblerInstruction instruction -> assembler.addEntry(new AssembledInstruction(macroContext, instruction, version, opcodesByNameLowercase));
 			case Routine routine -> assembler.addEntry(new AssembledRoutineHeader(macroContext, routine, version, packedAlignmentBitCount));
-			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(macroContext, buffer, version));
+			case Buffer buffer -> assembler.addEntry(new AssembledBuffer(macroContext, buffer, version, packedAlignment));
 			case NamedValue namedValue -> assembler.addEntry(new AssembledNamedValue(macroContext, namedValue));
 			case MacroReference macroReference -> addMacroReference(macroReference, macroContext);
 			case Alignment alignment -> assembler.addEntry(new AssembledAlignment(macroContext, alignment, packedAlignment));

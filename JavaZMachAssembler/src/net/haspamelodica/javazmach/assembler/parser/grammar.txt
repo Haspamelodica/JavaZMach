@@ -71,8 +71,8 @@ HeaderEntry
 NamedValue -> '.' 'value' IdentifierDeclaration IntegralValue { namedValue[-1] = NamedValue(identifierDeclaration[2], value[3]); } ;
 
 Buffer
- -> '.' 'buffer' MaybeBufferSize IdentifierDeclaration MaybeByteSequence
-      { buffer[-1] = Buffer(identifierDeclaration[3], bufferSize[2], optSeq[4]); } ;
+ -> '.' 'buffer' MaybeBufferSize IdentifierDeclaration MaybeAlignment MaybeByteSequence
+      { buffer[-1] = Buffer(identifierDeclaration[3], bufferSize[2], maybeAlignmentValue[4], optSeq[5]); } ;
 
 MaybeBufferSize
  ->                      { bufferSize[-1] = optIntegralValueEmpty(); }
@@ -165,10 +165,10 @@ HeaderValue
   | ByteSequenceElementNoIntegralLiteral { headerValue[-1] = ByteSequence(appendByteSequenceList(emptyByteSequenceList(), element[0])); }
   | ByteSequenceMin2                     { headerValue[-1] = sequence[0]; } ;
 
-LabelDeclaration -> IdentifierDeclaration MaybeLabelAlignment ':'
+LabelDeclaration -> IdentifierDeclaration MaybeAlignment ':'
   { labelDeclaration[-1] = LabelDeclaration(identifierDeclaration[0], maybeAlignmentValue[1]); } ;
 
-MaybeLabelAlignment
+MaybeAlignment
  ->                        { maybeAlignmentValue[-1] = optAlignmentValueEmpty(); }
   | 'align' AlignmentValue { maybeAlignmentValue[-1] = optAlignmentValueOf(alignmentValue[1]); } ;
 

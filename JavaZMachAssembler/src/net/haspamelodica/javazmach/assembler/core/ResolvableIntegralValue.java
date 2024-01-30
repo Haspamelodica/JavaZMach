@@ -2,22 +2,21 @@ package net.haspamelodica.javazmach.assembler.core;
 
 import static java.math.BigInteger.ZERO;
 import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intConst;
-import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intVal;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
 import net.haspamelodica.javazmach.assembler.core.macrocontext.resolvedvalues.ResolvedIntegralValue;
 
-public class ResolvableIntegralValue extends ResolvableValue<BigInteger>
+public class ResolvableIntegralValue extends ResolvableCustomDefaultIntegralValue
 {
 	public ResolvableIntegralValue(ResolvedIntegralValue integralValue)
 	{
-		this(intVal(integralValue));
+		super(integralValue, ZERO);
 	}
 	public ResolvableIntegralValue(AssemblerIntegralValue integralValue)
 	{
-		super(integralValue::resolve, ZERO);
+		super(integralValue, ZERO);
 	}
 
 	public BigInteger resolvedValueOrZero()

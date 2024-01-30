@@ -34,7 +34,8 @@
 .ALIGN 256
 .BUFFER 16 BYTE testbuffer1
 testbuffer2Packed ALIGN PACKED:
-.BUFFER testbuffer2 "This is the buffer content.\n"
+testbuffer2:
+.BUFFER testbuffer2Packed2 ALIGN PACKED "This is the buffer content.\n"
 
 .SECTION static
 
@@ -376,4 +377,5 @@ rtrue
 print "Trying to print buffer content...\n"
 print_addr testbuffer2
 print_paddr testbuffer2Packed
+print_paddr testbuffer2Packed2
 rtrue

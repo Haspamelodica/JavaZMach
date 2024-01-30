@@ -14,6 +14,7 @@ inc, dec, inc_chk, dec_chk, store, pull, load, jump
 ```
 
 The following header fields are set automatically and do not need to be explicitely specified:
+
 ```
 FILE_LENGTH, FILE_CHECKSUM, VERSION, ALPHABET_TABLE, HIGH_MEM_BASE, DICTIONARY, OBJ_TABLE, GLOBAL_VAR_TABLE, STATIC_MEM_BASE
 ```

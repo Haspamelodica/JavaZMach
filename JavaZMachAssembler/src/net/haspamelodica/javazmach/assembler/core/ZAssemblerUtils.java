@@ -1,5 +1,6 @@
 package net.haspamelodica.javazmach.assembler.core;
 
+import static java.math.BigInteger.ONE;
 import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intConst;
 import static net.haspamelodica.javazmach.assembler.core.AssemblerIntegralValue.intVal;
 import static net.haspamelodica.javazmach.assembler.core.DiagnosticHandler.defaultError;
@@ -10,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import net.haspamelodica.javazmach.assembler.core.macrocontext.MacroContext;
@@ -43,19 +45,27 @@ import net.haspamelodica.javazmach.core.text.ZSCIICharZCharConverter;
 
 public class ZAssemblerUtils
 {
-	public static void alignToBytes(SequentialMemoryWriteAccess memSeq, ResolvableIntegralValue alignment, DiagnosticHandler diagnosticHandler)
+	public static ResolvableCustomDefaultIntegralValue resolvableAlignmentValue(
+			MacroContext macroContext, AlignmentValue alignment, int packedAlignment)
 	{
-		memSeq.alignToBytes(bigintIntChecked(31, alignment.resolvedValueOrZero(),
-				a -> "Alignment doesn't fit in int: " + a, diagnosticHandler));
+		return resolvableAlignmentValue(macroContext, Optional.of(alignment), packedAlignment);
 	}
 
-	public static AssemblerIntegralValue resolveAlignmentValue(AlignmentValue alignment, MacroContext macroContext, int packedAlignment)
+	public static ResolvableCustomDefaultIntegralValue resolvableAlignmentValue(
+			MacroContext macroContext, Optional<AlignmentValue> alignment, int packedAlignment)
 	{
-		return switch(alignment)
-		{
-			case IntegralValue a -> intVal(macroContext.resolve(a));
-			case SimpleAlignmentValue a -> intConst(packedAlignment);
-		};
+		return new ResolvableCustomDefaultIntegralValue(alignment
+				.map(aa -> switch(aa)
+				{
+					case IntegralValue a -> intVal(macroContext.resolve(a));
+					case SimpleAlignmentValue a -> intConst(packedAlignment);
+				}).orElse(intConst(1)), ONE);
+	}
+
+	public static void alignToBytes(SequentialMemoryWriteAccess memSeq, ResolvableCustomDefaultIntegralValue alignment, DiagnosticHandler diagnosticHandler)
+	{
+		memSeq.alignToBytes(bigintIntChecked(31, alignment.resolvedValueOrDefault(),
+				a -> "Alignment doesn't fit in int: " + a, diagnosticHandler));
 	}
 
 	public static Variable variableOrNull(ResolvedVariable variable, ValueReferenceResolver valueReferenceResolver)
