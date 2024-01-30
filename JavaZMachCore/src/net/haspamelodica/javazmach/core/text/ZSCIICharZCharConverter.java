@@ -40,9 +40,15 @@ public class ZSCIICharZCharConverter
 			return;
 		}
 
-		if(zsciiChar == 13 && version == 1)
+		if(zsciiChar == 13)
 		{
-			target.accept((byte) 1);
+			if(version == 1)
+				target.accept((byte) 1);
+			else
+			{
+				target.accept((byte) (version < 3 ? 3 : 5));
+				target.accept((byte) 7);
+			}
 			return;
 		}
 
