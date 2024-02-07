@@ -221,6 +221,9 @@ public class ZInterpreter
 			case push:
 				stack.push(o0);
 				break;
+			case pop:
+				stack.pop();
+				break;
 			case pull_V15:
 			case pull_V7:
 				writeVariable(o0, stack.pop(), true);
